@@ -6,7 +6,7 @@ from inspect import Signature
 from typing import Any, \
     Callable, \
     Generic, \
-    ParamSpec, Tuple, \
+    Tuple, \
     TypeAlias, TypeVar, \
     Union, cast, overload
 
@@ -38,15 +38,12 @@ PreviousTransformer: TypeAlias = Union[
 class Transformer(Generic[T, S], ABC):
 
     @staticmethod
-    def _merge_serial_transform(
+    def _merge_serial_connection(
         transformer1: 'Transformer[T, S]', transformer2: 'Transformer[S, U]'
     ) -> 'Transformer[T, U]':
         transformer1 = transformer1.copy()
         transformer2 = transformer2.copy()
         transformer2._set_previous(transformer1)
-
-        custom_transform: Callable[[Any, T], U] = \
-            lambda _, data: transformer2(transformer1(data))
 
         trfm1_signature: Signature = transformer1.__signature__()
         trfm2_signature: Signature = transformer2.__signature__()
@@ -55,7 +52,7 @@ class Transformer(Generic[T, S], ABC):
 
         class NewTransformer(Transformer[T, U]):
             def transform(self, data: T) -> U:
-                return custom_transform(self, data)
+                return transformer2(transformer1(data))
 
             def __signature__(self) -> Signature:
                 return new_signature
@@ -66,7 +63,7 @@ class Transformer(Generic[T, S], ABC):
         return new_transformer
 
     @staticmethod
-    def _merge_diverging_transform(
+    def _merge_diverging_connection(
         incident_transformer: 'Transformer[T, S]',
         *receiving_transformers: 'Transformer[S, Any]'
     ) -> 'Transformer[T, tuple]':
@@ -84,9 +81,6 @@ class Transformer(Generic[T, S], ABC):
                 for receiving_transformer in receiving_transformers
             ])
 
-        tuple_transform: Callable[[Any, T], Tuple[Any, ...]] = \
-            lambda _, data: split_result(data)
-
         incident_signature: Signature = incident_transformer.__signature__()
         receiving_signature_returns: list[str] = [
             str(receiving_transformer.__signature__().return_annotation)
@@ -98,7 +92,7 @@ class Transformer(Generic[T, S], ABC):
 
         class NewTransformer(Transformer[T, Tuple[Any, ...]]):
             def transform(self, data: T) -> Tuple[Any, ...]:
-                return tuple_transform(self, data)
+                return split_result(data)
 
             def __signature__(self) -> Signature:
                 return new_signature
@@ -232,7 +226,7 @@ class Transformer(Generic[T, S], ABC):
             ]
             max_len = max(len(previous_repr) for previous_repr in previous_reprs)
 
-            first_repr = fca_repr + ' ─┬── ' + previous_reprs[0].ljust(max_len, '─') + '──╮'
+            first_repr = fca_repr + ' ─┬─⟶ ' + previous_reprs[0].ljust(max_len, '─') + '──╮'
             middle_repr = "\n".join([
                 ' ' * fca_repr_len + '  ├─⟶ ' + previous_repr.ljust(max_len, '─') + '──┤'
                 for previous_repr in previous_reprs[1:-1]
@@ -276,13 +270,13 @@ class Transformer(Generic[T, S], ABC):
 
     def __rshift__(self, transformer: Any) -> 'Transformer[T, Any]':
         if isinstance(transformer, Transformer):
-            return self._merge_serial_transform(self, transformer)
+            return self._merge_serial_connection(self, transformer)
 
         elif type(transformer) == tuple and isinstance(transformer[0], Transformer) and isinstance(
             transformer[1],
             Transformer
         ):
-            return self._merge_diverging_transform(self, *transformer)
+            return self._merge_diverging_connection(self, *transformer)
         else:
             raise Exception("Unsupported transformer argument")
 

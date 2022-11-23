@@ -232,12 +232,12 @@ class Transformer(Generic[T, S], ABC):
             ]
             max_len = max(len(previous_repr) for previous_repr in previous_reprs)
 
-            first_repr = fca_repr + ' ─┬─── ' + previous_reprs[0].ljust(max_len, '─') + '──╮'
+            first_repr = fca_repr + ' ─┬── ' + previous_reprs[0].ljust(max_len, '─') + '──╮'
             middle_repr = "\n".join([
-                ' ' * fca_repr_len + '  ├──⟶ ' + previous_repr.ljust(max_len, '─') + '──┤'
+                ' ' * fca_repr_len + '  ├─⟶ ' + previous_repr.ljust(max_len, '─') + '──┤'
                 for previous_repr in previous_reprs[1:-1]
             ] + [''])
-            last_repr = ' ' * fca_repr_len + '  ╰──⟶ ' + previous_reprs[-1].ljust(max_len, '─') + '──┴──⟶'
+            last_repr = ' ' * fca_repr_len + '  ╰─⟶ ' + previous_reprs[-1].ljust(max_len, '─') + '──┴──⟶'
 
             return f'{first_repr}\n{middle_repr}{last_repr} ({type(self).__name__})'
 

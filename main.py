@@ -32,12 +32,12 @@ class Joiner(Transformer[Iterable[str], str]):
         return self.separator.join(data)
 
 
-class TupleJoiner(Transformer[Tuple[str, str], str]):
+class TupleJoiner(Transformer[Tuple[str, str, str], str]):
     def __init__(self, separator: str = ", "):
         super().__init__()
         self.separator = separator
 
-    def transform(self, data: Tuple[str, str]) -> str:
+    def transform(self, data: Tuple[str, str, str]) -> str:
         return self.separator.join(data)
 
 
@@ -56,9 +56,19 @@ class Wrapper(Transformer[str, str]):
 graph_piece = (
     Repeater(3) >> (
         Joiner(" * ") >> Repeater(4) >> Joiner(' / '),
-        Joiner(" + ") >> Repeater(2) >> Joiner(' | ') >> Wrapper("{ ", " }") >> Wrapper("{ ", " }")
+        Joiner(" + ") >> Repeater(2) >> Joiner(' | ') >> Wrapper("{ ", " }") >> Wrapper("{ ", " }"),
+        Joiner(" - ") >> Repeater(3) >> Joiner(' = ') >> Wrapper("[ ", " ]")
     ) >>
-    TupleJoiner(" [|] ")
+    TupleJoiner(" [|] ") >> (
+        Wrapper("[ ", " ]") >> Wrapper("[ ", " ]") >> Wrapper("[ ", " ]"),
+        Wrapper("[ ", " ]") >> Wrapper("[ ", " ]")
+    ) >>
+    TupleJoiner(" [|] ") >> (
+        Wrapper("[ ", " ]") >> Wrapper("[ ", " ]") >> Wrapper("[ ", " ]"),
+        Wrapper("[ ", " ]") >> Wrapper("[ ", " ]") >> Wrapper("[ ", " ]"),
+        Wrapper("[ ", " ]") >> Wrapper("[ ", " ]") >> Wrapper("[ ", " ]") >> Wrapper("[ ", " ]"),
+        Wrapper("[ ", " ]") >> Wrapper("[ ", " ]")
+    )
 )
 
 
@@ -86,6 +96,6 @@ class LogHandler(TransformerHandler[Any, Any]):
 if __name__ == "__main__":
     # print(graph_piece('9'))
     result = graph(9)
-    print(result)
-    # print(graph)
-    # print(graph)
+    # print(result)
+    # str(graph)
+    print(graph)

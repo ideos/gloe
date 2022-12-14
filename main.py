@@ -1,8 +1,10 @@
 from typing import Any, \
-    Iterable, \
-    Tuple
+    Generic, Iterable, \
+    Tuple, TypeVar
 
+from mapper import Mapper
 from transformer import Transformer, TransformerHandler, transformer
+from transformer_validator import TransformerValidator
 
 
 class Stringifier(Transformer[int, str]):
@@ -14,12 +16,15 @@ class Stringifier(Transformer[int, str]):
         return str(data)
 
 
-class Repeater(Transformer[str, Iterable[str]]):
+T = TypeVar("T")
+
+
+class Repeater(Generic[T], Transformer[T, Iterable[T]]):
     def __init__(self, count: int = 5):
         super().__init__()
         self.count = count
 
-    def transform(self, data: str) -> Iterable[str]:
+    def transform(self, data: T) -> Iterable[T]:
         return [data] * self.count
 
 
@@ -54,14 +59,15 @@ class Wrapper(Transformer[str, str]):
 
 
 graph_piece = (
-    Repeater(3) >> (
+    Repeater[str](3) >> (
         Joiner(" * ") >> Repeater(4) >> Joiner(' / '),
         Joiner(" + ") >> Repeater(2) >> Joiner(' | ') >> Wrapper("{ ", " }") >> Wrapper("{ ", " }"),
         Joiner(" - ") >> Repeater(3) >> Joiner(' = ') >> Wrapper("[ ", " ]")
     ) >>
     TupleJoiner(" [|] ") >> (
+        Wrapper("[ ", " ]") >> Wrapper("[ ", " ]"),
         Wrapper("[ ", " ]") >> Wrapper("[ ", " ]") >> Wrapper("[ ", " ]"),
-        Wrapper("[ ", " ]") >> Wrapper("[ ", " ]")
+        Wrapper("[ ", " ]") >> Wrapper("[ ", " ]") >> Wrapper("[ ", " ]")
     ) >>
     TupleJoiner(" [|] ") >> (
         Wrapper("[ ", " ]") >> Wrapper("[ ", " ]") >> Wrapper("[ ", " ]"),
@@ -82,9 +88,37 @@ def to_string(number: int) -> str:
     return str(number)
 
 
+@transformer
+def times2(number: int) -> int:
+    return number * 2
+
+
+@transformer
+def sum_tuple(numbers: tuple[int, int]) -> int:
+    return sum(numbers)
+
+
+@transformer
+def join(numbers: Iterable[int]) -> str:
+    return ", ".join([str(number) for number in numbers])
+
+
+class IsEvenValidator(TransformerValidator[int, int]):
+    def validate_input(self, input: int):
+        if input % 2 != 0:
+            raise Exception(f"{input} is odd")
+
+    def validate_output(self, output: int):
+        if output % 2 != 0:
+            raise Exception(f"{input} is odd")
+
+
 graph = (
-    to_string >>
-    graph_piece
+    IsEvenValidator(times2) >>
+    Mapper([1, 2, 3, 4, 5], (
+        sum_tuple >> times2 >> IsEvenValidator(times2)
+    )) >>
+    Repeater(3)
 )
 
 

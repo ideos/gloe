@@ -1,18 +1,26 @@
+import traceback
 import uuid
 import inspect
 import warnings
 from abc import ABC, abstractmethod
 from inspect import Signature
+from traceback import TracebackException
+from types import FunctionType
+from typing import Annotated
 from typing import Any, \
     Callable, \
     Generic, \
-    Tuple, \
+    ParamSpec, Tuple, \
     TypeAlias, TypeVar, \
-    Union, cast, overload
+    Union, cast, overload, \
+    Concatenate
+
+from typing_extensions import TypeVarTuple
 
 T = TypeVar("T")
 S = TypeVar("S")
 U = TypeVar("U")
+
 R1 = TypeVar("R1")
 R2 = TypeVar("R2")
 R3 = TypeVar("R3")
@@ -35,6 +43,18 @@ PreviousTransformer: TypeAlias = Union[
 ]
 
 
+class TransformerException(Exception):
+    def __init__(
+        self,
+        previous_exception: Union['TransformerException', Exception],
+        raiser_transformer: 'Transformer',
+        message: str | None = None
+    ):
+        self.previous_exception = previous_exception
+        self.raiser_transformer = raiser_transformer
+        super().__init__(message)
+
+
 class Transformer(Generic[T, S], ABC):
 
     @staticmethod
@@ -45,10 +65,10 @@ class Transformer(Generic[T, S], ABC):
         transformer2 = transformer2.copy()
         transformer2._set_previous(transformer1)
 
-        trfm1_signature: Signature = transformer1.__signature__()
-        trfm2_signature: Signature = transformer2.__signature__()
-        new_signature = trfm2_signature \
-            .replace(parameters=list(trfm1_signature.parameters.values()))
+        transformer1_signature: Signature = transformer1.__signature__()
+        transformer2_signature: Signature = transformer2.__signature__()
+        new_signature = transformer2_signature \
+            .replace(parameters=list(transformer1_signature.parameters.values()))
 
         class NewTransformer(Transformer[T, U]):
             def transform(self, data: T) -> U:
@@ -208,7 +228,7 @@ class Transformer(Generic[T, S], ABC):
             if len(common_ancestors) > 0:
                 first_common_ancestor = max(
                     list(common_ancestors),
-                    key=lambda ancestor: len(ancestor.ancestors())
+                    key=lambda anc: len(anc.ancestors())
                 )
 
                 for ancestors in previous_ancestors:
@@ -238,9 +258,28 @@ class Transformer(Generic[T, S], ABC):
         return f'{self.previous} ─⟶ ({type(self).__name__})'
 
     def __call__(self, data: T) -> S:
-        transformed = self.transform(data)
-        for handler in self._handlers:
-            handler.handle(data, transformed)
+        internal_exception = None
+        transformed: S = None
+        try:
+            transformed = self.transform(data)
+            for handler in self._handlers:
+                handler.handle(data, transformed)
+        # except TransformerException as exception:
+        #     internal_exception = TransformerException(
+        #         previous_exception=exception,
+        #         raiser_transformer=self
+        #     )
+        except Exception as exception:
+            internal_exception = TransformerException(
+                previous_exception=exception,
+                raiser_transformer=self,
+                message=f"Error occurred in node with ID {self.id}."
+            )
+
+        if internal_exception is not None:# and type(internal_exception.previous_exception) != TransformerException:
+            # print(traceback.format_tb(internal_exception.previous_exception.__traceback__))
+            raise internal_exception from internal_exception.previous_exception
+
         return transformed
 
     @overload
@@ -265,18 +304,29 @@ class Transformer(Generic[T, S], ABC):
         pass
 
     @overload
-    def __rshift__(self, transformer: 'Transformer[S, U]') -> 'Transformer[T, U]':
+    def __rshift__(self, next_transformer: 'Transformer[S, U]') -> 'Transformer[T, U]':
         pass
 
-    def __rshift__(self, transformer: Any) -> 'Transformer[T, Any]':
-        if isinstance(transformer, Transformer):
-            return self._merge_serial_connection(self, transformer)
+    # @overload
+    # def __rshift__(
+    #     self: 'Transformer[T, S]',
+    #     next_transformer: 'Blank[S, U]'
+    # ) -> 'GenericTransformer[[Transformer[S, U]], T, U]':
+    #     pass
 
-        elif type(transformer) == tuple and isinstance(transformer[0], Transformer) and isinstance(
-            transformer[1],
-            Transformer
-        ):
-            return self._merge_diverging_connection(self, *transformer)
+    def __rshift__(self, next_transformers: Any):
+        if isinstance(next_transformers, Transformer):
+            return self._merge_serial_connection(self, next_transformers)
+
+        elif type(next_transformers) == tuple:
+            is_all_transformers = all(
+                isinstance(next_transformer, Transformer)
+                for next_transformer in next_transformers
+            )
+            if is_all_transformers:
+                return self._merge_diverging_connection(self, *next_transformers)
+
+            raise Exception("Unsupported transformer argument")
         else:
             raise Exception("Unsupported transformer argument")
 
@@ -294,7 +344,7 @@ def transformer(func: Callable[[T], S]) -> Transformer[T, S]:
 
     class LambdaTransformer(Transformer[T, S]):
         __doc__ = func.__doc__
-        __annotations__ = func.__annotations__
+        __annotations__ = cast(FunctionType, func).__annotations__
 
         def __signature__(self) -> Signature:
             return func_signature

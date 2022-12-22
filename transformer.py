@@ -154,10 +154,10 @@ class Transformer(Generic[T, S], ABC):
 
     def copy(self) -> 'Transformer[T, S]':
         copy = type(
-            type(self).__name__, (Transformer,), {
+            type(self).__name__, (self.__class__,), {
                 'transform': self.transform,
                 '__call__': self.__call__,
-                '__signature__': self.__signature__
+                '__signature__': self.__signature__,
             }
         )
         copied = copy()
@@ -355,3 +355,11 @@ def transformer(func: Callable[[T], S]) -> Transformer[T, S]:
     lambda_transformer = LambdaTransformer()
     lambda_transformer.__class__.__name__ = func.__name__
     return lambda_transformer
+
+
+class Begin(Generic[T], Transformer[T, T]):
+    def __repr__(self):
+        return str(self.previous)
+
+    def transform(self, data: T) -> T:
+        return data

@@ -1,135 +1,68 @@
-from typing import Any, \
-    Generic, Iterable, \
-    Tuple, TypeVar
+from transformer import Begin, transformer
+from transformer_ensurer import ensure_with, input_ensurer
 
-from mapper import Mapper
-from transformer import Transformer, TransformerHandler, transformer
-from transformer_validator import TransformerValidator
+import pandas as pd
 
-
-class Stringifier(Transformer[int, str]):
-    """
-    Given a number, return its string representation.
-    """
-
-    def transform(self, data: int) -> str:
-        return str(data)
-
-
-T = TypeVar("T")
-
-
-class Repeater(Generic[T], Transformer[T, Iterable[T]]):
-    def __init__(self, count: int = 5):
-        super().__init__()
-        self.count = count
-
-    def transform(self, data: T) -> Iterable[T]:
-        return [data] * self.count
-
-
-class Joiner(Transformer[Iterable[str], str]):
-    def __init__(self, separator: str = ", "):
-        super().__init__()
-        self.separator = separator
-
-    def transform(self, data: Iterable[str]) -> str:
-        return self.separator.join(data)
-
-
-class TupleJoiner(Transformer[Tuple[str, str, str], str]):
-    def __init__(self, separator: str = ", "):
-        super().__init__()
-        self.separator = separator
-
-    def transform(self, data: Tuple[str, str, str]) -> str:
-        return self.separator.join(data)
-
-
-class Wrapper(Transformer[str, str]):
-    """"""
-
-    def __init__(self, left: str = "( ", right: str = " )"):
-        super().__init__()
-        self.left = left
-        self.right = right
-
-    def transform(self, data: str) -> str:
-        return self.left + data + self.right
-
-
-graph_piece = (
-    Repeater[str](3) >> (
-        Joiner(" * ") >> Repeater(4) >> Joiner(' / '),
-        Joiner(" + ") >> Repeater(2) >> Joiner(' | ') >> Wrapper("{ ", " }") >> Wrapper("{ ", " }"),
-        Joiner(" - ") >> Repeater(3) >> Joiner(' = ') >> Wrapper("[ ", " ]")
-    ) >>
-    TupleJoiner(" [|] ") >> (
-        Wrapper("[ ", " ]") >> Wrapper("[ ", " ]"),
-        Wrapper("[ ", " ]") >> Wrapper("[ ", " ]") >> Wrapper("[ ", " ]"),
-        Wrapper("[ ", " ]") >> Wrapper("[ ", " ]") >> Wrapper("[ ", " ]")
-    ) >>
-    TupleJoiner(" [|] ") >> (
-        Wrapper("[ ", " ]") >> Wrapper("[ ", " ]") >> Wrapper("[ ", " ]"),
-        Wrapper("[ ", " ]") >> Wrapper("[ ", " ]") >> Wrapper("[ ", " ]"),
-        Wrapper("[ ", " ]") >> Wrapper("[ ", " ]") >> Wrapper("[ ", " ]") >> Wrapper("[ ", " ]"),
-        Wrapper("[ ", " ]") >> Wrapper("[ ", " ]")
-    )
+df = pd.DataFrame(
+    {
+        "name": ["John", "Mary", "Anne"],
+        "age": [10, 17, 20],
+        "sex": ["male", "female", "female"],
+    }
 )
 
 
 @transformer
-def to_string(number: int) -> str:
-    """
-
-    :param number:
-    :return:
-    """
-    return str(number)
+def filter_women(people_df: pd.DataFrame) -> pd.DataFrame:
+    return people_df.loc[people_df['sex'] == 'female']
 
 
 @transformer
-def times2(number: int) -> int:
-    return number * 2
+def filter_men(people_df: pd.DataFrame) -> pd.DataFrame:
+    return people_df.loc[people_df['sex'] == 'male']
 
 
 @transformer
-def sum_tuple(numbers: tuple[int, int]) -> int:
-    return sum(numbers)
+def filter_adult(people_df: pd.DataFrame) -> pd.DataFrame:
+    return people_df.loc[people_df['age'] >= 18]
 
 
 @transformer
-def join(numbers: Iterable[int]) -> str:
-    return ", ".join([str(number) for number in numbers])
+def filter_minor(people_df: pd.DataFrame) -> pd.DataFrame:
+    return people_df.loc[people_df['age'] < 18]
 
 
-class IsEvenValidator(TransformerValidator[int, int]):
-    def validate_input(self, input: int):
-        if input % 2 != 0:
-            raise Exception(f"{input} is odd")
-
-    def validate_output(self, output: int):
-        if output % 2 != 0:
-            raise Exception(f"{input} is odd")
+@input_ensurer
+def ensure_schema(people_df: pd.DataFrame):
+    required_cols = {'name', 'age', 'sex'}
+    if not required_cols.issubset(people_df.columns):
+        formatted_missing_cols = ", ".join(required_cols.difference(people_df.columns))
+        raise Exception(f'Missing columns: {formatted_missing_cols}')
 
 
-graph = (
-    IsEvenValidator(times2) >>
-    Mapper([1, 2, 3, 4, 5], (
-        sum_tuple >> times2 >> IsEvenValidator(times2)
-    )) >>
-    Repeater(3)
-)
+@ensure_with([ensure_schema])
+@transformer
+def format_introduction(people_df: pd.DataFrame) -> str:
+    return "\n".join([
+        f"Hi! My name is {row['name']} and I'm {row['age']} years old."
+        for _, row in people_df.iterrows()
+    ])
 
 
-class LogHandler(TransformerHandler[Any, Any]):
-    def handle(self, input_data: Any, output: Any):
-        print(f'Logging output: {output}')
+@transformer
+def format_output(strings: tuple[str, str]) -> str:
+    return "\n".join(list(strings))
 
 
-if __name__ == "__main__":
-    # print(graph_piece('9'))
-    result = graph(9)
-    # print(result)
-    # str(graph)
-    print(graph)
+filter_format = Begin[pd.DataFrame]() >> (
+    filter_adult >> format_introduction,
+    filter_minor >> format_introduction
+) >> format_output
+
+woman_process = filter_women >> filter_format
+print(woman_process(df), end='\n\n')
+print(woman_process)
+
+man_process = filter_men >> filter_format
+print(man_process(df), end='\n\n')
+print(man_process)

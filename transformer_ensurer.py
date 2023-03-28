@@ -1,8 +1,8 @@
 import inspect
 import warnings
 from abc import abstractmethod
-from types import FunctionType, MethodType
-from typing import Any, Callable, Generic, Type, TypeVar, cast
+from types import FunctionType
+from typing import Any, Callable, Generic, TypeVar, cast
 
 from transformer import Transformer
 
@@ -21,15 +21,14 @@ class TransformerEnsurer(Generic[T]):
         pass
 
     def __call__(self, transformer: Transformer[T, S]) -> Transformer[T, S]:
-        transformer_cp = transformer.copy()
 
-        def transform(this, data: T) -> S:
-            this.validate_input(data)
-            output = transformer_cp.transform(data)
-            this.validate_output(output)
+        def transform(this: Transformer, data: T) -> S:
+            self.validate_input(data)
+            output = transformer.transform(data)
+            self.validate_output(output)
             return output
 
-        transformer_cp.transform = MethodType(transform, transformer_cp)
+        transformer_cp = transformer.copy(transform)
         return transformer_cp
 
 
@@ -62,17 +61,16 @@ def ensure_with(
 ) -> Callable[[Transformer[T, S]], Transformer[T, S]]:
 
     def decorator(transformer: Transformer[T, S]) -> Transformer[T, S]:
-        transformer_cp = transformer.copy()
-
         def transform(self, data: T) -> S:
             for ensurer in ensurers:
                 ensurer.validate_input(data)
-            output = self.transform(data)
+            output = transformer.transform(data)
             for ensurer in ensurers:
                 ensurer.validate_output(output)
             return output
 
-        transformer_cp.transform = MethodType(transform, transformer_cp)
+        transformer_cp = transformer.copy(transform)
+
         return transformer_cp
 
     return decorator

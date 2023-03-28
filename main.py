@@ -27,9 +27,7 @@ def filter_adult(people_df: pd.DataFrame) -> pd.DataFrame:
     return people_df.loc[people_df['age'] >= 18]
 
 
-
 graph_func = lambda df: filter_women(filter_men(filter_adult(df)))
-
 
 
 @transformer
@@ -54,7 +52,6 @@ def format_introduction(people_df: pd.DataFrame) -> str:
     ])
 
 
-
 @transformer
 def format_output(strings: tuple[str, str]) -> str:
     return "\n".join(list(strings))
@@ -65,9 +62,11 @@ filter_format = Begin[pd.DataFrame]() >> (
     filter_minor >> format_introduction
 ) >> format_output
 
-woman_process = filter_women >> filter_format
-print(woman_process(df), end='\n\n')
+print(filter_format.__signature__())
 
-man_process = filter_men >> filter_format
-print(man_process(df), end='\n\n')
-print(man_process)
+# woman_process = filter_women >> filter_format
+# print(woman_process(df), end='\n\n')
+#
+# man_process = filter_men >> filter_format
+# print(man_process(df), end='\n\n')
+# print(man_process)

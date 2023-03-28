@@ -148,8 +148,7 @@ class Transformer(Generic[T, S], ABC):
             def graph_nodes(self) -> dict[UUID, 'Transformer']:
                 incident_transformer_nodes = incident_transformer.graph_nodes()
                 receiving_transformers_nodes = [
-                    t.graph_nodes()
-                    for t in receiving_transformers
+                    t.graph_nodes() for t in receiving_transformers
                 ]
                 all_nodes = incident_transformer_nodes
                 for nodes in receiving_transformers_nodes:
@@ -193,14 +192,14 @@ class Transformer(Generic[T, S], ABC):
                 previous.add_handler(handler)
 
     def copy(self, transform: Callable[['Transformer', T], S] | None = None, copy_previous: bool = True) -> 'Transformer[T, S]':
-        copy = type(
+        _copy = type(
             type(self).__name__, (self.__class__,), {
                 'transform': self.transform if transform is None else transform,
-                '__call__': self.__call__,
+                '__call__': self.__class__.__call__,
                 '__signature__': self.__signature__,
             }
         )
-        copied = copy()
+        copied = _copy()
         copied.id = self.id
         copied._handlers = self._handlers
         if self.previous is not None and copy_previous:

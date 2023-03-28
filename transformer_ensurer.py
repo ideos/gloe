@@ -56,6 +56,30 @@ def input_ensurer(func: Callable[[T], Any]) -> TransformerEnsurer[T]:
     return LambdaEnsurer()
 
 
+def output_ensurer(func: Callable[[S], Any]) -> TransformerEnsurer[S]:
+    func_signature = inspect.signature(func)
+    if len(func_signature.parameters) > 1:
+        warnings.warn(
+            "Only one parameter is allowed on Transformer Ensurer. "
+            f"Function '{func.__name__}' has the following signature: {func_signature}. "
+            "To pass a complex data, use a complex type like named tuples, "
+            "typed dicts, dataclasses or anything else.",
+            category=RuntimeWarning
+        )
+
+    class LambdaEnsurer(TransformerEnsurer[S]):
+        __doc__ = func.__doc__
+        __annotations__ = cast(FunctionType, func).__annotations__
+
+        def validate_input(self, data: T):
+            pass
+
+        def validate_output(self, output: S):
+            func(output)
+
+    return LambdaEnsurer()
+
+
 def ensure_with(
     ensurers: list[TransformerEnsurer[T]]
 ) -> Callable[[Transformer[T, S]], Transformer[T, S]]:

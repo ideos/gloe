@@ -1,5 +1,5 @@
 import unittest
-from tests.lib import *
+from tests.lib.transformers import *
 from transformer import transformer
 
 
@@ -82,14 +82,13 @@ class TestTransformersSimpleUses(unittest.TestCase):
         """
         Test the instantiation of large graph
         """
+        graph = sum1
+        max_iters = 325
+        for i in range(max_iters):
+            graph = graph >> sum1
 
-        graph = square >> square_root
-
-        for i in range(162):
-            graph = graph >> square >> square_root
-
-        result = graph(10)
-        self.assertEqual(result, 10)
+        result = graph(0)
+        self.assertEqual(result, max_iters + 1)
 
     def test_graph_length_property(self):
         graph = square >> square_root

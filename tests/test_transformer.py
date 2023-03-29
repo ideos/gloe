@@ -1,6 +1,8 @@
 import unittest
+from typing import cast
+
 from tests.lib.transformers import *
-from transformer import transformer
+from transformer import TransformerException, transformer
 
 
 class TestTransformersSimpleUses(unittest.TestCase):
@@ -83,7 +85,7 @@ class TestTransformersSimpleUses(unittest.TestCase):
         Test the instantiation of large graph
         """
         graph = sum1
-        max_iters = 325
+        max_iters = 488
         for i in range(max_iters):
             graph = graph >> sum1
 
@@ -156,6 +158,28 @@ class TestTransformersSimpleUses(unittest.TestCase):
             square_root.id: square_root
         }
         self.assertDictEqual(expected_nodes, nodes)
+
+    def test_transformer_error_bypass(self):
+        """
+        Test if an error raised inside a transformer can be caught outside it
+        """
+        graph = minus1 >> natural_logarithm
+        self.assertRaises(LnOfNegativeNumber, lambda: graph(0))
+
+    def test_transformer_error_handling(self):
+        """
+        Test if a raised error stores the correct TransformerException in its context
+        """
+
+        graph = minus1 >> natural_logarithm
+        try:
+            graph(0)
+        except LnOfNegativeNumber as exception:
+            self.assertEqual(type(exception.__context__), TransformerException)
+
+            exception_ctx = cast(TransformerException, exception.__context__)
+            self.assertEqual(natural_logarithm.id, exception_ctx.raiser_transformer.id)
+
 
 
 if __name__ == '__main__':

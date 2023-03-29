@@ -4,19 +4,15 @@ import inspect
 import warnings
 from abc import ABC, abstractmethod
 from inspect import Signature
-from traceback import TracebackException
 from types import FunctionType
-from typing import Annotated
 from typing import Any, \
     Callable, \
     Generic, \
-    ParamSpec, Tuple, \
+    Tuple, \
     TypeAlias, TypeVar, \
-    Union, cast, overload, \
-    Concatenate
+    Union, cast, overload
 from uuid import UUID
 
-from typing_extensions import TypeVarTuple
 
 T = TypeVar("T")
 S = TypeVar("S")
@@ -51,12 +47,13 @@ PreviousTransformer: TypeAlias = Union[
 class TransformerException(Exception):
     def __init__(
         self,
-        previous_exception: Union['TransformerException', Exception],
+        internal_exception: Union['TransformerException', Exception],
         raiser_transformer: 'Transformer',
         message: str | None = None
     ):
-        self.previous_exception = previous_exception
+        self.internal_exception = internal_exception
         self.raiser_transformer = raiser_transformer
+        internal_exception.__context__ = self
         super().__init__(message)
 
 
@@ -88,7 +85,9 @@ class Transformer(Generic[T, S], ABC):
 
         class NewTransformer(Transformer[T, U]):
             def transform(self, data: T) -> U:
-                return transformer2(transformer1(data))
+                transformer2_call = transformer2.__call__
+                transformer1_call = transformer1.__call__
+                return transformer2_call(transformer1_call(data))
 
             def __signature__(self) -> Signature:
                 return new_signature
@@ -191,7 +190,9 @@ class Transformer(Generic[T, S], ABC):
             elif isinstance(previous, Transformer):
                 previous.add_handler(handler)
 
-    def copy(self, transform: Callable[['Transformer', T], S] | None = None, copy_previous: bool = True) -> 'Transformer[T, S]':
+    def copy(self,
+             transform: Callable[['Transformer', T], S] | None = None,
+             copy_previous: bool = True) -> 'Transformer[T, S]':
         _copy = type(
             type(self).__name__, (self.__class__,), {
                 'transform': self.transform if transform is None else transform,
@@ -308,27 +309,31 @@ class Transformer(Generic[T, S], ABC):
         return 1
 
     def __call__(self, data: T) -> S:
-        internal_exception = None
+        transform_exception = None
         transformed: S | None = None
         try:
             transformed = self.transform(data)
             for handler in self._handlers:
                 handler.handle(data, transformed)
         except TransformerException as exception:
-            internal_exception = TransformerException(
-                previous_exception=exception,
-                raiser_transformer=self
-            )
-        except Exception as exception:
-            internal_exception = TransformerException(
-                previous_exception=exception,
+            transform_exception = TransformerException(
+                internal_exception=exception.internal_exception,
                 raiser_transformer=self,
                 message=f"Error occurred in node with ID {self.id}."
             )
+        except Exception as exception:
+            if type(exception.__context__) == TransformerException:
+                transform_exception = cast(TransformerException, exception.__context__)
+            else:
+                transform_exception = TransformerException(
+                    internal_exception=exception,
+                    raiser_transformer=self,
+                    message=f"Error occurred in node with ID {self.id}."
+                )
 
-        if internal_exception is not None and type(internal_exception.previous_exception) != TransformerException:
+        if transform_exception is not None:
             # print(traceback.format_tb(internal_exception.previous_exception.__traceback__))
-            raise internal_exception.previous_exception
+            raise transform_exception.internal_exception
 
         if transformed is not None:
             return transformed
@@ -440,7 +445,7 @@ class Blank(Generic[T, S]):
         raise Exception('Blank transformers must be filled.')
 
 
-A = ParamSpec("A")
+# A = ParamSpec("A")
 
 
 # class GenericTransformer(Generic[T, S, A], ABC):

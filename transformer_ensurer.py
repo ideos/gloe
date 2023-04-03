@@ -2,7 +2,9 @@ import inspect
 import warnings
 from abc import abstractmethod
 from types import FunctionType
-from typing import Any, Callable, Generic, TypeVar, cast
+from typing import Any, Callable, Generic, Sequence, TypeVar, cast
+
+from typing_extensions import Never
 
 from transformer import Transformer
 
@@ -81,15 +83,18 @@ def output_ensurer(func: Callable[[S], Any]) -> TransformerEnsurer[S]:
 
 
 def ensure_with(
-    ensurers: list[TransformerEnsurer[T]]
+    input_ensurers: Sequence[Callable[[T], Never]] = [],
+    output_ensurers: Sequence[Callable[[T], Never]] = []
 ) -> Callable[[Transformer[T, S]], Transformer[T, S]]:
+    input_ensurers_instances = [input_ensurer(ensurer) for ensurer in input_ensurers]
+    output_ensurers_instances = [output_ensurer(ensurer) for ensurer in output_ensurers]
 
     def decorator(transformer: Transformer[T, S]) -> Transformer[T, S]:
         def transform(self, data: T) -> S:
-            for ensurer in ensurers:
+            for ensurer in input_ensurers_instances:
                 ensurer.validate_input(data)
             output = transformer.transform(data)
-            for ensurer in ensurers:
+            for ensurer in output_ensurers_instances:
                 ensurer.validate_output(output)
             return output
 

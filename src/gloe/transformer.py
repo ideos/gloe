@@ -19,7 +19,7 @@ import schemdraw.elements as elm
 from schemdraw.elements import Element
 from schemdraw.util import Point
 
-from sequential_pass import SequentialPass
+from .sequential_pass import SequentialPass
 
 A = TypeVar("A")
 S = TypeVar("S")

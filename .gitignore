@@ -1,4 +1,4 @@
 .mypy_cache
 testes
-build
+docs/build
 .idea

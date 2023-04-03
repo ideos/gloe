@@ -1,11 +1,7 @@
-import typing
-from typing import List, ParamSpec, Tuple, TypeVar
-from typing_extensions import TypeVarTuple, Unpack
-
-from conditional import If, conditioner
+from src.gloe.conditional import conditioner
 from tests.lib.transformers import square, square_root, sum1
-from transformer import Begin, Blank, transformer
-from transformer_ensurer import ensure_with, input_ensurer
+from src.gloe.transformer import transformer
+from src.gloe.transformer_ensurer import ensure_with, input_ensurer
 
 import pandas as pd
 

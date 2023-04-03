@@ -2,7 +2,7 @@ from inspect import Signature
 from typing import Callable, Generic, TypeVar, Union
 from uuid import UUID
 
-from transformer import Transformer
+from .transformer import Transformer
 
 A = TypeVar("A")
 B = TypeVar("B")

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gloe_Ideos"
+version = "0.1.0"
+authors = [
+  { name="Samir Braga", email="samirchavess@gmail.com" },
+]
+description = "Gloe is a general purpose library made to help developers to create, maintain, document and test operational and data flows."
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://gitlab.com/ideos_dev/gloe"
+"Bug Tracker" = "https://gitlab.com/ideos_dev/gloe/-/issues"

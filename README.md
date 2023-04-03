@@ -1,92 +1,127 @@
-# gloe
+# Let Gloe help you
 
+Gloe is a general purpose library made to help developers to create,
+maintain, document and test operational and data flows. It can be used
+in data science and machine learning pipelines as well in servers,
+scripts or wherever else one identifies a lack between the code and the
+understanding of logical business. Gloe was not thought to be used in
+the entire application even less replacing any existing library, it was
+built to be integrated with other tools and to be implemented where the
+code complexity can be bigger than the desired.
 
+## Gloe\'s paradigm
 
-## Getting started
+The main idea behind Gloe is constraint the implementation of a specific
+flow into a formalized and type-safe pipeline (or execution graph).
+Every piece (or node) of this pipeline is responsible to transform its
+input into the input of the next piece, composing a sequential execution
+process. No code of this flow can be executed out of these pieces. Each
+node of a graph is called Transformer.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+Basic structure of a Graph:
+``` 
+(type A) -> [Transformer 1] -> (type B) -> [Transformer 2] -> ... -> (type X)
+```
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+> Type A is called **input type** and type X is called **output type** of
+the graph.
 
-## Add your files
+A transformer must have an atomic and well-defined responsibility. As we
+will see later, implement a Transformer is a ridiculously easy task, so
+have many of them is not a problem. Keep it simple, make it easier to
+understand, document and test!
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+### Lightness
+
+Gloe is a lightweight library, it is not a development environment nor
+an engine and nor even a heavy framework. It was built much more on top
+of **strong concepts** than an exhausting amount of code.
+
+Its dependencies are only other python libraries, nothing external is
+required.
+
+### Type-safety
+
+Gloe was implemented to be completely type-safe. It means, when using
+Gloe, you must to provided all the type hints of the created
+transformers, which can be summed up in its input and output types.
+Using these definitions, Gloe can warn about a malformed graph right
+away in the IDE and make precise inferring of extremely complex types.
+
+For example, consider the bellow Transformer:
+
+``` text
+(type A) -> [MyTransformer] -> (type B)
+```
+
+The next transformer that can be appended to `MyTransformer`
+must have the following signature:
+
+``` text
+(type B) -> [NextTransformer] -> (some type C)
+```
+
+That is, the output type of `MyTransformer` must be the same
+as the input of `NextTransformer`. When building your
+graphs, you will know about any problem with types immediately.
+
+> The representation of a transformer with its name and types is called
+**signature**.
+
+To perform this kind of behavior, Gloe uses the most recent and
+sophisticated features of [Python typing
+library](https://docs.python.org/3/library/typing.html).
+
+### Immutability
+
+An important concept adopted by Gloe is immutability. Every time a
+Transformer is instantiated and appended as a next step of an existing
+one, a new Transformer is created, merging the internal operations of
+both transformers sequentially.
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/ideos_dev/gloe.git
-git branch -M main
-git push -uf origin main
+(type A) -> [Transformer 1] -> (type B) -> [Transformer 2] -> (type C)
+
+Above graph is in fact this:
+
+(type A) -> [Transformer 1 and 2] -> (type C)
 ```
 
-## Integrate with your tools
+It means every time we talked about a graph we was talking about a
+Transformer too! A graph represents a Transformer that merge the
+operations of its last node with the operations of the previous
+Transformer, recursively:
 
-- [ ] [Set up project integrations](https://gitlab.com/ideos_dev/gloe/-/settings/integrations)
+##### Graph is a Transformer (intermediate types were omitted for simplicity)
+```
++--------- Transformer [ ... [[1 2] 3] ... N] --------+
+|                                                     |
+|                                                     |
+|                                                     |
++------ Transformer [[1 2] 3] -----+                                 |
+|                                  |                                 |
++-- Transformer [1 2] --+                      |                                 |
+|                       |                      |                                 |
+[Transformer 1]   ->   [Transformer 2]   ->   [Transformer 3]   ->   ...   ->   [Transformer N]
+```
 
-## Collaborate with your team
+> To make easy our communication in this documentation, we will continue
+to call the sequence of transformers as a **graph** and any range of
+this sequence as a **subgraph**.
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+### Non-linearity
 
-## Test and Deploy
+The term graph is motivated by the non-linearity characteristic of some
+flows. A Transformer can pass its data to more than one posterior
+transformers:
 
-Use the built-in continuous integration in GitLab.
+##### Graph non-linearity
+```
+[Transformer 1]   -+->   [Transformer 2]   ->   [Transformer 3]   -+
+                   |                                               |
+                   +->   [Transformer 4]   ->   [Transformer 5]   -+->   [Transformer 6]
+```
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Any branch or ramification (transformers 2 and 3 or transformers 4 and 5
+in above example) can have its own input and output types and it can be
+of any length and including others ramifications.

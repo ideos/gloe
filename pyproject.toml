@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "gloe_Ideos"
+name = "gloe"
 version = "0.1.0"
 authors = [
   { name="Samir Braga", email="samirchavess@gmail.com" },

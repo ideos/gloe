@@ -1,5 +1,4 @@
 from tests.lib.exceptions import NumberIsOdd, NumberLessThanOrEquals10
-from transformer_ensurer import input_ensurer, output_ensurer
 
 
 def is_even(num: int):

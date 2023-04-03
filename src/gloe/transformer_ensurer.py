@@ -6,7 +6,7 @@ from typing import Any, Callable, Generic, Sequence, TypeVar, cast
 
 from typing_extensions import Never
 
-from transformer import Transformer
+from .transformer import Transformer
 
 T = TypeVar("T")
 S = TypeVar("S")

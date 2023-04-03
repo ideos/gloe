@@ -16,6 +16,13 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    'typing_extensions~=4.3.0',
+    'schemdraw~=0.16',
+    'setuptools~=61.2.0',
+    'mypy~=1.1.1',
+    'pandas~=1.4.1'
+]
 
 [project.urls]
 "Homepage" = "https://gitlab.com/ideos_dev/gloe"

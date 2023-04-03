@@ -1,9 +1,8 @@
 import math
-from typing import Any, Tuple
+from typing import Tuple
 
-from conditional import If, conditioner
 from tests.lib.exceptions import LnOfNegativeNumber
-from transformer import transformer
+from src.gloe.transformer import transformer
 
 
 @transformer

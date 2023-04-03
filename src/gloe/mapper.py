@@ -1,6 +1,6 @@
 from typing import Generic, Iterable, TypeVar
 
-from transformer import Transformer
+from .transformer import Transformer
 
 T = TypeVar("T")
 S = TypeVar("S")

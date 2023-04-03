@@ -2,7 +2,7 @@ import unittest
 from typing import cast
 
 from tests.lib.transformers import *
-from transformer import TransformerException, transformer
+from src.gloe.transformer import TransformerException, transformer
 
 
 class TestFunctionTransformer(unittest.TestCase):

@@ -1,20 +1,27 @@
+import copy
 import traceback
+import types
 import uuid
 import inspect
 import warnings
-from abc import ABC, abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 from inspect import Signature
 from types import FunctionType
 from typing import Any, \
     Callable, \
     Generic, \
-    Tuple, \
+    Protocol, Tuple, \
     TypeAlias, TypeVar, \
     Union, cast, overload
 from uuid import UUID
+from schemdraw import Drawing, flow
+import schemdraw.elements as elm
+from schemdraw.elements import Element
+from schemdraw.util import Point
 
+from sequential_pass import SequentialPass
 
-T = TypeVar("T")
+A = TypeVar("A")
 S = TypeVar("S")
 U = TypeVar("U")
 
@@ -26,10 +33,10 @@ R5 = TypeVar("R5")
 R6 = TypeVar("R6")
 
 
-class TransformerHandler(Generic[T, S], ABC):
+class TransformerHandler(Generic[A, S], ABC):
 
     @abstractmethod
-    def handle(self, input_data: T, output: S):
+    def handle(self, input_data: A, output: S):
         pass
 
 
@@ -57,7 +64,7 @@ class TransformerException(Exception):
         super().__init__(message)
 
 
-class Transformer(Generic[T, S], ABC):
+class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
     """
     A Transformer is generic block with the responsibility to take an input of type `T`
     and transform it to an output of type `S`.
@@ -72,8 +79,8 @@ class Transformer(Generic[T, S], ABC):
 
     @staticmethod
     def _merge_serial_connection(
-        transformer1: 'Transformer[T, S]', transformer2: 'Transformer[S, U]'
-    ) -> 'Transformer[T, U]':
+        transformer1: 'Transformer[A, S]', transformer2: 'Transformer[S, U]'
+    ) -> 'Transformer[A, U]':
         transformer1 = transformer1.copy()
         transformer2 = transformer2.copy()
         transformer2._set_previous(transformer1)
@@ -83,8 +90,8 @@ class Transformer(Generic[T, S], ABC):
         new_signature = transformer2_signature \
             .replace(parameters=list(transformer1_signature.parameters.values()))
 
-        class NewTransformer(Transformer[T, U]):
-            def transform(self, data: T) -> U:
+        class NewTransformer(Transformer[A, U]):
+            def transform(self, data: A) -> U:
                 transformer2_call = transformer2.__call__
                 transformer1_call = transformer1.__call__
                 return transformer2_call(transformer1_call(data))
@@ -107,9 +114,9 @@ class Transformer(Generic[T, S], ABC):
 
     @staticmethod
     def _merge_diverging_connection(
-        incident_transformer: 'Transformer[T, S]',
+        incident_transformer: 'Transformer[A, S]',
         *receiving_transformers: 'Transformer[S, Any]'
-    ) -> 'Transformer[T, tuple]':
+    ) -> 'Transformer[A, tuple]':
         incident_transformer = incident_transformer.copy()
         receiving_transformers = tuple([
             receiving_transformer.copy() for receiving_transformer in receiving_transformers
@@ -117,7 +124,7 @@ class Transformer(Generic[T, S], ABC):
         for receiving_transformer in receiving_transformers:
             receiving_transformer._set_previous(incident_transformer)
 
-        def split_result(data: T) -> Tuple[Any, ...]:
+        def split_result(data: A) -> Tuple[Any, ...]:
             intermediate_result = incident_transformer(data)
             return tuple([
                 receiving_transformer(intermediate_result)
@@ -133,8 +140,8 @@ class Transformer(Generic[T, S], ABC):
             return_annotation=f"""({", ".join(receiving_signature_returns)})"""
         )
 
-        class NewTransformer(Transformer[T, Tuple[Any, ...]]):
-            def transform(self, data: T) -> Tuple[Any, ...]:
+        class NewTransformer(Transformer[A, Tuple[Any, ...]]):
+            def transform(self, data: A) -> Tuple[Any, ...]:
                 return split_result(data)
 
             def __signature__(self) -> Signature:
@@ -160,11 +167,10 @@ class Transformer(Generic[T, S], ABC):
         return new_transformer
 
     def __init__(self):
-        self._handlers: list[TransformerHandler[T, S]] = []
+        self._handlers: list[TransformerHandler[A, S]] = []
         self.previous: PreviousTransformer = None
         self.id = uuid.uuid4()
         self.__class__.__annotations__ = self.transform.__annotations__
-        self._signature = inspect.signature(self.transform)
 
     def __hash__(self):
         return self.id.int
@@ -175,10 +181,10 @@ class Transformer(Generic[T, S], ABC):
         return NotImplemented
 
     @abstractmethod
-    def transform(self, data: T) -> S:
+    def transform(self, data: A) -> S:
         pass
 
-    def add_handler(self, handler: TransformerHandler[T, S]):
+    def add_handler(self, handler: TransformerHandler[A, S]):
         if handler not in self._handlers:
             self._handlers = self._handlers + [handler]
 
@@ -191,24 +197,23 @@ class Transformer(Generic[T, S], ABC):
                 previous.add_handler(handler)
 
     def copy(self,
-             transform: Callable[['Transformer', T], S] | None = None,
-             copy_previous: bool = True) -> 'Transformer[T, S]':
-        _copy = type(
-            type(self).__name__, (self.__class__,), {
-                'transform': self.transform if transform is None else transform,
-                '__call__': self.__class__.__call__,
-                '__signature__': self.__signature__,
-            }
-        )
-        copied = _copy()
+             transform: Callable[['Transformer', A], S] | None = None,
+             copy_previous: bool = True) -> 'Transformer[A, S]':
+        _copy = copy.copy(self)
+
+        if transform is not None:
+            func_type = types.MethodType
+            setattr(_copy, 'transform', func_type(transform, _copy))
+
+        copied = _copy
         copied.id = self.id
         copied._handlers = self._handlers
         if self.previous is not None and copy_previous:
             if type(self.previous) == tuple:
-                copied.previous = tuple([
+                copied.previous = cast(PreviousTransformer, tuple([
                     previous_transformer.copy(copy_previous=False)
                     for previous_transformer in self.previous
-                ])
+                ]))
             elif isinstance(self.previous, Transformer):
                 copied.previous = self.previous.copy(copy_previous=False)
         else:
@@ -241,10 +246,7 @@ class Transformer(Generic[T, S], ABC):
         return ancestors
 
     def __signature__(self) -> Signature:
-        return self._signature
-
-    def _set_signature(self, signature: Signature):
-        self._signature = signature
+        return inspect.signature(self.transform)
 
     def __get_bound_types(self) -> tuple[str, str]:
         transform_signature = self.__signature__()
@@ -305,11 +307,94 @@ class Transformer(Generic[T, S], ABC):
     def graph_nodes(self) -> dict[UUID, 'Transformer']:
         return {self.id: self}
 
+    # def _flow_drawing(
+    #     self,
+    #     drawing: Drawing,
+    #     common_ancestor: Union['Transformer', None] = None,
+    #     add_last_arrow: bool = True,
+    #     anchor: Union[Point, None] = None,
+    #     dx: float = 0,
+    #     dy: float = 0
+    # ) -> Union[Element, list[Element]]:
+    #
+    #     last_box = flow.Process().label(self.__class__.__name__)
+    #     first_box: Union[Element, list[Element]] = last_box
+    #
+    #     previous = self.previous
+    #     if previous is not None and previous != common_ancestor:
+    #         if type(previous) == tuple:
+    #             previous_list = tuple([prev.copy() for prev in previous])
+    #             previous_ancestors = [previous.ancestors() for previous in previous_list]
+    #             common_ancestors = set.intersection(*previous_ancestors)
+    #
+    #             if len(common_ancestors) > 0:
+    #                 first_common_ancestor = max(
+    #                     list(common_ancestors),
+    #                     key=lambda anc: len(anc.ancestors())
+    #                 )
+    #
+    #                 first_common_ancestor.previous._flow_drawing(drawing)
+    #                 gateway = flow.Decision()
+    #                 drawing += gateway
+    #
+    #                 boxes = [
+    #                     prev._flow_drawing(
+    #                         drawing,
+    #                         first_common_ancestor,
+    #                         add_last_arrow=False,
+    #                         anchor=gateway.S,
+    #                         dx=i * 5,
+    #                         dy=-2
+    #                     )
+    #                     for i, prev in enumerate(previous_list)
+    #                 ]
+    #
+    #                 for box in boxes:
+    #                     drawing += elm.RightLines(arrow='->').at(gateway.S).to(box.N)
+    #
+    #                 first_box = boxes
+    #                 # drawing += flow.Decision()
+    #
+    #         elif isinstance(previous, Transformer):
+    #             first_box = previous._flow_drawing(
+    #                 drawing,
+    #                 common_ancestor=common_ancestor,
+    #                 add_last_arrow=add_last_arrow,
+    #                 anchor=anchor,
+    #                 dx=dx,
+    #                 dy=dy
+    #             )
+    #     else:
+    #         if anchor is not None:
+    #             drawing.move_from(anchor, dx=dx, dy=dy)
+    #         else:
+    #             drawing.move(dy=dy)
+    #
+    #     drawing += last_box
+    #
+    #     drawing += flow.Arrow().label(str(self.__signature__().return_annotation))
+    #
+    #     return first_box
+    #
+    #
+    # def save(self, svg_file: str):
+    #     d = Drawing(canvas='svg')
+    #     d.config(fontsize=10, unit=1)
+    #     d += flow.Start().label('Start')
+    #     parameters = self.__signature__().parameters
+    #     parameter_names = list(parameters.keys())
+    #     first_parameter = parameters[parameter_names[0]]
+    #     d += flow.Arrow().label(str(first_parameter.annotation.__name__))
+    #     self._flow_drawing(d)
+    #     # d += flow.StateEnd().label('End')
+    #     d.save(svg_file)
+
     def __len__(self):
         return 1
 
-    def __call__(self, data: T) -> S:
+    def __call__(self, data: A) -> S:
         transform_exception = None
+
         transformed: S | None = None
         try:
             transformed = self.transform(data)
@@ -328,14 +413,14 @@ class Transformer(Generic[T, S], ABC):
                 transform_exception = TransformerException(
                     internal_exception=exception,
                     raiser_transformer=self,
-                    message=f"Error occurred in node with ID {self.id}."
+                    message=f"Error occurred in node [{self.__class__.__name__}]."
                 )
 
         if transform_exception is not None:
             # print(traceback.format_tb(internal_exception.previous_exception.__traceback__))
             raise transform_exception.internal_exception
 
-        if transformed is not None:
+        if type(transformed) is not None:
             return transformed
 
         raise NotImplementedError
@@ -343,13 +428,13 @@ class Transformer(Generic[T, S], ABC):
     @overload
     def __rshift__(
         self, transformers: Tuple['Transformer[S, U]', 'Transformer[S, R1]']
-    ) -> 'Transformer[T, Tuple[U, R1]]':
+    ) -> 'Transformer[A, Tuple[U, R1]]':
         pass
 
     @overload
     def __rshift__(
         self, transformers: Tuple['Transformer[S, U]', 'Transformer[S, R1]', 'Transformer[S, R2]']
-    ) -> 'Transformer[T, Tuple[U, R1, R2]]':
+    ) -> 'Transformer[A, Tuple[U, R1, R2]]':
         pass
 
     @overload
@@ -358,7 +443,7 @@ class Transformer(Generic[T, S], ABC):
         transformers: Tuple[
             'Transformer[S, U]', 'Transformer[S, R1]', 'Transformer[S, R2]', 'Transformer[S, R3]'
         ]
-    ) -> 'Transformer[T, Tuple[U, R1, R2, R3]]':
+    ) -> 'Transformer[A, Tuple[U, R1, R2, R3]]':
         pass
 
     @overload
@@ -367,7 +452,7 @@ class Transformer(Generic[T, S], ABC):
         transformers: Tuple[
             'Transformer[S, U]', 'Transformer[S, R1]', 'Transformer[S, R2]', 'Transformer[S, R3]', 'Transformer[S, R4]'
         ]
-    ) -> 'Transformer[T, Tuple[U, R1, R2, R3, R4]]':
+    ) -> 'Transformer[A, Tuple[U, R1, R2, R3, R4]]':
         pass
 
     @overload
@@ -376,7 +461,7 @@ class Transformer(Generic[T, S], ABC):
         transformers: Tuple[
             'Transformer[S, U]', 'Transformer[S, R1]', 'Transformer[S, R2]', 'Transformer[S, R3]', 'Transformer[S, R4]', 'Transformer[S, R5]'
         ]
-    ) -> 'Transformer[T, Tuple[U, R1, R2, R3, R4, R5]]':
+    ) -> 'Transformer[A, Tuple[U, R1, R2, R3, R4, R5]]':
         pass
 
     @overload
@@ -385,35 +470,31 @@ class Transformer(Generic[T, S], ABC):
         transformers: Tuple[
             'Transformer[S, U]', 'Transformer[S, R1]', 'Transformer[S, R2]', 'Transformer[S, R3]', 'Transformer[S, R4]', 'Transformer[S, R5]', 'Transformer[S, R6]'
         ]
-    ) -> 'Transformer[T, Tuple[U, R1, R2, R3, R4, R5, R6]]':
+    ) -> 'Transformer[A, Tuple[U, R1, R2, R3, R4, R5, R6]]':
         pass
 
     @overload
-    def __rshift__(self: 'Transformer[T, S]', next_transformer: 'Transformer[S, U]') -> 'Transformer[T, U]':
+    def __rshift__(self, next_transformer: 'Transformer[S, U]') -> 'Transformer[A, U]':
         pass
 
-    # @overload
-    # def __rshift__(self: 'Transformer[T, S]', next_transformer: 'Blank[S, U]') -> 'GenericTransformer[T, U, [GenericTransformer[S, U, []]]]':
-    #     pass
+    def __rshift__(self, next_step: Any):
+        if isinstance(next_step, Transformer):
+            return self._merge_serial_connection(self, next_step)
 
-    def __rshift__(self, next_transformers: Any):
-        if isinstance(next_transformers, Transformer):
-            return self._merge_serial_connection(self, next_transformers)
-
-        elif type(next_transformers) == tuple:
+        elif type(next_step) == tuple:
             is_all_transformers = all(
                 isinstance(next_transformer, Transformer)
-                for next_transformer in next_transformers
+                for next_transformer in next_step
             )
             if is_all_transformers:
-                return self._merge_diverging_connection(self, *next_transformers)
+                return self._merge_diverging_connection(self, *next_step)
 
             raise Exception("Unsupported transformer argument")
         else:
             raise Exception("Unsupported transformer argument")
 
 
-def transformer(func: Callable[[T], S]) -> Transformer[T, S]:
+def transformer(func: Callable[[A], S]) -> Transformer[A, S]:
     func_signature = inspect.signature(func)
     if len(func_signature.parameters) > 1:
         warnings.warn(
@@ -424,14 +505,14 @@ def transformer(func: Callable[[T], S]) -> Transformer[T, S]:
             category=RuntimeWarning
         )
 
-    class LambdaTransformer(Transformer[T, S]):
+    class LambdaTransformer(Transformer[A, S]):
         __doc__ = func.__doc__
         __annotations__ = cast(FunctionType, func).__annotations__
 
         def __signature__(self) -> Signature:
             return func_signature
 
-        def transform(self, data: T) -> S:
+        def transform(self, data: A) -> S:
             return func(data)
 
     lambda_transformer = LambdaTransformer()
@@ -439,9 +520,9 @@ def transformer(func: Callable[[T], S]) -> Transformer[T, S]:
     return lambda_transformer
 
 
-class Blank(Generic[T, S]):
+class Blank(Generic[A, S]):
 
-    def transform(self, data: T) -> S:
+    def transform(self, data: A) -> S:
         raise Exception('Blank transformers must be filled.')
 
 
@@ -474,9 +555,9 @@ class Blank(Generic[T, S]):
 #         print('top')
 
 
-class Begin(Generic[T], Transformer[T, T]):
+class Begin(Generic[A], Transformer[A, A]):
     def __repr__(self):
         return str(self.previous)
 
-    def transform(self, data: T) -> T:
+    def transform(self, data: A) -> A:
         return data

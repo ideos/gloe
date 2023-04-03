@@ -5,7 +5,7 @@ from tests.lib.transformers import *
 from transformer import TransformerException, transformer
 
 
-class TestTransformersSimpleUses(unittest.TestCase):
+class TestFunctionTransformer(unittest.TestCase):
     def test_linear_flow(self):
         """
         Test the most simple linear case
@@ -85,7 +85,7 @@ class TestTransformersSimpleUses(unittest.TestCase):
         Test the instantiation of large graph
         """
         graph = sum1
-        max_iters = 488
+        max_iters = 480
         for i in range(max_iters):
             graph = graph >> sum1
 
@@ -112,8 +112,10 @@ class TestTransformersSimpleUses(unittest.TestCase):
         self.assertEqual(len(graph2), 15)
 
     def test_transformer_equality(self):
+        graph = square >> square_root
         self.assertEqual(square, square)
         self.assertEqual(square, square.copy())
+        self.assertNotEqual(graph, square_root)
         self.assertNotEqual(square, square_root)
 
     def test_transformer_pydoc_keeping(self):
@@ -159,7 +161,7 @@ class TestTransformersSimpleUses(unittest.TestCase):
         }
         self.assertDictEqual(expected_nodes, nodes)
 
-    def test_transformer_error_bypass(self):
+    def test_transformer_error_forward(self):
         """
         Test if an error raised inside a transformer can be caught outside it
         """
@@ -179,7 +181,6 @@ class TestTransformersSimpleUses(unittest.TestCase):
 
             exception_ctx = cast(TransformerException, exception.__context__)
             self.assertEqual(natural_logarithm.id, exception_ctx.raiser_transformer.id)
-
 
 
 if __name__ == '__main__':

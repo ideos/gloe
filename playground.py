@@ -1,3 +1,9 @@
+import typing
+from typing import List, ParamSpec, Tuple, TypeVar
+from typing_extensions import TypeVarTuple, Unpack
+
+from conditional import If, conditioner
+from tests.lib.transformers import square, square_root, sum1
 from transformer import Begin, Blank, transformer
 from transformer_ensurer import ensure_with, input_ensurer
 
@@ -46,10 +52,12 @@ def ensure_schema(people_df: pd.DataFrame):
 @ensure_with([ensure_schema])
 @transformer
 def format_introduction(people_df: pd.DataFrame) -> str:
-    return "\n".join([
-        f"Hi! My name is {row['name']} and I'm {row['age']} years old."
-        for _, row in people_df.iterrows()
-    ])
+    return "\n".join(
+        [
+            f"Hi! My name is {row['name']} and I'm {row['age']} years old."
+            for _, row in people_df.iterrows()
+        ]
+    )
 
 
 @transformer
@@ -57,12 +65,28 @@ def format_output(strings: tuple[str, str]) -> str:
     return "\n".join(list(strings))
 
 
-filter_format = Begin[pd.DataFrame]() >> (
-    filter_adult >> format_introduction,
-    filter_minor >> format_introduction
-) >> format_output
+@conditioner
+def if_not_zero(x: float) -> bool:
+    return x != 0
 
-print(filter_format.__signature__())
+
+graph = sum1 >> square >> (
+    square_root >> sum1 >> square,
+    square_root >> square >> square_root >> square >> square_root >> (
+        square >> square_root,
+        square >> square_root,
+    ),
+    square_root >> square >> square_root
+)
+
+filter_1 = filter_women >> filter_minor
+filter_2 = filter_adult >> format_introduction
+
+graph2 = filter_1 >> filter_1 >> if_not_zero.Then(filter_1).Else(filter_2)
+
+if __name__ == '__main__':
+    print(graph(1))
+    # graph.save('./process.svg')
 
 # woman_process = filter_women >> filter_format
 # print(woman_process(df), end='\n\n')

@@ -85,12 +85,28 @@ class TestFunctionTransformer(unittest.TestCase):
         Test the instantiation of large graph
         """
         graph = sum1
-        max_iters = 480
+        max_iters = 488
         for i in range(max_iters):
             graph = graph >> sum1
 
         result = graph(0)
         self.assertEqual(result, max_iters + 1)
+
+    def test_recursive_flow(self):
+        """
+        Test the instantiation of large graph
+        """
+        graph = sum1 >> sum1
+        graph = graph >> graph
+        graph = graph >> graph
+        graph = graph >> graph
+        graph = graph >> graph
+        graph = graph >> graph
+        graph = graph >> graph
+        graph = graph >> graph
+
+        result = graph(0)
+        self.assertEqual(result, 256)
 
     def test_graph_length_property(self):
         graph = square >> square_root
@@ -180,7 +196,7 @@ class TestFunctionTransformer(unittest.TestCase):
             self.assertEqual(type(exception.__context__), TransformerException)
 
             exception_ctx = cast(TransformerException, exception.__context__)
-            self.assertEqual(natural_logarithm.id, exception_ctx.raiser_transformer.id)
+            self.assertEqual(natural_logarithm, exception_ctx.raiser_transformer)
 
 
 if __name__ == '__main__':

@@ -81,7 +81,7 @@ filter_2 = filter_adult >> format_introduction
 graph2 = filter_1 >> filter_1 >> if_not_zero.Then(filter_1).Else(filter_2)
 
 if __name__ == '__main__':
-    print(graph(1))
+    print(graph)
     # graph.save('./process.svg')
 
 # woman_process = filter_women >> filter_format

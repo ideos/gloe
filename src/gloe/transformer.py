@@ -1,16 +1,16 @@
 import copy
-import traceback
 import types
 import uuid
 import inspect
 import warnings
 from abc import ABC, ABCMeta, abstractmethod
 from inspect import Signature
+from random import randint
 from types import FunctionType
 from typing import Any, \
     Callable, \
     Generic, \
-    Protocol, Tuple, \
+    Literal, Protocol, Tuple, \
     TypeAlias, TypeVar, \
     Union, cast, overload
 from uuid import UUID
@@ -81,8 +81,9 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
     def _merge_serial_connection(
         transformer1: 'Transformer[A, S]', transformer2: 'Transformer[S, U]'
     ) -> 'Transformer[A, U]':
+        same_transformer = transformer1 == transformer2
         transformer1 = transformer1.copy()
-        transformer2 = transformer2.copy()
+        transformer2 = transformer2.copy(copy_previous='all' if same_transformer else 'first_previous')
         transformer2._set_previous(transformer1)
 
         transformer1_signature: Signature = transformer1.__signature__()
@@ -94,13 +95,14 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
             def transform(self, data: A) -> U:
                 transformer2_call = transformer2.__call__
                 transformer1_call = transformer1.__call__
-                return transformer2_call(transformer1_call(data))
+                transformed = transformer2_call(transformer1_call(data))
+                return transformed
 
             def __signature__(self) -> Signature:
                 return new_signature
 
             def __len__(self):
-                return len(transformer2) + len(transformer1)
+                return len(transformer1) + len(transformer2)
 
             def graph_nodes(self) -> dict[UUID, 'Transformer']:
                 transformer1_nodes = transformer1.graph_nodes()
@@ -171,6 +173,7 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
         self.previous: PreviousTransformer = None
         self.id = uuid.uuid4()
         self.__class__.__annotations__ = self.transform.__annotations__
+        self.transform_method = 'transform'
 
     def __hash__(self):
         return self.id.int
@@ -196,9 +199,11 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
             elif isinstance(previous, Transformer):
                 previous.add_handler(handler)
 
-    def copy(self,
-             transform: Callable[['Transformer', A], S] | None = None,
-             copy_previous: bool = True) -> 'Transformer[A, S]':
+    def copy(
+        self,
+        transform: Callable[['Transformer', A], S] | None = None,
+        copy_previous: str = 'first_previous'
+    ) -> 'Transformer[A, S]':
         _copy = copy.copy(self)
 
         if transform is not None:
@@ -208,14 +213,15 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
         copied = _copy
         copied.id = self.id
         copied._handlers = self._handlers
-        if self.previous is not None and copy_previous:
+        if self.previous is not None and copy_previous != 'none':
+            copy_next_previous = 'none' if copy_previous == 'first_previous' else copy_previous
             if type(self.previous) == tuple:
                 copied.previous = cast(PreviousTransformer, tuple([
-                    previous_transformer.copy(copy_previous=False)
+                    previous_transformer.copy(copy_previous=copy_next_previous)
                     for previous_transformer in self.previous
                 ]))
             elif isinstance(self.previous, Transformer):
-                copied.previous = self.previous.copy(copy_previous=False)
+                copied.previous = self.previous.copy(copy_previous=copy_next_previous)
         else:
             copied.previous = self.previous
 
@@ -264,45 +270,9 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
         return input_param, output_param
 
     def __repr__(self):
-        if self.previous is None:
-            return f'({type(self).__name__})'
-
-        if type(self.previous) == tuple:
-            previous_list = tuple([previous.copy() for previous in self.previous])
-            previous_ancestors = [previous.ancestors() for previous in previous_list]
-            common_ancestors = set.intersection(*previous_ancestors)
-
-            if len(common_ancestors) > 0:
-                first_common_ancestor = max(
-                    list(common_ancestors),
-                    key=lambda anc: len(anc.ancestors())
-                )
-
-                for ancestors in previous_ancestors:
-                    for ancestor in ancestors:
-                        if ancestor.previous == first_common_ancestor:
-                            ancestor.previous = None
-
-                fca_repr = repr(first_common_ancestor)
-            else:
-                fca_repr = ''
-
-            fca_repr_len = max(len(line) for line in fca_repr.split("\n"))
-            previous_reprs = [
-                f'{previous} ' for previous in previous_list
-            ]
-            max_len = max(len(previous_repr) for previous_repr in previous_reprs)
-
-            first_repr = fca_repr + ' ─┬─⟶ ' + previous_reprs[0].ljust(max_len, '─') + '──╮'
-            middle_repr = "\n".join([
-                ' ' * fca_repr_len + '  ├─⟶ ' + previous_repr.ljust(max_len, '─') + '──┤'
-                for previous_repr in previous_reprs[1:-1]
-            ] + [''])
-            last_repr = ' ' * fca_repr_len + '  ╰─⟶ ' + previous_reprs[-1].ljust(max_len, '─') + '──┴──⟶'
-
-            return f'{first_repr}\n{middle_repr}{last_repr} ({type(self).__name__})'
-
-        return f'{self.previous} ─⟶ ({type(self).__name__})'
+        signature = self.__signature__()
+        parameter = list(signature.parameters.items())[0][1].annotation
+        return f'{parameter.__name__} -> ({type(self).__name__}) -> {signature.return_annotation}'
 
     def graph_nodes(self) -> dict[UUID, 'Transformer']:
         return {self.id: self}
@@ -397,6 +367,7 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
 
         transformed: S | None = None
         try:
+            # transform_method: Callable[[A], S] = getattr(self, self.transform_method)
             transformed = self.transform(data)
             for handler in self._handlers:
                 handler.handle(data, transformed)

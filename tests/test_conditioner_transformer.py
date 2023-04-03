@@ -1,9 +1,7 @@
 import unittest
-from typing import cast
 
 from tests.lib.conditioners import if_not_zero
 from tests.lib.transformers import *
-from transformer import TransformerException, transformer
 
 
 class TestConditionerTransformer(unittest.TestCase):

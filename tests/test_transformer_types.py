@@ -1,13 +1,12 @@
 import os
 import unittest
 from pathlib import Path
-from typing import Union
 
 from typing_extensions import assert_type
 
 from tests.lib.conditioners import if_not_zero
 from tests.lib.transformers import *
-from transformer import Transformer
+from src.gloe.transformer import Transformer
 from mypy import api
 
 

@@ -18,6 +18,27 @@ class TestFunctionTransformer(unittest.TestCase):
 
         self.assertEqual(result, integer)
 
+    def test_previous_property(self):
+        """
+        Test the previous property
+        """
+
+        linear_graph = square >> square_root
+
+        self.assertEqual(linear_graph.previous, square)
+
+        divergent_graph = square >> square_root >> (
+            square >> (
+                square_root,
+                square_root
+            ),
+            square >> square_root >> (
+                square
+            )
+        )
+
+        self.assertIsNone(divergent_graph.previous[0].previous[0].previous.previous.previous.previous)
+
     def test_divergence_flow(self):
         """
         Test the most simple divergent case

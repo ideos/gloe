@@ -3,3 +3,4 @@ schemdraw~=0.16
 setuptools~=61.2.0
 mypy~=1.1.1
 pandas~=1.4.1
+networkx~=3.1

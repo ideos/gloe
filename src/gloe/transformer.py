@@ -20,6 +20,7 @@ from schemdraw import Drawing, flow
 import schemdraw.elements as elm
 from schemdraw.elements import Element
 from schemdraw.util import Point
+from typing_extensions import Self
 
 from .sequential_pass import SequentialPass
 
@@ -54,6 +55,7 @@ PreviousTransformer: TypeAlias = Union[
 
 
 class TransformerException(Exception):
+
     def __init__(
         self,
         internal_exception: Union['TransformerException', Exception],
@@ -78,8 +80,6 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
         ...
 
     """
-
-    invisible_transformer = False
 
     @staticmethod
     def _merge_serial_connection(
@@ -116,8 +116,19 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
                 return {**transformer1_nodes, **transformer2_nodes}
 
         new_transformer = NewTransformer()
+
+        # locked_props = ['_handlers', 'previous', 'id', 'instance_id']
+        # for prop, value in vars(transformer2).items():
+        #     if prop not in locked_props:
+        #         setattr(new_transformer, prop, value)
+
         new_transformer.__class__.__name__ = transformer2.__class__.__name__
+        new_transformer.children = transformer2.children
         new_transformer._set_previous(transformer2.previous)
+
+        if len(transformer2.children) > 0:
+            setattr(new_transformer, '_add_net_node', transformer2._add_net_node)
+
         return new_transformer
 
     @staticmethod
@@ -152,7 +163,6 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
         )
 
         class NewTransformer(Transformer[A, Tuple[Any, ...]]):
-            invisible_transformer = True
 
             def transform(self, data: A) -> Tuple[Any, ...]:
                 return split_result(data)
@@ -182,10 +192,10 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
     def __init__(self):
         self._handlers: list[TransformerHandler[A, S]] = []
         self.previous: PreviousTransformer = None
+        self.children: list[Transformer] = []
         self.id = uuid.uuid4()
         self.instance_id = uuid.uuid4()
         self.__class__.__annotations__ = self.transform.__annotations__
-        self.transform_method = 'transform'
 
     def __hash__(self):
         return self.id.int
@@ -215,7 +225,7 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
         self,
         transform: Callable[['Transformer', A], S] | None = None,
         copy_previous: str = 'first_previous'
-    ) -> 'Transformer[A, S]':
+    ) -> Self:
         _copy = copy.copy(self)
 
         if transform is not None:
@@ -240,11 +250,22 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
 
     def _set_previous(self, previous: PreviousTransformer):
         if self.previous is None:
+            # if isinstance(previous, Transformer) and len(previous.children) > 0:
+            #     self.previous = cast(PreviousTransformer, tuple(previous.children))
+            # else:
             self.previous = previous
         elif type(self.previous) == tuple:
             for previous_transformer in self.previous:
+                # if isinstance(previous, Transformer) and len(previous.children) > 0:
+                #     previous_transformer._set_previous(
+                #         cast(PreviousTransformer, tuple(previous.children))
+                #     )
+                # else:
                 previous_transformer._set_previous(previous)
         elif isinstance(self.previous, Transformer):
+            # if isinstance(previous, Transformer) and len(previous.children) > 0:
+            #     self.previous._set_previous(cast(PreviousTransformer, tuple(previous.children)))
+            # else:
             self.previous._set_previous(previous)
 
     def ancestors(self) -> set['Transformer']:
@@ -288,87 +309,6 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
     def graph_nodes(self) -> dict[UUID, 'Transformer']:
         return {self.id: self}
 
-    def _flow_drawing(
-        self,
-        drawing: Drawing,
-        common_ancestor: Union['Transformer', None] = None,
-        add_last_arrow: bool = True,
-        anchor: Union[Point, None] = None,
-        dx: float = 0,
-        dy: float = 0
-    ) -> Union[Element, list[Element]]:
-
-        last_box = flow.Process().label(self.__class__.__name__)
-        first_box: Union[Element, list[Element]] = last_box
-
-        previous = self.previous
-        if previous is not None and previous != common_ancestor:
-            if type(previous) == tuple:
-                previous_list = tuple([prev.copy() for prev in previous])
-                previous_ancestors = [previous.ancestors() for previous in previous_list]
-                common_ancestors = set.intersection(*previous_ancestors)
-
-                if len(common_ancestors) > 0:
-                    first_common_ancestor = max(
-                        list(common_ancestors),
-                        key=lambda anc: len(anc.ancestors())
-                    )
-
-                    first_common_ancestor.previous._flow_drawing(drawing)
-                    gateway = flow.Decision()
-                    drawing += gateway
-
-                    boxes = [
-                        prev._flow_drawing(
-                            drawing,
-                            first_common_ancestor,
-                            add_last_arrow=False,
-                            anchor=gateway.S,
-                            dx=i * 5,
-                            dy=-2
-                        )
-                        for i, prev in enumerate(previous_list)
-                    ]
-
-                    for box in boxes:
-                        drawing += elm.RightLines(arrow='->').at(gateway.S).to(box.N)
-
-                    first_box = boxes
-                    # drawing += flow.Decision()
-
-            elif isinstance(previous, Transformer):
-                first_box = previous._flow_drawing(
-                    drawing,
-                    common_ancestor=common_ancestor,
-                    add_last_arrow=add_last_arrow,
-                    anchor=anchor,
-                    dx=dx,
-                    dy=dy
-                )
-        else:
-            if anchor is not None:
-                drawing.move_from(anchor, dx=dx, dy=dy)
-            else:
-                drawing.move(dy=dy)
-
-        drawing += last_box
-
-        drawing += flow.Arrow().label(str(self.__signature__().return_annotation))
-
-        return first_box
-
-    def save(self, svg_file: str):
-        d = Drawing(canvas='svg')
-        d.config(fontsize=10, unit=1)
-        d += flow.Start().label('Start')
-        parameters = self.__signature__().parameters
-        parameter_names = list(parameters.keys())
-        first_parameter = parameters[parameter_names[0]]
-        d += flow.Arrow().label(str(first_parameter.annotation.__name__))
-        self._flow_drawing(d)
-        # d += flow.StateEnd().label('End')
-        d.save(svg_file)
-
     def _add_net_node(self, net: Graph):
         node_id = str(self.instance_id)
         if node_id not in net.nodes:
@@ -384,6 +324,21 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
 
     def _dag(self, net: DiGraph, next_node: Union['Transformer', None] = None):
         in_nodes = [edge[1] for edge in net.in_edges()]
+
+        if len(self.children) > 0:
+            node_id = self._add_net_node(net)
+            next_node_id = str(self.instance_id)
+            children_nets = [DiGraph() for _ in self.children]
+            for child, child_net in zip(self.children, children_nets):
+                child._dag(child_net, next_node)
+                net.add_nodes_from(child_net.nodes.data())
+                net.add_edges_from(child_net.edges.data())
+
+                child_root_node = [n for n in child_net.nodes if child_net.in_degree(n) == 0][0]
+                child_final_node = [n for n in child_net.nodes if child_net.out_degree(n) == 0][0]
+
+                net.add_edge(node_id, child_root_node, label='True')
+                net.add_edge(child_final_node, next_node_id)
 
         previous = self.previous
         if previous is not None:
@@ -404,7 +359,6 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
             elif isinstance(previous, Transformer):
                 next_node_id = self._add_net_node(net)
                 previous_node_id = str(previous.instance_id)
-
                 if previous.__class__.__name__ != 'Converge':
                     net.add_edge(previous_node_id, next_node_id, label=str(self.__signature__().return_annotation))
 
@@ -426,7 +380,6 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
 
         transformed: S | None = None
         try:
-            # transform_method: Callable[[A], S] = getattr(self, self.transform_method)
             transformed = self.transform(data)
 
             for handler in self._handlers:

@@ -1,3 +1,10 @@
+import contextvars
+from contextvars import ContextVar
+
+from networkx.drawing.nx_pydot import graphviz_layout
+import networkx as nx
+import matplotlib.pyplot as plt
+
 from src.gloe.conditional import conditioner
 from tests.lib.transformers import square, square_root, sum1
 from src.gloe.transformer import transformer
@@ -67,22 +74,61 @@ def if_not_zero(x: float) -> bool:
 
 
 graph = sum1 >> square >> (
-    square_root >> sum1 >> square,
-    square_root >> square >> square_root >> square >> square_root >> (
+    sum1 >> square >> (
         square >> square_root,
-        square >> square_root,
+        square >> square_root >> (
+            sum1 >> square,
+            sum1 >> square
+        )
     ),
-    square_root >> square >> square_root
-)
-
-filter_1 = filter_women >> filter_minor
-filter_2 = filter_adult >> format_introduction
-
-graph2 = filter_1 >> filter_1 >> if_not_zero.Then(filter_1).Else(filter_2)
+    sum1 >> square >> (
+        square >> square_root,
+        square >> square_root >> (
+            sum1 >> square,
+            sum1 >> square
+        )
+    ),
+    sum1 >> square >> (
+        sum1 >> square >> (
+            square >> square_root,
+            square >> square_root >> (
+                sum1 >> square,
+                sum1 >> square
+            )
+        ),
+        sum1 >> square >> (
+            square >> square_root,
+            square >> square_root >> (
+                sum1 >> square,
+                sum1 >> sum1 >> square >> (
+                    sum1 >> square >> (
+                        square >> square_root,
+                        square >> square_root >> (
+                            sum1 >> square,
+                            sum1 >> square
+                        )
+                    ),
+                    sum1 >> square >> (
+                        square >> square_root,
+                        square >> square_root >> (
+                            sum1 >> square,
+                            sum1 >> square
+                        )
+                    )
+                ) >> square >> square
+            )
+        )
+    ) >> square >> square
+) >> square >> square
 
 if __name__ == '__main__':
-    print(graph(1))
     # graph.save('./process.svg')
+
+    net = graph.graph()
+    nx.nx_agraph.to_agraph(net).write("net.dot")
+    pos = graphviz_layout(net, prog="dot")
+    nx.draw(net, pos)
+    plt.show()
 
 # woman_process = filter_women >> filter_format
 # print(woman_process(df), end='\n\n')

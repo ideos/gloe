@@ -18,6 +18,27 @@ class TestFunctionTransformer(unittest.TestCase):
 
         self.assertEqual(result, integer)
 
+    def test_previous_property(self):
+        """
+        Test the previous property
+        """
+
+        linear_graph = square >> square_root
+
+        self.assertEqual(linear_graph.previous, square)
+
+        divergent_graph = square >> square_root >> (
+            square >> (
+                square_root,
+                square_root
+            ),
+            square >> square_root >> (
+                square
+            )
+        )
+
+        self.assertIsNone(divergent_graph.previous[0].previous[0].previous.previous.previous.previous)
+
     def test_divergence_flow(self):
         """
         Test the most simple divergent case
@@ -85,12 +106,28 @@ class TestFunctionTransformer(unittest.TestCase):
         Test the instantiation of large graph
         """
         graph = sum1
-        max_iters = 480
+        max_iters = 488
         for i in range(max_iters):
             graph = graph >> sum1
 
         result = graph(0)
         self.assertEqual(result, max_iters + 1)
+
+    def test_recursive_flow(self):
+        """
+        Test the instantiation of large graph
+        """
+        graph = sum1 >> sum1
+        graph = graph >> graph
+        graph = graph >> graph
+        graph = graph >> graph
+        graph = graph >> graph
+        graph = graph >> graph
+        graph = graph >> graph
+        graph = graph >> graph
+
+        result = graph(0)
+        self.assertEqual(result, 256)
 
     def test_graph_length_property(self):
         graph = square >> square_root
@@ -180,7 +217,7 @@ class TestFunctionTransformer(unittest.TestCase):
             self.assertEqual(type(exception.__context__), TransformerException)
 
             exception_ctx = cast(TransformerException, exception.__context__)
-            self.assertEqual(natural_logarithm.id, exception_ctx.raiser_transformer.id)
+            self.assertEqual(natural_logarithm, exception_ctx.raiser_transformer)
 
 
 if __name__ == '__main__':

@@ -1,12 +1,12 @@
 from inspect import Signature
-from typing import Callable, Generic, TypeVar, Union
+from typing import Any, Callable, Generic, TypeVar, Union
 from uuid import UUID
 
 import networkx as nx
 from networkx import DiGraph
 from typing_extensions import Self
 
-from src.gloe.transformer import Transformer
+from .transformer import Transformer
 
 A = TypeVar("A")
 B = TypeVar("B")
@@ -59,17 +59,24 @@ class ConditionerTransformer(Generic[A, B, C], Transformer[A, Union[B, C]]):
         transformer2_nodes = self.else_transformer.graph_nodes()
         return {**transformer1_nodes, **transformer2_nodes}
 
-    def _add_net_node(self, net: DiGraph):
+    def _add_net_node(self, net: DiGraph, custom_data: dict[str, Any] = {}):
         node_id = str(self.instance_id)
         if node_id not in net.nodes:
-            net.add_node(node_id, shape='diamond', style='filled', label=self.__class__.__name__)
+            net.add_node(
+                node_id,
+                shape='diamond',
+                style='filled',
+                label=self.__class__.__name__,
+                **custom_data
+            )
         else:
             nx.set_node_attributes(
                 net, {
                     node_id: {
                         "shape": "diamond",
                         "diamond": "filled",
-                        "label": self.__class__.__name__
+                        "label": self.__class__.__name__,
+                        **custom_data
                     }
                 }
             )

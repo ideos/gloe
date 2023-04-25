@@ -15,6 +15,7 @@ from typing import Any, \
     TypeAlias, TypeVar, \
     Union, cast, overload
 from uuid import UUID
+from itertools import groupby
 
 from schemdraw import Drawing, flow
 import schemdraw.elements as elm
@@ -124,10 +125,12 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
 
         new_transformer.__class__.__name__ = transformer2.__class__.__name__
         new_transformer.children = transformer2.children
+        new_transformer.invisible = transformer2.invisible
         new_transformer._set_previous(transformer2.previous)
 
         if len(transformer2.children) > 0:
             setattr(new_transformer, '_add_net_node', transformer2._add_net_node)
+            setattr(new_transformer, '_add_child_node', transformer2._add_child_node)
 
         return new_transformer
 
@@ -186,6 +189,7 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
 
         new_transformer = NewTransformer()
         new_transformer.previous = cast(PreviousTransformer, receiving_transformers)
+        new_transformer.invisible = True
         new_transformer.__class__.__name__ = 'Converge'
         return new_transformer
 
@@ -193,6 +197,7 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
         self._handlers: list[TransformerHandler[A, S]] = []
         self.previous: PreviousTransformer = None
         self.children: list[Transformer] = []
+        self.invisible = False
         self.id = uuid.uuid4()
         self.instance_id = uuid.uuid4()
         self.__class__.__annotations__ = self.transform.__annotations__
@@ -309,68 +314,98 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
     def graph_nodes(self) -> dict[UUID, 'Transformer']:
         return {self.id: self}
 
-    def _add_net_node(self, net: Graph):
+    def _add_net_node(self, net: Graph, custom_data: dict[str, Any] = {}):
         node_id = str(self.instance_id)
         if node_id not in net.nodes:
-            net.add_node(node_id, shape='box', label=self.__class__.__name__)
+            net.add_node(node_id, shape='box', label=self.__class__.__name__, **custom_data)
         else:
             nx.set_node_attributes(net, {
                 node_id: {
                     "shape": "box",
-                    "label": self.__class__.__name__
+                    "label": self.__class__.__name__,
+                    **custom_data
                 }
             })
         return node_id
 
-    def _dag(self, net: DiGraph, next_node: Union['Transformer', None] = None):
+    def _add_child_node(
+        self,
+        child: 'Transformer',
+        child_net: DiGraph,
+        parent_id: str,
+        next_node: 'Transformer'
+    ):
+        child._dag(child_net, custom_data={'parent_id': parent_id})
+
+    def _add_children_subgraph(self, net: DiGraph, next_node: 'Transformer', parent_id: str):
+        next_node_id = str(next_node.instance_id)
+        children_nets = [DiGraph() for _ in self.children]
+        for child, child_net in zip(self.children, children_nets):
+            self._add_child_node(child, child_net, parent_id, next_node)
+            net.add_nodes_from(child_net.nodes.data())
+            net.add_edges_from(child_net.edges.data())
+
+            child_root_node = [n for n in child_net.nodes if child_net.in_degree(n) == 0][0]
+            child_final_node = [n for n in child_net.nodes if child_net.out_degree(n) == 0][0]
+
+            net.add_edge(parent_id, child_root_node)
+            net.add_edge(child_final_node, next_node_id)
+
+    def _dag(self, net: DiGraph, next_node: Union['Transformer', None] = None, custom_data: dict[str, Any] = {}):
         in_nodes = [edge[1] for edge in net.in_edges()]
-
-        if len(self.children) > 0:
-            node_id = self._add_net_node(net)
-            next_node_id = str(self.instance_id)
-            children_nets = [DiGraph() for _ in self.children]
-            for child, child_net in zip(self.children, children_nets):
-                child._dag(child_net, next_node)
-                net.add_nodes_from(child_net.nodes.data())
-                net.add_edges_from(child_net.edges.data())
-
-                child_root_node = [n for n in child_net.nodes if child_net.in_degree(n) == 0][0]
-                child_final_node = [n for n in child_net.nodes if child_net.out_degree(n) == 0][0]
-
-                net.add_edge(node_id, child_root_node, label='True')
-                net.add_edge(child_final_node, next_node_id)
 
         previous = self.previous
         if previous is not None:
             if type(previous) == tuple:
-                if self.__class__.__name__ == 'Converge' and next_node is not None:
+                if self.invisible and next_node is not None:
+                    next_node_id = next_node._add_net_node(net)
                     _next_node = next_node
                 else:
+                    next_node_id = self._add_net_node(net, custom_data)
                     _next_node = self
 
-                next_node_id = _next_node._add_net_node(net)
-
                 for prev in previous:
-                    if prev.__class__.__name__ != 'Converge':
+                    if not prev.invisible:
                         previous_node_id = str(prev.instance_id)
                         net.add_edge(previous_node_id, next_node_id, label=str(_next_node.__signature__().return_annotation))
 
-                    prev._dag(net, _next_node)
+                    prev._dag(net, _next_node, custom_data)
             elif isinstance(previous, Transformer):
-                next_node_id = self._add_net_node(net)
+                next_node_id = self._add_net_node(net, custom_data)
                 previous_node_id = str(previous.instance_id)
-                if previous.__class__.__name__ != 'Converge':
+
+                if not previous.invisible and len(previous.children) == 0:
+                    previous_node_id = previous._add_net_node(net)
                     net.add_edge(previous_node_id, next_node_id, label=str(self.__signature__().return_annotation))
 
                 if previous_node_id not in in_nodes:
-                    previous._dag(net, self)
+                    previous._dag(net, self, custom_data)
         else:
-            self._add_net_node(net)
+            next_node_id = self._add_net_node(net, custom_data)
+
+        if len(self.children) > 0 and next_node is not None:
+            self._add_children_subgraph(net, next_node, next_node_id)
 
     def graph(self) -> DiGraph:
         net = nx.DiGraph()
         self._dag(net)
         return net
+
+    def export(self, path: str):
+        net = self.graph()
+        boxed_nodes = [
+            node for node in net.nodes.data()
+            if 'parent_id' in node[1] and 'bounding_box' in node[1]
+        ]
+        agraph = nx.nx_agraph.to_agraph(net)
+        subgraphs = groupby(boxed_nodes, key=lambda x: x[1]['parent_id'])
+        for parent_id, nodes in subgraphs:
+            nodes = list(nodes)
+            node_ids = [node[0] for node in nodes]
+            if len(nodes) > 0:
+                label = nodes[0][1]['box_label']
+                agraph.add_subgraph(node_ids, label=label, name=f'cluster_{parent_id}', style="dotted")
+        agraph.write(path)
 
     def __len__(self):
         return 1

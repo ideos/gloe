@@ -8,7 +8,7 @@ from functools import cached_property
 from inspect import Signature
 import networkx as nx
 from networkx import DiGraph, Graph
-from types import FunctionType
+from types import FunctionType, GenericAlias
 from typing import Any, \
     Callable, \
     Generic, \
@@ -24,6 +24,7 @@ from schemdraw.elements import Element
 from schemdraw.util import Point
 from typing_extensions import Self
 
+from ._utils import _format_return_annotation
 from .sequential_pass import SequentialPass
 
 A = TypeVar("A")
@@ -87,17 +88,11 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
     def _merge_serial_connection(
         transformer1: 'Transformer[A, S]', transformer2: 'Transformer[S, U]'
     ) -> 'Transformer[A, U]':
-        same_transformer = transformer1 == transformer2
         transformer1 = transformer1.copy()
         transformer1.instance_id = uuid.uuid4()
-        transformer2 = transformer2.copy(copy_previous='all' if same_transformer else 'first_previous')
+        transformer2 = transformer2.copy()
         transformer2.instance_id = uuid.uuid4()
         transformer2._set_previous(transformer1)
-
-        transformer1_signature: Signature = transformer1.signature
-        transformer2_signature: Signature = transformer2.signature
-        new_signature = transformer2_signature \
-            .replace(parameters=list(transformer1_signature.parameters.values()))
 
         class NewTransformer(Transformer[A, U]):
             def transform(self, data: A) -> U:
@@ -106,8 +101,11 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
                 transformed = transformer2_call(transformer1_call(data))
                 return transformed
 
-            @property
             def signature(self) -> Signature:
+                transformer1_signature: Signature = transformer1.signature()
+                transformer2_signature: Signature = transformer2.signature()
+                new_signature = transformer2_signature \
+                    .replace(parameters=list(transformer1_signature.parameters.values()))
                 return new_signature
 
             def __len__(self):
@@ -158,22 +156,21 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
                 for receiving_transformer in receiving_transformers
             ])
 
-        incident_signature: Signature = incident_transformer.signature
-        receiving_signature_returns: list[str] = [
-            receiving_transformer.signature.return_annotation
-            for receiving_transformer in receiving_transformers
-        ]
-        new_signature = incident_signature.replace(
-            return_annotation=tuple(receiving_signature_returns)
-        )
 
         class NewTransformer(Transformer[A, Tuple[Any, ...]]):
 
             def transform(self, data: A) -> Tuple[Any, ...]:
                 return split_result(data)
 
-            @property
             def signature(self) -> Signature:
+                incident_signature: Signature = incident_transformer.signature()
+                receiving_signature_returns: list[str] = [
+                    receiving_transformer.signature().return_annotation
+                    for receiving_transformer in receiving_transformers
+                ]
+                new_signature = incident_signature.replace(
+                    return_annotation=GenericAlias(tuple, tuple(receiving_signature_returns))
+                )
                 return new_signature
 
             def __len__(self):
@@ -279,39 +276,24 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
 
         return ancestors
 
-    @property
     def signature(self) -> Signature:
-        return inspect.signature(self.transform)
-
-    def _format_tuple(self, tuple_annotation: tuple) -> str:
-        formatted: list[str] = []
-        for annotation in tuple_annotation:
-            if type(annotation) == tuple:
-                formatted.append(self._format_tuple(annotation))
-            elif type(annotation) == str:
-                formatted.append(annotation)
-            else:
-                formatted.append(str(annotation.__name__))
-        return f"({', '.join(formatted)})"
+        signature = inspect.signature(self.transform)
+        return signature
 
     @property
     def output_annotation(self) -> str:
-        if type(self.signature.return_annotation) == str:
-            return self.signature.return_annotation
-        if type(self.signature.return_annotation) == tuple:
-            return self._format_tuple(self.signature.return_annotation)
-        return str(self.signature.return_annotation.__name__)
+        return _format_return_annotation(self.signature().return_annotation)
 
     @property
     def input_annotation(self) -> str:
-        parameters = list(self.signature.parameters.items())
+        parameters = list(self.signature().parameters.items())
         if len(parameters) == 0:
             return ''
         parameter_type = parameters[0][1]
         return parameter_type.annotation.__name__
 
     def __get_bound_types(self) -> tuple[str, str]:
-        transform_signature = self.signature
+        transform_signature = self.signature()
         input_param = str([
             v
             for k, v in transform_signature.parameters.items()
@@ -326,7 +308,7 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
         return input_param, output_param
 
     def __repr__(self):
-        signature = self.signature
+        signature = self.signature()
         parameter = list(signature.parameters.items())[0][1].annotation
         return f'{parameter.__name__} -> ({type(self).__name__}) -> {signature.return_annotation}'
 
@@ -590,7 +572,6 @@ def transformer(func: Callable[[A], S]) -> Transformer[A, S]:
         __doc__ = func.__doc__
         __annotations__ = cast(FunctionType, func).__annotations__
 
-        @property
         def signature(self) -> Signature:
             return func_signature
 

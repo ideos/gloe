@@ -1,5 +1,5 @@
 from types import GenericAlias
-from typing import ForwardRef
+from typing import ForwardRef, _GenericAlias
 
 
 def _format_tuple(tuple_annotation: tuple) -> str:
@@ -33,7 +33,7 @@ def _format_return_annotation(return_annotation) -> str:
         return _format_tuple(return_annotation.__args__)
     if return_annotation.__name__ in {'Union'}:
         return _format_union(return_annotation.__args__)
-    if type(return_annotation) == GenericAlias:
+    if type(return_annotation) == GenericAlias or type(return_annotation) == _GenericAlias:
         return _format_generic_alias(return_annotation)
 
     return str(return_annotation.__name__)

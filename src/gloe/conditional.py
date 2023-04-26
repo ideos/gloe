@@ -32,9 +32,10 @@ class ConditionerTransformer(Generic[A, B, C], Transformer[A, Union[B, C]]):
         else:
             return self.else_transformer.transform(data)
 
-    def __signature__(self) -> Signature:
-        then_signature: Signature = self.then_transformer.__signature__()
-        else_signature: Signature = self.else_transformer.__signature__()
+    @property
+    def signature(self) -> Signature:
+        then_signature: Signature = self.then_transformer.signature
+        else_signature: Signature = self.else_transformer.signature
 
         new_signature = then_signature.replace(
             return_annotation=f"""({then_signature.return_annotation} | {else_signature.return_annotation})"""

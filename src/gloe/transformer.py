@@ -4,6 +4,7 @@ import uuid
 import inspect
 import warnings
 from abc import ABC, ABCMeta, abstractmethod
+from functools import cached_property
 from inspect import Signature
 import networkx as nx
 from networkx import DiGraph, Graph
@@ -93,8 +94,8 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
         transformer2.instance_id = uuid.uuid4()
         transformer2._set_previous(transformer1)
 
-        transformer1_signature: Signature = transformer1.__signature__()
-        transformer2_signature: Signature = transformer2.__signature__()
+        transformer1_signature: Signature = transformer1.signature
+        transformer2_signature: Signature = transformer2.signature
         new_signature = transformer2_signature \
             .replace(parameters=list(transformer1_signature.parameters.values()))
 
@@ -105,7 +106,8 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
                 transformed = transformer2_call(transformer1_call(data))
                 return transformed
 
-            def __signature__(self) -> Signature:
+            @property
+            def signature(self) -> Signature:
                 return new_signature
 
             def __len__(self):
@@ -156,9 +158,9 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
                 for receiving_transformer in receiving_transformers
             ])
 
-        incident_signature: Signature = incident_transformer.__signature__()
+        incident_signature: Signature = incident_transformer.signature
         receiving_signature_returns: list[str] = [
-            str(receiving_transformer.__signature__().return_annotation)
+            str(receiving_transformer.output_annotation)
             for receiving_transformer in receiving_transformers
         ]
         new_signature = incident_signature.replace(
@@ -170,7 +172,8 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
             def transform(self, data: A) -> Tuple[Any, ...]:
                 return split_result(data)
 
-            def __signature__(self) -> Signature:
+            @property
+            def signature(self) -> Signature:
                 return new_signature
 
             def __len__(self):
@@ -255,29 +258,17 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
 
     def _set_previous(self, previous: PreviousTransformer):
         if self.previous is None:
-            # if isinstance(previous, Transformer) and len(previous.children) > 0:
-            #     self.previous = cast(PreviousTransformer, tuple(previous.children))
-            # else:
             self.previous = previous
         elif type(self.previous) == tuple:
             for previous_transformer in self.previous:
-                # if isinstance(previous, Transformer) and len(previous.children) > 0:
-                #     previous_transformer._set_previous(
-                #         cast(PreviousTransformer, tuple(previous.children))
-                #     )
-                # else:
                 previous_transformer._set_previous(previous)
         elif isinstance(self.previous, Transformer):
-            # if isinstance(previous, Transformer) and len(previous.children) > 0:
-            #     self.previous._set_previous(cast(PreviousTransformer, tuple(previous.children)))
-            # else:
             self.previous._set_previous(previous)
 
     def ancestors(self) -> set['Transformer']:
         ancestors: set['Transformer'] = set()
         previous = self.previous
         if previous is not None:
-            # print(previous, isinstance(previous, Transformer))
             if type(previous) == tuple:
                 ancestors = set(previous)
                 for previous_transformer in previous:
@@ -288,11 +279,26 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
 
         return ancestors
 
-    def __signature__(self) -> Signature:
+    @property
+    def signature(self) -> Signature:
         return inspect.signature(self.transform)
 
+    @property
+    def output_annotation(self) -> str:
+        if type(self.signature.return_annotation) == str:
+            return self.signature.return_annotation
+        return str(self.signature.return_annotation.__name__)
+
+    @property
+    def input_annotation(self) -> str:
+        parameters = list(self.signature.parameters.items())
+        if len(parameters) == 0:
+            return ''
+        parameter_type = parameters[0][1]
+        return parameter_type.annotation.__name__
+
     def __get_bound_types(self) -> tuple[str, str]:
-        transform_signature = self.__signature__()
+        transform_signature = self.signature
         input_param = str([
             v
             for k, v in transform_signature.parameters.items()
@@ -307,7 +313,7 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
         return input_param, output_param
 
     def __repr__(self):
-        signature = self.__signature__()
+        signature = self.signature
         parameter = list(signature.parameters.items())[0][1].annotation
         return f'{parameter.__name__} -> ({type(self).__name__}) -> {signature.return_annotation}'
 
@@ -315,7 +321,7 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
         return {self.id: self}
 
     def _add_net_node(self, net: Graph, custom_data: dict[str, Any] = {}):
-        node_id = str(self.instance_id)
+        node_id = self.node_id
         if node_id not in net.nodes:
             net.add_node(node_id, shape='box', label=self.__class__.__name__, **custom_data)
         else:
@@ -335,21 +341,54 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
         parent_id: str,
         next_node: 'Transformer'
     ):
-        child._dag(child_net, custom_data={'parent_id': parent_id})
+        child._dag(child_net, next_node, custom_data={'parent_id': parent_id})
 
-    def _add_children_subgraph(self, net: DiGraph, next_node: 'Transformer', parent_id: str):
-        next_node_id = str(next_node.instance_id)
+    @property
+    def node_id(self) -> str:
+        return str(self.instance_id)
+
+    @cached_property
+    def visible_previous(self) -> PreviousTransformer:
+        previous = self.previous
+
+        if isinstance(previous, Transformer):
+            if previous.invisible:
+                if previous.previous is None:
+                    return previous
+
+                if type(previous.previous) == tuple:
+                    return previous.previous
+
+                return previous.visible_previous
+            else:
+                return previous
+
+        return previous
+
+    def _add_children_subgraph(self, net: DiGraph, next_node: 'Transformer'):
+        next_node_id = next_node.node_id
         children_nets = [DiGraph() for _ in self.children]
+        visible_previous = self.visible_previous
         for child, child_net in zip(self.children, children_nets):
-            self._add_child_node(child, child_net, parent_id, next_node)
+            self._add_child_node(child, child_net, self.node_id, next_node)
             net.add_nodes_from(child_net.nodes.data())
             net.add_edges_from(child_net.edges.data())
 
             child_root_node = [n for n in child_net.nodes if child_net.in_degree(n) == 0][0]
             child_final_node = [n for n in child_net.nodes if child_net.out_degree(n) == 0][0]
 
-            net.add_edge(parent_id, child_root_node)
-            net.add_edge(child_final_node, next_node_id)
+            if self.invisible:
+                if type(visible_previous) == tuple:
+                    for prev in visible_previous:
+                        net.add_edge(prev.node_id, child_root_node, label=prev.output_annotation)
+                elif isinstance(visible_previous, Transformer):
+                    net.add_edge(visible_previous.node_id, child_root_node, label=visible_previous.output_annotation)
+            else:
+                node_id = self._add_net_node(net)
+                net.add_edge(node_id, child_root_node)
+
+            if child_final_node != next_node_id:
+                net.add_edge(child_final_node, next_node_id, label=next_node.input_annotation)
 
     def _dag(self, net: DiGraph, next_node: Union['Transformer', None] = None, custom_data: dict[str, Any] = {}):
         in_nodes = [edge[1] for edge in net.in_edges()]
@@ -366,37 +405,47 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
 
                 for prev in previous:
                     if not prev.invisible:
-                        previous_node_id = str(prev.instance_id)
-                        net.add_edge(previous_node_id, next_node_id, label=str(_next_node.__signature__().return_annotation))
+                        previous_node_id = prev.node_id
+                        net.add_edge(previous_node_id, next_node_id, label=prev.output_annotation)
 
                     prev._dag(net, _next_node, custom_data)
             elif isinstance(previous, Transformer):
-                next_node_id = self._add_net_node(net, custom_data)
-                previous_node_id = str(previous.instance_id)
+                if self.invisible and next_node is not None:
+                    next_node_id = next_node._add_net_node(net)
+                    _next_node = next_node
+                else:
+                    next_node_id = self._add_net_node(net, custom_data)
+                    _next_node = self
 
-                if not previous.invisible and len(previous.children) == 0:
+                previous_node_id = previous.node_id
+
+                if len(previous.children) == 0 and not previous.invisible and not self.invisible:
                     previous_node_id = previous._add_net_node(net)
-                    net.add_edge(previous_node_id, next_node_id, label=str(self.__signature__().return_annotation))
+                    net.add_edge(previous_node_id, next_node_id, label=_next_node.output_annotation)
 
                 if previous_node_id not in in_nodes:
                     previous._dag(net, self, custom_data)
         else:
-            next_node_id = self._add_net_node(net, custom_data)
+            self._add_net_node(net, custom_data)
 
         if len(self.children) > 0 and next_node is not None:
-            self._add_children_subgraph(net, next_node, next_node_id)
+            self._add_children_subgraph(net, next_node)
 
     def graph(self) -> DiGraph:
         net = nx.DiGraph()
         self._dag(net)
         return net
 
-    def export(self, path: str):
+    def export(self, path: str, with_edge_labels: bool = True):
         net = self.graph()
         boxed_nodes = [
             node for node in net.nodes.data()
             if 'parent_id' in node[1] and 'bounding_box' in node[1]
         ]
+        if not with_edge_labels:
+            for u, v in net.edges:
+                net.edges[u, v]['label'] = ''
+
         agraph = nx.nx_agraph.to_agraph(net)
         subgraphs = groupby(boxed_nodes, key=lambda x: x[1]['parent_id'])
         for parent_id, nodes in subgraphs:
@@ -528,7 +577,8 @@ def transformer(func: Callable[[A], S]) -> Transformer[A, S]:
         __doc__ = func.__doc__
         __annotations__ = cast(FunctionType, func).__annotations__
 
-        def __signature__(self) -> Signature:
+        @property
+        def signature(self) -> Signature:
             return func_signature
 
         def transform(self, data: A) -> S:

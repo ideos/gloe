@@ -160,11 +160,11 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
 
         incident_signature: Signature = incident_transformer.signature
         receiving_signature_returns: list[str] = [
-            str(receiving_transformer.output_annotation)
+            receiving_transformer.signature.return_annotation
             for receiving_transformer in receiving_transformers
         ]
         new_signature = incident_signature.replace(
-            return_annotation=f"""({", ".join(receiving_signature_returns)})"""
+            return_annotation=tuple(receiving_signature_returns)
         )
 
         class NewTransformer(Transformer[A, Tuple[Any, ...]]):
@@ -283,10 +283,23 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
     def signature(self) -> Signature:
         return inspect.signature(self.transform)
 
+    def _format_tuple(self, tuple_annotation: tuple) -> str:
+        formatted: list[str] = []
+        for annotation in tuple_annotation:
+            if type(annotation) == tuple:
+                formatted.append(self._format_tuple(annotation))
+            elif type(annotation) == str:
+                formatted.append(annotation)
+            else:
+                formatted.append(str(annotation.__name__))
+        return f"({', '.join(formatted)})"
+
     @property
     def output_annotation(self) -> str:
         if type(self.signature.return_annotation) == str:
             return self.signature.return_annotation
+        if type(self.signature.return_annotation) == tuple:
+            return self._format_tuple(self.signature.return_annotation)
         return str(self.signature.return_annotation.__name__)
 
     @property

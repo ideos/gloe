@@ -1,3 +1,4 @@
+import inspect
 from typing import Any, Generic, Iterable, TypeVar, Union
 
 from networkx import DiGraph
@@ -37,6 +38,6 @@ class Mapper(Generic[T, U], Transformer[T, Iterable[U]]):
             {
                 'parent_id': parent_id,
                 'bounding_box': True,
-                'box_label': self.__class__.__name__
+                'box_label': 'mapping'
             }
         )

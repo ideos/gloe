@@ -187,9 +187,25 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
                     all_nodes = {**all_nodes, **nodes}
                 return all_nodes
 
+            def _add_net_node(self, net: DiGraph, custom_data: dict[str, Any] = {}):
+                node_id = self.node_id
+                props = {
+                    "shape": "diamond",
+                    "width": 0.5,
+                    "height": 0.5,
+                    "label": '',
+                    **custom_data
+                }
+                if node_id not in net.nodes:
+                    net.add_node(node_id, **props)
+                else:
+                    nx.set_node_attributes(net, {
+                        node_id: props
+                    })
+                return node_id
+
         new_transformer = NewTransformer()
         new_transformer.previous = cast(PreviousTransformer, receiving_transformers)
-        new_transformer.invisible = True
         new_transformer.__class__.__name__ = 'Converge'
         return new_transformer
 
@@ -317,15 +333,16 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
 
     def _add_net_node(self, net: Graph, custom_data: dict[str, Any] = {}):
         node_id = self.node_id
+        props = {
+            "shape": "box",
+            "label": self.__class__.__name__,
+            **custom_data
+        }
         if node_id not in net.nodes:
-            net.add_node(node_id, shape='box', label=self.__class__.__name__, **custom_data)
+            net.add_node(node_id, **props)
         else:
             nx.set_node_attributes(net, {
-                node_id: {
-                    "shape": "box",
-                    "label": self.__class__.__name__,
-                    **custom_data
-                }
+                node_id: props
             })
         return node_id
 
@@ -399,11 +416,12 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
                     _next_node = self
 
                 for prev in previous:
+                    previous_node_id = prev.node_id
                     if not prev.invisible:
-                        previous_node_id = prev.node_id
                         net.add_edge(previous_node_id, next_node_id, label=prev.output_annotation)
 
-                    prev._dag(net, _next_node, custom_data)
+                    if previous_node_id not in in_nodes:
+                        prev._dag(net, _next_node, custom_data)
             elif isinstance(previous, Transformer):
                 if self.invisible and next_node is not None:
                     next_node_id = next_node._add_net_node(net)
@@ -419,7 +437,7 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
                     net.add_edge(previous_node_id, next_node_id, label=_next_node.output_annotation)
 
                 if previous_node_id not in in_nodes:
-                    previous._dag(net, self, custom_data)
+                    previous._dag(net, _next_node, custom_data)
         else:
             self._add_net_node(net, custom_data)
 
@@ -428,6 +446,7 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
 
     def graph(self) -> DiGraph:
         net = nx.DiGraph()
+        net.graph['splines'] = 'ortho'
         self._dag(net)
         return net
 
@@ -583,42 +602,11 @@ def transformer(func: Callable[[A], S]) -> Transformer[A, S]:
     return lambda_transformer
 
 
-class Blank(Generic[A, S]):
-
-    def transform(self, data: A) -> S:
-        raise Exception('Blank transformers must be filled.')
-
-
-# A = ParamSpec("A")
-
-
-# class GenericTransformer(Generic[T, S, A], ABC):
-#     @overload
-#     def __rshift__(
-#         self,
-#         next_transformer: Transformer[S, U]
-#     ) -> 'GenericTransformer[T, U, A]':
-#         pass
-#
-#     @overload
-#     def __rshift__(
-#         self,
-#         next_transformer: Blank[S, U]
-#     ) -> 'GenericTransformer[T, U, Concatenate[Transformer[S, U], A]]':
-#         pass
-#
-#     @overload
-#     def __rshift__(
-#         self,
-#         next_transformer: 'GenericTransformer[S, U, ]'
-#     ) -> 'GenericTransformer[T, U, Concatenate[GenericTransformer[S, U], A]]':
-#         pass
-#
-#     def __rshift__(self, next_transformer: Any):
-#         print('top')
-
-
 class Begin(Generic[A], Transformer[A, A]):
+    def __init__(self):
+        super().__init__()
+        self.invisible = True
+
     def __repr__(self):
         return str(self.previous)
 

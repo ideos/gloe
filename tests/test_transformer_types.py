@@ -4,7 +4,7 @@ from pathlib import Path
 
 from typing_extensions import assert_type
 
-from tests.lib.conditioners import if_not_zero
+from tests.lib.conditioners import *
 from tests.lib.transformers import *
 from src.gloe.transformer import Transformer
 from mypy import api
@@ -62,6 +62,21 @@ class TestTransformerTypes(unittest.TestCase):
         conditioned_graph2 = square >> square_root >> if_not_zero.Then(to_string).Else(square)
 
         assert_type(conditioned_graph2, Transformer[float, str | float])
+
+    def _test_chained_condition_flow_types(self):
+        """
+        Test the most simple transformer typing
+        """
+
+        chained_conditions_graph = (
+            if_is_even
+            .Then(square)
+            .ElseIf(lambda x: x < 10)
+            .Then(to_string)
+            .ElseNone()
+        )
+
+        assert_type(chained_conditions_graph, Transformer[float, float | str | None])
 
     def test_all(self):
         file_path = Path(os.path.abspath(__file__))

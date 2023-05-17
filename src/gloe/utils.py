@@ -1,6 +1,6 @@
 from typing import Any
 
-from src.gloe.transformer import transformer
+from .transformer import transformer
 
 
 @transformer

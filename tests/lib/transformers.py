@@ -2,7 +2,7 @@ import math
 from typing import Tuple
 
 from tests.lib.exceptions import LnOfNegativeNumber
-from src.gloe.transformer import transformer
+from src.gloe import transformer
 
 
 @transformer
@@ -50,3 +50,15 @@ def natural_logarithm(num: float) -> float:
         raise LnOfNegativeNumber(num)
     else:
         return math.log(num, math.e)
+
+
+@transformer
+def logarithm(base: float, arg: float) -> float:
+    return math.log(arg) / math.log(base)
+
+@transformer
+def repeat(n_times: int, linebreak: bool, content: str) -> str:
+    repeated = content * n_times
+    if linebreak:
+        repeated += '\n'
+    return repeated

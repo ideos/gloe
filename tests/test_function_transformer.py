@@ -2,7 +2,7 @@ import unittest
 from typing import cast
 
 from tests.lib.transformers import *
-from src.gloe.transformer import TransformerException, transformer
+from src.gloe import transformer, TransformerException
 
 
 class TestFunctionTransformer(unittest.TestCase):
@@ -218,6 +218,14 @@ class TestFunctionTransformer(unittest.TestCase):
 
             exception_ctx = cast(TransformerException, exception.__context__)
             self.assertEqual(natural_logarithm, exception_ctx.raiser_transformer)
+
+    def test_curried_transformer(self):
+        """
+        Test the curried transformer
+        """
+
+        graph = logarithm(2)
+        self.assertEqual(graph(2), 1)
 
 
 if __name__ == '__main__':

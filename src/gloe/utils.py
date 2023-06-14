@@ -1,6 +1,6 @@
 from typing import Any
 
-from .transformer import transformer
+from .functional import transformer
 
 
 @transformer

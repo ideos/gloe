@@ -2,8 +2,7 @@ import unittest
 
 from tests.lib.exceptions import NumberLessThanOrEquals10
 from tests.lib.ensurers import NumberIsOdd, is_even, is_greater_than_10
-from src.gloe.transformer import transformer
-from src.gloe.transformer_ensurer import ensure_with
+from src.gloe import transformer, ensure_with
 
 
 class TestTransformerEnsurer(unittest.TestCase):

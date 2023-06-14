@@ -27,22 +27,22 @@ from typing_extensions import Self
 from ._utils import _format_return_annotation
 from .sequential_pass import SequentialPass
 
-A = TypeVar("A")
-S = TypeVar("S")
-U = TypeVar("U")
+_A = TypeVar("_A")
+_S = TypeVar("_S")
+_U = TypeVar("_U")
 
-R1 = TypeVar("R1")
-R2 = TypeVar("R2")
-R3 = TypeVar("R3")
-R4 = TypeVar("R4")
-R5 = TypeVar("R5")
-R6 = TypeVar("R6")
+_R1 = TypeVar("_R1")
+_R2 = TypeVar("_R2")
+_R3 = TypeVar("_R3")
+_R4 = TypeVar("_R4")
+_R5 = TypeVar("_R5")
+_R6 = TypeVar("_R6")
 
 
-class TransformerHandler(Generic[A, S], ABC):
+class TransformerHandler(Generic[_A, _S], ABC):
 
     @abstractmethod
-    def handle(self, input_data: A, output: S):
+    def handle(self, input_data: _A, output: _S):
         pass
 
 
@@ -71,7 +71,7 @@ class TransformerException(Exception):
         super().__init__(message)
 
 
-class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
+class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
     """
     A Transformer is generic block with the responsibility to take an input of type `T`
     and transform it to an output of type `S`.
@@ -86,16 +86,16 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
 
     @staticmethod
     def _merge_serial_connection(
-        transformer1: 'Transformer[A, S]', transformer2: 'Transformer[S, U]'
-    ) -> 'Transformer[A, U]':
+        transformer1: 'Transformer[_A, _S]', transformer2: 'Transformer[_S, _U]'
+    ) -> 'Transformer[_A, _U]':
         transformer1 = transformer1.copy()
         transformer1.instance_id = uuid.uuid4()
         transformer2 = transformer2.copy()
         transformer2.instance_id = uuid.uuid4()
         transformer2._set_previous(transformer1)
 
-        class NewTransformer(Transformer[A, U]):
-            def transform(self, data: A) -> U:
+        class NewTransformer(Transformer[_A, _U]):
+            def transform(self, data: _A) -> _U:
                 transformer2_call = transformer2.__call__
                 transformer1_call = transformer1.__call__
                 transformed = transformer2_call(transformer1_call(data))
@@ -136,9 +136,9 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
 
     @staticmethod
     def _merge_diverging_connection(
-        incident_transformer: 'Transformer[A, S]',
-        *receiving_transformers: 'Transformer[S, Any]'
-    ) -> 'Transformer[A, tuple]':
+        incident_transformer: 'Transformer[_A, _S]',
+        *receiving_transformers: 'Transformer[_S, Any]'
+    ) -> 'Transformer[_A, tuple]':
         incident_transformer = incident_transformer.copy()
         incident_transformer.instance_id = uuid.uuid4()
         receiving_transformers = tuple([
@@ -149,7 +149,7 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
             receiving_transformer.instance_id = uuid.uuid4()
             receiving_transformer._set_previous(incident_transformer)
 
-        def split_result(data: A) -> Tuple[Any, ...]:
+        def split_result(data: _A) -> Tuple[Any, ...]:
             intermediate_result = incident_transformer(data)
             return tuple([
                 receiving_transformer(intermediate_result)
@@ -157,9 +157,9 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
             ])
 
 
-        class NewTransformer(Transformer[A, Tuple[Any, ...]]):
+        class NewTransformer(Transformer[_A, Tuple[Any, ...]]):
 
-            def transform(self, data: A) -> Tuple[Any, ...]:
+            def transform(self, data: _A) -> Tuple[Any, ...]:
                 return split_result(data)
 
             def signature(self) -> Signature:
@@ -210,7 +210,7 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
         return new_transformer
 
     def __init__(self):
-        self._handlers: list[TransformerHandler[A, S]] = []
+        self._handlers: list[TransformerHandler[_A, _S]] = []
         self.previous: PreviousTransformer = None
         self.children: list[Transformer] = []
         self.invisible = False
@@ -227,10 +227,10 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
         return NotImplemented
 
     @abstractmethod
-    def transform(self, data: A) -> S:
+    def transform(self, data: _A) -> _S:
         pass
 
-    def add_handler(self, handler: TransformerHandler[A, S]):
+    def add_handler(self, handler: TransformerHandler[_A, _S]):
         if handler not in self._handlers:
             self._handlers = self._handlers + [handler]
 
@@ -244,7 +244,7 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
 
     def copy(
         self,
-        transform: Callable[['Transformer', A], S] | None = None,
+        transform: Callable[['Transformer', _A], _S] | None = None,
         copy_previous: str = 'first_previous'
     ) -> Self:
         _copy = copy.copy(self)
@@ -473,10 +473,10 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
     def __len__(self):
         return 1
 
-    def __call__(self, data: A) -> S:
+    def __call__(self, data: _A) -> _S:
         transform_exception = None
 
-        transformed: S | None = None
+        transformed: _S | None = None
         try:
             transformed = self.transform(data)
 
@@ -509,54 +509,55 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
 
     @overload
     def __rshift__(
-        self, transformers: Tuple['Transformer[S, U]', 'Transformer[S, R1]']
-    ) -> 'Transformer[A, Tuple[U, R1]]':
+        self, transformers: Tuple['Transformer[_S, _U]', 'Transformer[_S, _R1]']
+    ) -> 'Transformer[_A, Tuple[_U, _R1]]':
         pass
 
     @overload
     def __rshift__(
-        self, transformers: Tuple['Transformer[S, U]', 'Transformer[S, R1]', 'Transformer[S, R2]']
-    ) -> 'Transformer[A, Tuple[U, R1, R2]]':
-        pass
-
-    @overload
-    def __rshift__(
-        self,
-        transformers: Tuple[
-            'Transformer[S, U]', 'Transformer[S, R1]', 'Transformer[S, R2]', 'Transformer[S, R3]'
-        ]
-    ) -> 'Transformer[A, Tuple[U, R1, R2, R3]]':
+        self, transformers: Tuple[
+            'Transformer[_S, _U]', 'Transformer[_S, _R1]', 'Transformer[_S, _R2]']
+    ) -> 'Transformer[_A, Tuple[_U, _R1, _R2]]':
         pass
 
     @overload
     def __rshift__(
         self,
         transformers: Tuple[
-            'Transformer[S, U]', 'Transformer[S, R1]', 'Transformer[S, R2]', 'Transformer[S, R3]', 'Transformer[S, R4]'
+            'Transformer[_S, _U]', 'Transformer[_S, _R1]', 'Transformer[_S, _R2]', 'Transformer[_S, _R3]'
         ]
-    ) -> 'Transformer[A, Tuple[U, R1, R2, R3, R4]]':
+    ) -> 'Transformer[_A, Tuple[_U, _R1, _R2, _R3]]':
         pass
 
     @overload
     def __rshift__(
         self,
         transformers: Tuple[
-            'Transformer[S, U]', 'Transformer[S, R1]', 'Transformer[S, R2]', 'Transformer[S, R3]', 'Transformer[S, R4]', 'Transformer[S, R5]'
+            'Transformer[_S, _U]', 'Transformer[_S, _R1]', 'Transformer[_S, _R2]', 'Transformer[_S, _R3]', 'Transformer[_S, _R4]'
         ]
-    ) -> 'Transformer[A, Tuple[U, R1, R2, R3, R4, R5]]':
+    ) -> 'Transformer[_A, Tuple[_U, _R1, _R2, _R3, _R4]]':
         pass
 
     @overload
     def __rshift__(
         self,
         transformers: Tuple[
-            'Transformer[S, U]', 'Transformer[S, R1]', 'Transformer[S, R2]', 'Transformer[S, R3]', 'Transformer[S, R4]', 'Transformer[S, R5]', 'Transformer[S, R6]'
+            'Transformer[_S, _U]', 'Transformer[_S, _R1]', 'Transformer[_S, _R2]', 'Transformer[_S, _R3]', 'Transformer[_S, _R4]', 'Transformer[_S, _R5]'
         ]
-    ) -> 'Transformer[A, Tuple[U, R1, R2, R3, R4, R5, R6]]':
+    ) -> 'Transformer[_A, Tuple[_U, _R1, _R2, _R3, _R4, _R5]]':
         pass
 
     @overload
-    def __rshift__(self, next_transformer: 'Transformer[S, U]') -> 'Transformer[A, U]':
+    def __rshift__(
+        self,
+        transformers: Tuple[
+            'Transformer[_S, _U]', 'Transformer[_S, _R1]', 'Transformer[_S, _R2]', 'Transformer[_S, _R3]', 'Transformer[_S, _R4]', 'Transformer[_S, _R5]', 'Transformer[_S, _R6]'
+        ]
+    ) -> 'Transformer[_A, Tuple[_U, _R1, _R2, _R3, _R4, _R5, _R6]]':
+        pass
+
+    @overload
+    def __rshift__(self, next_transformer: 'Transformer[_S, _U]') -> 'Transformer[_A, _U]':
         pass
 
     def __rshift__(self, next_step: Any):
@@ -576,33 +577,7 @@ class Transformer(Generic[A, S], SequentialPass['Transformer'], ABC):
             raise Exception("Unsupported transformer argument")
 
 
-def transformer(func: Callable[[A], S]) -> Transformer[A, S]:
-    func_signature = inspect.signature(func)
-    if len(func_signature.parameters) > 1:
-        warnings.warn(
-            "Only one parameter is allowed on Transformers. "
-            f"Function '{func.__name__}' has the following signature: {func_signature}. "
-            "To pass a complex data, use a complex type like named tuples, "
-            "typed dicts, dataclasses or anything else.",
-            category=RuntimeWarning
-        )
-
-    class LambdaTransformer(Transformer[A, S]):
-        __doc__ = func.__doc__
-        __annotations__ = cast(FunctionType, func).__annotations__
-
-        def signature(self) -> Signature:
-            return func_signature
-
-        def transform(self, data: A) -> S:
-            return func(data)
-
-    lambda_transformer = LambdaTransformer()
-    lambda_transformer.__class__.__name__ = func.__name__
-    return lambda_transformer
-
-
-class Begin(Generic[A], Transformer[A, A]):
+class Begin(Generic[_A], Transformer[_A, _A]):
     def __init__(self):
         super().__init__()
         self.invisible = True
@@ -610,5 +585,5 @@ class Begin(Generic[A], Transformer[A, A]):
     def __repr__(self):
         return str(self.previous)
 
-    def transform(self, data: A) -> A:
+    def transform(self, data: _A) -> _A:
         return data

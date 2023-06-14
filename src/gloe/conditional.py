@@ -6,7 +6,7 @@ import networkx as nx
 from networkx import DiGraph
 from typing_extensions import Self
 
-from .transformer import Transformer
+from .transformers import Transformer
 from .utils import forget
 
 In = TypeVar("In")

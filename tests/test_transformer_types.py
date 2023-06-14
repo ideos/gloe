@@ -6,7 +6,7 @@ from typing_extensions import assert_type
 
 from tests.lib.conditioners import *
 from tests.lib.transformers import *
-from src.gloe.transformer import Transformer
+from src.gloe.transformers import Transformer
 from mypy import api
 
 
@@ -77,6 +77,17 @@ class TestTransformerTypes(unittest.TestCase):
         )
 
         assert_type(chained_conditions_graph, Transformer[float, float | str | None])
+
+    def _test_curried_transformer(self):
+        """
+        Test the curried transformer typing
+        """
+
+        log2 = logarithm(2)
+        assert_type(log2, Transformer[float,  float])
+
+        repeater = repeat(2, True)
+        assert_type(repeater, Transformer[str,  str])
 
     def test_all(self):
         file_path = Path(os.path.abspath(__file__))

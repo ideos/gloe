@@ -224,7 +224,7 @@ class TestFunctionTransformer(unittest.TestCase):
         Test the curried transformer
         """
 
-        graph = logarithm(2)
+        graph = logarithm(base=2)
         self.assertEqual(graph(2), 1)
 
 

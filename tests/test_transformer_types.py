@@ -83,10 +83,10 @@ class TestTransformerTypes(unittest.TestCase):
         Test the curried transformer typing
         """
 
-        log2 = logarithm(2)
+        log2 = logarithm(base=2)
         assert_type(log2, Transformer[float,  float])
 
-        repeater = repeat(2, True)
+        repeater = repeat(n_times=2, linebreak=True)
         assert_type(repeater, Transformer[str,  str])
 
     def test_all(self):

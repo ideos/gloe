@@ -81,50 +81,50 @@ def output_ensurer(func: Callable[[_T, _S], Any]) -> TransformerEnsurer[_T, _S]:
 
 
 @overload
-def ensure_with(
-    output_ensurers: Sequence[Callable[[_S], Any]] = []
+def ensure(
+    outcome: Sequence[Callable[[_S], Any]] = []
 ) -> Callable[[Transformer[Any, _S]], Transformer[Any, _S]]:
     pass
 
 
 @overload
-def ensure_with(
-    output_ensurers: Sequence[Callable[[_T, _S], Any]] = []
+def ensure(
+    outcome: Sequence[Callable[[_T, _S], Any]] = []
 ) -> Callable[[Transformer[_T, _S]], Transformer[_T, _S]]:
     pass
 
 
 @overload
-def ensure_with(
-    input_ensurers: Sequence[Callable[[_T], Any]] = []
+def ensure(
+    income: Sequence[Callable[[_T], Any]] = []
 ) -> Callable[[Transformer[_T, Any]], Transformer[_T, Any]]:
     pass
 
 
 @overload
-def ensure_with(
-    input_ensurers: Sequence[Callable[[_T], Any]] = [],
-    output_ensurers: Sequence[Callable[[_T, _S], Any]] = []
+def ensure(
+    income: Sequence[Callable[[_T], Any]] = [],
+    outcome: Sequence[Callable[[_T, _S], Any]] = []
 ) -> Callable[[Transformer[_T, _S]], Transformer[_T, _S]]:
     pass
 
 
 @overload
-def ensure_with(
-    input_ensurers: Sequence[Callable[[_T], Any]] = [],
-    output_ensurers: Sequence[Callable[[_S], Any]] = []
+def ensure(
+    income: Sequence[Callable[[_T], Any]] = [],
+    outcome: Sequence[Callable[[_S], Any]] = []
 ) -> Callable[[Transformer[_T, _S]], Transformer[_T, _S]]:
     pass
 
 
-def ensure_with(*args, **kwargs) -> Callable[[Transformer], Transformer]:
-    if 'input_ensurers' in kwargs:
-        input_ensurers = kwargs['input_ensurers']
+def ensure(*args, **kwargs) -> Callable[[Transformer], Transformer]:
+    if 'income' in kwargs:
+        input_ensurers = kwargs['income']
     else:
         input_ensurers = []
 
-    if 'output_ensurers' in kwargs:
-        output_ensurers = kwargs['output_ensurers']
+    if 'outcome' in kwargs:
+        output_ensurers = kwargs['outcome']
     else:
         output_ensurers = []
 

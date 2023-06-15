@@ -4,22 +4,22 @@ from typing import Any, Generic, Iterable, TypeVar, Union
 from networkx import DiGraph
 import networkx as nx
 
-from .transformer import Transformer
+from .transformers import Transformer
 
-T = TypeVar("T")
-S = TypeVar("S")
-U = TypeVar("U")
+_T = TypeVar("_T")
+_S = TypeVar("_S")
+_U = TypeVar("_U")
 
 
-class Mapper(Generic[T, U], Transformer[T, Iterable[U]]):
-    def __init__(self, iterable: Iterable[S], looping_transformer: Transformer[tuple[T, S], U]):
+class Mapper(Generic[_T, _U], Transformer[_T, Iterable[_U]]):
+    def __init__(self, iterable: Iterable[_S], looping_transformer: Transformer[tuple[_T, _S], _U]):
         super().__init__()
         self.iterable = iterable
         self.looping_transformer = looping_transformer
         self.invisible = True
         self.children = [looping_transformer]
 
-    def transform(self, data: T) -> Iterable[U]:
+    def transform(self, data: _T) -> Iterable[_U]:
         lopping_result = []
         for item in self.iterable:
             lopping_result.append(self.looping_transformer((data, item)))

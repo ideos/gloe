@@ -1,8 +1,6 @@
-import inspect
-from typing import Any, Generic, Iterable, TypeVar, Union
+from typing import Generic, Iterable, TypeVar
 
 from networkx import DiGraph
-import networkx as nx
 
 from .transformers import Transformer
 

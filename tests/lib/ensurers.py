@@ -1,3 +1,4 @@
+from lib.exceptions import NumbersNotEqual
 from tests.lib.exceptions import NumberIsOdd, NumberLessThanOrEquals10
 
 
@@ -11,5 +12,7 @@ def is_greater_than_10(num: float):
         raise NumberLessThanOrEquals10()
 
 
-def same_number(data: float, num: float):
-    return data == num
+def same_value(data: float, output: float):
+    if data != output:
+        raise NumbersNotEqual()
+

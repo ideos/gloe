@@ -10,3 +10,6 @@ def is_greater_than_10(num: float):
     if num <= 10:
         raise NumberLessThanOrEquals10()
 
+
+def same_number(data: float, num: float):
+    return data == num

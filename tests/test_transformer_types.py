@@ -17,7 +17,6 @@ class TestTransformerTypes(unittest.TestCase):
         """
 
         graph = square
-
         assert_type(graph, Transformer[float, float])
 
     def _test_simple_flow_typing(self):

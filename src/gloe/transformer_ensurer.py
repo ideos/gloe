@@ -2,7 +2,7 @@ import inspect
 import warnings
 from abc import abstractmethod
 from types import FunctionType
-from typing import Any, Callable, Generic, Sequence, TypeVar, cast, overload
+from typing import Any, Callable, Generic, Sequence, TypeVar, Union, cast, overload
 from .transformers import Transformer
 
 
@@ -56,26 +56,29 @@ def input_ensurer(func: Callable[[_T], Any]) -> TransformerEnsurer[_T, Any]:
     return LambdaEnsurer()
 
 
+@overload
 def output_ensurer(func: Callable[[_T, _S], Any]) -> TransformerEnsurer[_T, _S]:
-    func_signature = inspect.signature(func)
-    if len(func_signature.parameters) > 1:
-        warnings.warn(
-            "Only one parameter is allowed on Transformer Ensurer. "
-            f"Function '{func.__name__}' has the following signature: {func_signature}. "
-            "To pass a complex data, use a complex type like named tuples, "
-            "typed dicts, dataclasses or anything else.",
-            category=RuntimeWarning
-        )
+    pass
 
-    class LambdaEnsurer(TransformerEnsurer[_T, _S]):
+
+@overload
+def output_ensurer(func: Callable[[_S], Any]) -> TransformerEnsurer[Any, _S]:
+    pass
+
+
+def output_ensurer(func: Callable):
+    class LambdaEnsurer(TransformerEnsurer):
         __doc__ = func.__doc__
         __annotations__ = cast(FunctionType, func).__annotations__
 
-        def validate_input(self, data: _T):
+        def validate_input(self, data):
             pass
 
-        def validate_output(self, data: _T, output: _S):
-            func(data, output)
+        def validate_output(self, data, output):
+            if len(inspect.signature(func).parameters) == 1:
+                func(output)
+            else:
+                func(data, output)
 
     return LambdaEnsurer()
 
@@ -131,11 +134,9 @@ def ensure(*args, **kwargs) -> Callable[[Transformer], Transformer]:
     input_ensurers_instances = [
         input_ensurer(ensurer) for ensurer in input_ensurers
     ]
+
     output_ensurers_instances = [
-        output_ensurer(lambda _, x: ensurer(x))
-        if len(inspect.signature(ensurer).parameters) == 1
-        else output_ensurer(ensurer)
-        for ensurer in output_ensurers
+        output_ensurer(ensurer) for ensurer in output_ensurers
     ]
 
     def decorator(transformer: Transformer) -> Transformer:

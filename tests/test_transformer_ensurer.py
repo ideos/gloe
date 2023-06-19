@@ -33,12 +33,18 @@ class TestTransformerEnsurer(unittest.TestCase):
 
         self.assertRaises(NumbersNotEqual, lambda: sum1(4))
 
-        @ensure(outcome=[same_value, is_greater_than_10])
+        @ensure(outcome=[is_greater_than_10, same_value])
         @transformer
         def identity(num: int) -> int:
             return num
 
+        @ensure(outcome=[same_value, is_greater_than_10])
+        @transformer
+        def identity2(num: int) -> int:
+            return num
+
         self.assertEqual(identity(11), 11)
+        self.assertEqual(identity2(11), 11)
         self.assertRaises(NumberLessThanOrEquals10, lambda: identity(9))
 
     def test_many_ensurers(self):

@@ -56,4 +56,5 @@ def transformer(func: Callable[[A], S]) -> Transformer[A, S]:
 
     lambda_transformer = LambdaTransformer()
     lambda_transformer.__class__.__name__ = func.__name__
+    lambda_transformer.label = func.__name__
     return lambda_transformer

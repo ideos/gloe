@@ -1,6 +1,5 @@
 from inspect import Signature
 from typing import Any, Callable, Generic, Optional, TypeVar, Union
-from uuid import UUID
 
 import networkx as nx
 from networkx import DiGraph
@@ -39,7 +38,9 @@ class ConditionerTransformer(Generic[In, ThenOut, ElseOut], Transformer[In, Unio
         else_signature: Signature = self.else_transformer.signature()
 
         new_signature = then_signature.replace(
-            return_annotation=Union[then_signature.return_annotation, else_signature.return_annotation]
+            return_annotation=Union[
+                then_signature.return_annotation, else_signature.return_annotation
+            ]
         )
         return new_signature
 
@@ -49,20 +50,15 @@ class ConditionerTransformer(Generic[In, ThenOut, ElseOut], Transformer[In, Unio
         copy_previous: str = 'first_previous'
     ) -> Self:
         copied: Self = super().copy(transform, copy_previous)
-        copied.then_transformer = self.then_transformer.copy()
-        copied.else_transformer = self.else_transformer.copy()
+        copied.then_transformer = copied.children[0]
+        copied.else_transformer = copied.children[1]
         return copied
 
     def __len__(self):
         return len(self.then_transformer) + len(self.else_transformer)
 
-    def graph_nodes(self) -> dict[UUID, 'Transformer']:
-        transformer1_nodes = self.then_transformer.graph_nodes()
-        transformer2_nodes = self.else_transformer.graph_nodes()
-        return {**transformer1_nodes, **transformer2_nodes}
-
     def _add_net_node(self, net: DiGraph, custom_data: dict[str, Any] = {}):
-        node_id = str(self.instance_id)
+        node_id = self.node_id
         props = {
             "shape": "diamond",
             "style": "filled",

@@ -73,6 +73,7 @@ class _IfThen(Generic[In, ThenOut]):
             self._condition, self._then_transformer, else_transformer
         )
         new_transformer.__class__.__name__ = self.__class__.__name__
+        new_transformer.label = self.__class__.__name__
         return new_transformer
 
     def ElseIf(self, condition: Callable[[In], bool]) -> '_ElseIf[In, ThenOut]':

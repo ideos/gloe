@@ -108,7 +108,7 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
         new_transformer = NewTransformer()
 
         new_transformer.__class__.__name__ = transformer2.__class__.__name__
-        new_transformer.label = transformer2.__class__.__name__
+        new_transformer.label = transformer2.label
         new_transformer.children = transformer2.children
         new_transformer.invisible = transformer2.invisible
         new_transformer.graph_node_props = transformer2.graph_node_props
@@ -217,15 +217,11 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
         transform: Callable[['Transformer', _A], _S] | None = None,
         regenerate_instance_id: bool = False
     ) -> Self:
-        _copy = copy.copy(self)
+        copied = copy.copy(self)
 
         func_type = types.MethodType
         if transform is not None:
-            setattr(_copy, 'transform', func_type(transform, _copy))
-
-        copied = _copy
-        copied.id = self.id
-        copied._handlers = self._handlers
+            setattr(copied, 'transform', func_type(transform, copied))
 
         if regenerate_instance_id:
             copied.instance_id = uuid.uuid4()

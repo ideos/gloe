@@ -14,7 +14,7 @@ from src.gloe.utils import forward
 
 
 class TestTransformerGraph(unittest.TestCase):
-    def assert_graph_has_edges(self, transformer, graph, expected_edges):
+    def _assert_graph_has_edges(self, transformer, graph, expected_edges):
 
         ids_by_name = {
             node.__class__.__name__: str(id)
@@ -43,7 +43,7 @@ class TestTransformerGraph(unittest.TestCase):
             ('sum1', 'minus1')
         ]
 
-        self.assert_graph_has_edges(identity, graph, expected_edges)
+        self._assert_graph_has_edges(identity, graph, expected_edges)
 
     def test_simple_divergent_case(self):
         divergent = square >> (
@@ -71,7 +71,7 @@ class TestTransformerGraph(unittest.TestCase):
             ('Converge', 'sum_tuple2')
         ]
 
-        self.assert_graph_has_edges(divergent, graph, expected_edges)
+        self._assert_graph_has_edges(divergent, graph, expected_edges)
 
     def test_complex_divergent_case(self):
         divergent = square >> (
@@ -104,7 +104,35 @@ class TestTransformerGraph(unittest.TestCase):
             ('Converge', 'sum_tuple3')
         ]
 
-        self.assert_graph_has_edges(divergent, graph, expected_edges)
+        self._assert_graph_has_edges(divergent, graph, expected_edges)
+
+    def test_nested_divergent_case(self):
+        divergent = square >> (
+            square_root >> sum1 >> (
+                minus1,
+                natural_logarithm
+            ),
+            times2 >> divide_by_2
+        ) >> sum_tuple2
+
+        graph: DiGraph = divergent.graph()
+
+        nodes = graph.nodes.items()
+        self.assertEqual(10, len(nodes))  # Each divergent connection has a hidden node
+
+        edges = [edge for edge, props in list(graph.edges.items())]
+        self.assertEqual(11, len(edges))
+
+        expected_edges = [
+            ('square', 'square_root'),
+            ('square', 'times2'),
+            ('square_root', 'sum1'),
+            ('sum1', 'minus1'),
+            ('sum1', 'natural_logarithm'),
+            ('times2', 'divide_by_2'),
+        ]
+
+        self._assert_graph_has_edges(divergent, graph, expected_edges)
 
     def test_simple_conditional_case(self):
 
@@ -126,4 +154,57 @@ class TestTransformerGraph(unittest.TestCase):
             ('forward', 'minus1'),
         ]
 
-        self.assert_graph_has_edges(conditional, graph, expected_edges)
+        self._assert_graph_has_edges(conditional, graph, expected_edges)
+
+    def test_complex_conditional_case(self):
+
+        then_graph = (
+            sum1 >> square >> (
+                times2,
+                divide_by_2
+            ) >> sum_tuple2
+        )
+        conditional = (
+            square_root >>
+            if_is_even.Then(then_graph).Else(forward) >>
+            minus1
+        )
+
+        graph: DiGraph = conditional.graph()
+
+        nodes = graph.nodes.items()
+        self.assertEqual(10, len(nodes))
+
+        edges = [edge for edge, props in list(graph.edges.items())]
+        self.assertEqual(11, len(edges))
+
+        expected_edges = [
+            ('square_root', 'if_is_even'),
+            ('if_is_even', 'sum1'),
+            ('if_is_even', 'forward'),
+            ('sum1', 'square'),
+            ('square', 'times2'),
+            ('square', 'divide_by_2'),
+            ('times2', 'Converge'),
+            ('divide_by_2', 'Converge'),
+            ('Converge', 'sum_tuple2'),
+            ('sum_tuple2', 'minus1'),
+            ('forward', 'minus1'),
+        ]
+
+        self._assert_graph_has_edges(conditional, graph, expected_edges)
+
+    def test_repeated_nodes_case(self):
+
+        repeated = sum1 >> sum1 >> (
+            sum1 >> sum1 >> sum1,
+            minus1 >> minus1
+        ) >> minus1
+
+        graph: DiGraph = repeated.graph()
+
+        nodes = graph.nodes.items()
+        self.assertEqual(9, len(nodes))
+
+        edges = [edge for edge, props in list(graph.edges.items())]
+        self.assertEqual(9, len(edges))

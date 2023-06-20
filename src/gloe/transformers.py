@@ -82,7 +82,10 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
     def _merge_serial_connection(
         transformer1: 'Transformer[_A, _S]', _transformer2: 'Transformer[_S, _U]'
     ) -> 'Transformer[_A, _U]':
-        transformer2 = _transformer2.copy()
+        if transformer1.previous is None:
+            transformer1 = transformer1.copy(regenerate_instance_id=True)
+
+        transformer2 = _transformer2.copy(regenerate_instance_id=True)
         transformer2._set_previous(transformer1)
 
         class NewTransformer(Transformer[_A, _U]):
@@ -105,8 +108,10 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
         new_transformer = NewTransformer()
 
         new_transformer.__class__.__name__ = transformer2.__class__.__name__
+        new_transformer.label = transformer2.__class__.__name__
         new_transformer.children = transformer2.children
         new_transformer.invisible = transformer2.invisible
+        new_transformer.graph_node_props = transformer2.graph_node_props
         new_transformer._set_previous(transformer2.previous)
 
         # if len(transformer2.children) > 0:
@@ -120,9 +125,12 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
         incident_transformer: 'Transformer[_A, _S]',
         *receiving_transformers: 'Transformer[_S, Any]'
     ) -> 'Transformer[_A, tuple]':
-        incident_transformer = incident_transformer
+        if incident_transformer.previous is None:
+            incident_transformer = incident_transformer.copy(regenerate_instance_id=True)
+
         receiving_transformers = tuple([
-            receiving_transformer.copy() for receiving_transformer in receiving_transformers
+            receiving_transformer.copy(regenerate_instance_id=True)
+            for receiving_transformer in receiving_transformers
         ])
 
         for receiving_transformer in receiving_transformers:
@@ -134,7 +142,6 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
                 receiving_transformer(intermediate_result)
                 for receiving_transformer in receiving_transformers
             ])
-
 
         class NewTransformer(Transformer[_A, Tuple[Any, ...]]):
 
@@ -156,26 +163,15 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
                 lengths = [len(t) for t in receiving_transformers]
                 return sum(lengths) + len(incident_transformer)
 
-            def _add_net_node(self, net: DiGraph, custom_data: dict[str, Any] = {}):
-                node_id = self.node_id
-                props = {
-                    "shape": "diamond",
-                    "width": 0.5,
-                    "height": 0.5,
-                    "label": '',
-                    **custom_data
-                }
-                if node_id not in net.nodes:
-                    net.add_node(node_id, **props)
-                else:
-                    nx.set_node_attributes(net, {
-                        node_id: props
-                    })
-                return node_id
-
         new_transformer = NewTransformer()
         new_transformer.previous = cast(PreviousTransformer, receiving_transformers)
         new_transformer.__class__.__name__ = 'Converge'
+        new_transformer.label = ''
+        new_transformer.graph_node_props = {
+            "shape": "diamond",
+            "width": 0.5,
+            "height": 0.5
+        }
 
         return new_transformer
 
@@ -186,6 +182,10 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
         self.invisible = False
         self.id = uuid.uuid4()
         self.instance_id = uuid.uuid4()
+        self.label = self.__class__.__name__
+        self.graph_node_props: dict[str, Any] = {
+            "shape": "box"
+        }
         self.__class__.__annotations__ = self.transform.__annotations__
 
     def __hash__(self):
@@ -215,7 +215,7 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
     def copy(
         self,
         transform: Callable[['Transformer', _A], _S] | None = None,
-        copy_previous: str = 'first_previous'
+        regenerate_instance_id: bool = False
     ) -> Self:
         _copy = copy.copy(self)
 
@@ -225,8 +225,10 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
 
         copied = _copy
         copied.id = self.id
-        copied.instance_id = uuid.uuid4()
         copied._handlers = self._handlers
+
+        if regenerate_instance_id:
+            copied.instance_id = uuid.uuid4()
 
         if self.previous is not None:
             # copy_next_previous = 'none' if copy_previous == 'first_previous' else copy_previous
@@ -239,7 +241,7 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
             elif isinstance(self.previous, Transformer):
                 copied.previous = self.previous.copy()
 
-        copied.children = [child.copy() for child in self.children]
+        copied.children = [child.copy(regenerate_instance_id=True) for child in self.children]
 
         return copied
 
@@ -330,9 +332,9 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
     def _add_net_node(self, net: Graph, custom_data: dict[str, Any] = {}):
         node_id = self.node_id
         props = {
-            "shape": "box",
-            "label": self.__class__.__name__,
-            **custom_data
+            **self.graph_node_props,
+            **custom_data,
+            "label": self.label
         }
         if node_id not in net.nodes:
             net.add_node(node_id, **props)
@@ -391,7 +393,11 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
                     for prev in visible_previous:
                         net.add_edge(prev.node_id, child_root_node, label=prev.output_annotation)
                 elif isinstance(visible_previous, Transformer):
-                    net.add_edge(visible_previous.node_id, child_root_node, label=visible_previous.output_annotation)
+                    net.add_edge(
+                        visible_previous.node_id,
+                        child_root_node,
+                        label=visible_previous.output_annotation
+                    )
             else:
                 node_id = self._add_net_node(net)
                 net.add_edge(node_id, child_root_node)
@@ -414,7 +420,9 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
 
                 for prev in previous:
                     previous_node_id = prev.node_id
-                    if not prev.invisible:
+
+                    # TODO: check the impact of the below line to the Mapper transformer
+                    if not prev.invisible and len(prev.children) == 0:
                         net.add_edge(previous_node_id, next_node_id, label=prev.output_annotation)
 
                     if previous_node_id not in in_nodes:

@@ -8,7 +8,7 @@ from src.gloe import transformer, ensure
 
 
 class TestTransformerEnsurer(unittest.TestCase):
-    def test_ensure_with(self):
+    def test_ensure_decorator(self):
         @ensure(income=[is_even])
         @transformer
         def divide_by_2(num: int) -> float:

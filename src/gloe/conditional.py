@@ -1,9 +1,6 @@
 from inspect import Signature
-from typing import Any, Callable, Generic, Optional, TypeVar, Union
-from uuid import UUID
+from typing import Callable, Generic, Optional, TypeVar, Union
 
-import networkx as nx
-from networkx import DiGraph
 from typing_extensions import Self
 
 from .transformers import Transformer
@@ -26,6 +23,11 @@ class ConditionerTransformer(Generic[In, ThenOut, ElseOut], Transformer[In, Unio
         self.condition = condition
         self.then_transformer = then_transformer
         self.else_transformer = else_transformer
+        self.graph_node_props = {
+            "shape": "diamond",
+            "style": "filled",
+            "port": "n"
+        }
         self.children = [then_transformer, else_transformer]
 
     def transform(self, data: In) -> Union[ThenOut, ElseOut]:
@@ -39,43 +41,24 @@ class ConditionerTransformer(Generic[In, ThenOut, ElseOut], Transformer[In, Unio
         else_signature: Signature = self.else_transformer.signature()
 
         new_signature = then_signature.replace(
-            return_annotation=Union[then_signature.return_annotation, else_signature.return_annotation]
+            return_annotation=Union[
+                then_signature.return_annotation, else_signature.return_annotation
+            ]
         )
         return new_signature
 
     def copy(
         self,
         transform: Callable[['Transformer', In], Union[ThenOut, ElseOut]] | None = None,
-        copy_previous: str = 'first_previous'
+        regenerate_instance_id: bool = False
     ) -> Self:
-        copied: Self = super().copy(transform, copy_previous)
-        copied.then_transformer = self.then_transformer.copy()
-        copied.else_transformer = self.else_transformer.copy()
+        copied: Self = super().copy(transform, regenerate_instance_id)
+        copied.then_transformer = copied.children[0]
+        copied.else_transformer = copied.children[1]
         return copied
 
     def __len__(self):
         return len(self.then_transformer) + len(self.else_transformer)
-
-    def graph_nodes(self) -> dict[UUID, 'Transformer']:
-        transformer1_nodes = self.then_transformer.graph_nodes()
-        transformer2_nodes = self.else_transformer.graph_nodes()
-        return {**transformer1_nodes, **transformer2_nodes}
-
-    def _add_net_node(self, net: DiGraph, custom_data: dict[str, Any] = {}):
-        node_id = str(self.instance_id)
-        props = {
-            "shape": "diamond",
-            "style": "filled",
-            "port": "n",
-            "label": self.__class__.__name__,
-        }
-        if node_id not in net.nodes:
-            net.add_node(node_id, **props)
-        else:
-            nx.set_node_attributes(net, {
-                node_id: props
-            })
-        return node_id
 
 
 class _IfThen(Generic[In, ThenOut]):
@@ -90,6 +73,7 @@ class _IfThen(Generic[In, ThenOut]):
             self._condition, self._then_transformer, else_transformer
         )
         new_transformer.__class__.__name__ = self.__class__.__name__
+        new_transformer.label = self.__class__.__name__
         return new_transformer
 
     def ElseIf(self, condition: Callable[[In], bool]) -> '_ElseIf[In, ThenOut]':

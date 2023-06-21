@@ -29,6 +29,16 @@ def minus1(num: float) -> float:
 
 
 @transformer
+def times2(num: float) -> float:
+    return num * 2
+
+
+@transformer
+def divide_by_2(num: float) -> float:
+    return num / 2
+
+
+@transformer
 def sum_tuple2(num: Tuple[float, float]) -> float:
     return num[0] + num[1]
 

@@ -433,7 +433,7 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
 
                 previous_node_id = previous.node_id
 
-                if len(previous.children) == 0 and not previous.invisible and not self.invisible:
+                if len(previous.children) == 0 and (not previous.invisible or previous.previous is None):
                     previous_node_id = previous._add_net_node(net)
                     net.add_edge(previous_node_id, next_node_id, label=_next_node.output_annotation)
 

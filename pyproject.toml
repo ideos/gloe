@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gloe"
-version = "0.3.0"
+version = "0.3.1"
 authors = [
   { name="Samir Braga", email="samirchavess@gmail.com" },
 ]
@@ -21,7 +21,6 @@ dependencies = [
     'schemdraw~=0.16',
     'setuptools~=61.2.0',
     'mypy~=1.1.1',
-    'pandas~=1.4.1',
     'networkx~=3.1'
 ]
 

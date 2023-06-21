@@ -44,6 +44,11 @@ def sum_tuple2(num: Tuple[float, float]) -> float:
 
 
 @transformer
+def mul_tuple2(num: Tuple[float, float]) -> float:
+    return num[0] * num[1]
+
+
+@transformer
 def sum_tuple3(num: Tuple[float, float, float]) -> float:
     num1, num2, num3 = num
     return num1 + num2 + num3

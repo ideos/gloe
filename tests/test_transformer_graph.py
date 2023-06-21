@@ -4,12 +4,13 @@ from networkx import DiGraph
 
 from lib.conditioners import if_is_even
 from lib.transformers import divide_by_2, minus1, \
-    natural_logarithm, \
+    mul_tuple2, natural_logarithm, \
     square, \
     square_root, \
     sum1, \
     sum_tuple2, \
     sum_tuple3, times2
+from src.gloe import Begin
 from src.gloe.utils import forward
 
 
@@ -199,7 +200,7 @@ class TestTransformerGraph(unittest.TestCase):
         repeated = sum1 >> sum1 >> (
             sum1 >> sum1 >> sum1,
             minus1 >> minus1
-        ) >> minus1
+        ) >> sum_tuple2
 
         graph: DiGraph = repeated.graph()
 
@@ -208,3 +209,50 @@ class TestTransformerGraph(unittest.TestCase):
 
         edges = [edge for edge, props in list(graph.edges.items())]
         self.assertEqual(9, len(edges))
+
+    def test_begin_node_case(self):
+
+        begin = Begin[float]() >> (
+            sum1,
+            minus1
+        ) >> sum_tuple2
+
+        graph: DiGraph = begin.graph()
+
+        nodes = graph.nodes.items()
+        self.assertEqual(5, len(nodes))
+
+        edges = [edge for edge, props in list(graph.edges.items())]
+        self.assertEqual(5, len(edges))
+
+        expected_edges = [
+            ('Begin', 'sum1'),
+            ('Begin', 'minus1'),
+            ('sum1', 'Converge'),
+            ('minus1', 'Converge'),
+            ('Converge', 'sum_tuple2')
+        ]
+
+        self._assert_graph_has_edges(begin, graph, expected_edges)
+
+    def test_invisible_nodes_case(self):
+
+        begin1 = Begin[float]() >> (
+            sum1,
+            minus1
+        ) >> sum_tuple2
+
+        begin2 = Begin[float]() >> (
+            divide_by_2,
+            times2
+        ) >> mul_tuple2
+
+        begin = begin1 >> begin2
+
+        graph: DiGraph = begin.graph()
+
+        nodes = graph.nodes.items()
+        self.assertEqual(9, len(nodes))
+
+        edges = [edge for edge, props in list(graph.edges.items())]
+        self.assertEqual(10, len(edges))

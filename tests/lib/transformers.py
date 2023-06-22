@@ -73,6 +73,11 @@ def logarithm(arg: float, base: float) -> float:
 
 
 @transformer_init
+def format_currency(number: float, thousands_separator: str) -> str:
+    return f'{number}:{thousands_separator}.2f'
+
+
+@transformer_init
 def repeat(content: str, n_times: int, linebreak: bool) -> str:
     repeated = content * n_times
     if linebreak:

@@ -1,9 +1,12 @@
 import os
 import unittest
 from pathlib import Path
+from typing import Iterable
 
 from typing_extensions import assert_type
 
+from src.gloe import Begin
+from src.gloe.collections import Map
 from tests.lib.conditioners import *
 from tests.lib.transformers import *
 from src.gloe.transformers import Transformer
@@ -87,6 +90,24 @@ class TestTransformerTypes(unittest.TestCase):
 
         repeater = repeat(n_times=2, linebreak=True)
         assert_type(repeater, Transformer[str,  str])
+
+    def _test_transformer_init(self):
+        """
+        Test the transformer initializer typing
+        """
+
+        formatter = format_currency(thousands_separator=',')
+
+        assert_type(formatter, Transformer[float, str])
+
+    def _test_transformer_map(self):
+        """
+        Test the transformer map collection operation
+        """
+
+        mapped_logarithm = Begin[Iterable[float]]() >> Map(format_currency(thousands_separator=','))
+
+        assert_type(mapped_logarithm, Transformer[Iterable[float], Iterable[str]])
 
     def test_all(self):
         file_path = Path(os.path.abspath(__file__))

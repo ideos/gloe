@@ -27,6 +27,7 @@ def transformer_init(func: Callable[Concatenate[A, P1], S]) -> Callable[P1, Tran
 
         lambda_transformer = LambdaTransformer()
         lambda_transformer.__class__.__name__ = func.__name__
+        lambda_transformer.label = func.__name__
         return lambda_transformer
 
     return init_func

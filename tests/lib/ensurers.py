@@ -1,5 +1,4 @@
-from lib.exceptions import NumbersNotEqual
-from tests.lib.exceptions import NumberIsOdd, NumberLessThanOrEquals10
+from tests.lib.exceptions import NumberIsOdd, NumberLessThanOrEquals10, NumbersNotEqual
 
 
 def is_even(num: int):
@@ -14,5 +13,10 @@ def is_greater_than_10(num: float):
 
 def same_value(data: float, output: float):
     if data != output:
+        raise NumbersNotEqual()
+
+
+def same_value_int(income: int, outcome: int):
+    if income != outcome:
         raise NumbersNotEqual()
 

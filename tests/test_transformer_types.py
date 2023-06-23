@@ -5,9 +5,10 @@ from typing import Iterable
 
 from typing_extensions import assert_type
 
-from src.gloe import Begin
+from src.gloe import Begin, ensured_init
 from src.gloe.collections import Map
 from tests.lib.conditioners import *
+from tests.lib.ensurers import is_even, same_value, same_value_int
 from tests.lib.transformers import *
 from src.gloe.transformers import Transformer
 from mypy import api
@@ -108,6 +109,38 @@ class TestTransformerTypes(unittest.TestCase):
         mapped_logarithm = Begin[Iterable[float]]() >> Map(format_currency(thousands_separator=','))
 
         assert_type(mapped_logarithm, Transformer[Iterable[float], Iterable[str]])
+
+    def _test_transformer_init_ensurer(self):
+        @ensured_init(income=[is_even])
+        @transformer_init
+        def ti1(n1: int, n2: int) -> int:
+            return n1 * n2
+
+        @ensured_init(outcome=[is_even])
+        @transformer_init
+        def ti2(n1: int, n2: int) -> int:
+            return n1 * n2
+
+        @ensured_init(outcome=[same_value_int])
+        @transformer_init
+        def ti3(n1: int, n2: int) -> int:
+            return n1 * n2
+
+        @ensured_init(income=[is_even], outcome=[is_even])
+        @transformer_init
+        def ti4(n1: int, n2: int) -> int:
+            return n1 * n2
+
+        @ensured_init(income=[is_even], outcome=[same_value_int])
+        @transformer_init
+        def ti5(n1: int, n2: int) -> int:
+            return n1 * n2
+
+        assert_type(ti1(2), Transformer[int, int])
+        assert_type(ti2(2), Transformer[int, int])
+        assert_type(ti3(2), Transformer[int, int])
+        assert_type(ti4(2), Transformer[int, int])
+        assert_type(ti5(2), Transformer[int, int])
 
     def test_all(self):
         file_path = Path(os.path.abspath(__file__))

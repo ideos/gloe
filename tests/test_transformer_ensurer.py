@@ -1,9 +1,7 @@
 import unittest
 
-from lib.ensurers import same_value
-from lib.exceptions import NumbersNotEqual
-from tests.lib.exceptions import NumberLessThanOrEquals10
-from tests.lib.ensurers import NumberIsOdd, is_even, is_greater_than_10
+from tests.lib.exceptions import NumberLessThanOrEquals10, NumbersNotEqual, NumberIsOdd
+from tests.lib.ensurers import same_value, is_even, is_greater_than_10, same_value_int
 from src.gloe import transformer, ensure
 
 
@@ -26,7 +24,7 @@ class TestTransformerEnsurer(unittest.TestCase):
         self.assertRaises(NumberLessThanOrEquals10, lambda: multiply_by_2(4))
         self.assertEqual(multiply_by_2(6), 12)
 
-        @ensure(outcome=[same_value])
+        @ensure(outcome=[same_value_int])
         @transformer
         def sum1(num: int) -> int:
             return num + 1
@@ -40,7 +38,7 @@ class TestTransformerEnsurer(unittest.TestCase):
 
         @ensure(outcome=[same_value, is_greater_than_10])
         @transformer
-        def identity2(num: int) -> int:
+        def identity2(num: float) -> float:
             return num
 
         self.assertEqual(identity(11), 11)

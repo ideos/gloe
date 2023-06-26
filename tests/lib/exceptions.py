@@ -2,6 +2,10 @@ class NumberIsOdd(Exception):
     pass
 
 
+class NumberIsEven(Exception):
+    pass
+
+
 class NumberLessThanOrEquals10(Exception):
     pass
 

@@ -1,9 +1,17 @@
-from tests.lib.exceptions import NumberIsOdd, NumberLessThanOrEquals10, NumbersNotEqual
+from tests.lib.exceptions import NumberIsEven, \
+    NumberIsOdd, \
+    NumberLessThanOrEquals10, \
+    NumbersNotEqual
 
 
 def is_even(num: int):
     if num % 2 != 0:
         raise NumberIsOdd()
+
+
+def is_odd(num: int):
+    if num % 2 == 0:
+        raise NumberIsEven()
 
 
 def is_greater_than_10(num: float):

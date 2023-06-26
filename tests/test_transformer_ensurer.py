@@ -1,10 +1,11 @@
 import unittest
 
-from lib.ensurers import same_value
-from lib.exceptions import NumbersNotEqual
-from tests.lib.exceptions import NumberLessThanOrEquals10
-from tests.lib.ensurers import NumberIsOdd, is_even, is_greater_than_10
-from src.gloe import transformer, ensure
+from tests.lib.exceptions import NumberIsEven, \
+    NumberLessThanOrEquals10, \
+    NumbersNotEqual, \
+    NumberIsOdd
+from tests.lib.ensurers import is_odd, same_value, is_even, is_greater_than_10, same_value_int
+from src.gloe import ensured_init, transformer, ensure, transformer_init
 
 
 class TestTransformerEnsurer(unittest.TestCase):
@@ -26,7 +27,7 @@ class TestTransformerEnsurer(unittest.TestCase):
         self.assertRaises(NumberLessThanOrEquals10, lambda: multiply_by_2(4))
         self.assertEqual(multiply_by_2(6), 12)
 
-        @ensure(outcome=[same_value])
+        @ensure(outcome=[same_value_int])
         @transformer
         def sum1(num: int) -> int:
             return num + 1
@@ -40,7 +41,7 @@ class TestTransformerEnsurer(unittest.TestCase):
 
         @ensure(outcome=[same_value, is_greater_than_10])
         @transformer
-        def identity2(num: int) -> int:
+        def identity2(num: float) -> float:
             return num
 
         self.assertEqual(identity(11), 11)
@@ -57,3 +58,38 @@ class TestTransformerEnsurer(unittest.TestCase):
         self.assertRaises(NumberLessThanOrEquals10, lambda: multiply_by_2(4))
         self.assertRaises(NumberIsOdd, lambda: multiply_by_2(7))
         self.assertEqual(multiply_by_2(6), 12)
+
+    def test_ensurer_init_income(self):
+        @ensured_init(income=[is_even])
+        @transformer_init
+        def multiply_by_even(n1: int, n2: int) -> int:
+            return n1 * n2
+
+        self.assertRaises(NumberIsOdd, lambda: multiply_by_even(2)(3))
+        self.assertEqual(multiply_by_even(2)(4), 8)
+
+    def test_ensurer_init_outcome(self):
+        @ensured_init(outcome=[is_even])
+        @transformer_init
+        def multiply_by_equals_even(n1: int, n2: int) -> int:
+            return n1 * n2
+
+        self.assertRaises(NumberIsOdd, lambda: multiply_by_equals_even(3)(3))
+        self.assertEqual(multiply_by_equals_even(3)(2), 6)
+
+    def test_ensurer_init_income_outcome(self):
+        @ensured_init(income=[is_even], outcome=[is_even])
+        @transformer_init
+        def multiply_by_even_equals_even(n1: int, n2: int) -> int:
+            return n1 * n2
+
+        @ensured_init(income=[is_odd], outcome=[is_even])
+        @transformer_init
+        def multiply_by_odd_equals_even(n1: int, n2: int) -> int:
+            return n1 * n2
+
+        self.assertRaises(NumberIsOdd, lambda: multiply_by_even_equals_even(4)(3))
+        self.assertEqual(multiply_by_even_equals_even(4)(6), 24)
+
+        self.assertRaises(NumberIsEven, lambda: multiply_by_odd_equals_even(3)(4))
+        self.assertEqual(multiply_by_odd_equals_even(4)(3), 12)

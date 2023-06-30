@@ -1,4 +1,5 @@
 import unittest
+from typing import Any
 
 from networkx import DiGraph
 
@@ -15,16 +16,21 @@ from src.gloe.utils import forward
 
 
 class TestTransformerGraph(unittest.TestCase):
+    def _get_nodes_by_name(self, transformer: Transformer) -> dict[str, str]:
+        ids_by_name = {
+            node.__class__.__name__: str(id)
+            for id, node in transformer.graph_nodes.items()
+        }
+
+        return ids_by_name
+
     def _assert_graph_has_edges(
         self,
         transformer: Transformer,
         graph: DiGraph,
         expected_edges: list[tuple[str, str]]
     ):
-        ids_by_name = {
-            node.__class__.__name__: str(id)
-            for id, node in transformer.graph_nodes.items()
-        }
+        ids_by_name = self._get_nodes_by_name(transformer)
 
         edges = [edge for edge, props in list(graph.edges.items())]
 
@@ -40,6 +46,20 @@ class TestTransformerGraph(unittest.TestCase):
     def _assert_edges_count(self, expected: int, graph: DiGraph):
         edges = [edge for edge, props in list(graph.edges.items())]
         self.assertEqual(expected, len(edges))
+
+    def _assert_nodes_properties(
+        self,
+        nodes_properties: dict[str, dict[str, Any]],
+        transformer: Transformer,
+        graph: DiGraph
+    ):
+        ids_by_name = self._get_nodes_by_name(transformer)
+        props_by_id = dict(graph.nodes)
+        for name, properties in nodes_properties.items():
+            node_id = ids_by_name[name]
+            current_props = props_by_id[node_id]
+            expected_props = nodes_properties[name]
+            self.assertDictEqual(current_props | expected_props, current_props)
 
     def test_simplest_case(self):
         identity = square >> square_root >> sum1 >> minus1
@@ -66,7 +86,6 @@ class TestTransformerGraph(unittest.TestCase):
 
         self._assert_nodes_count(5, graph)
 
-        edges = [edge for edge, props in list(graph.edges.items())]
         # Five edges:
         #           +---->  sum1  ----+
         #  square --+                 +--> (Converge) --> sum_tuple2
@@ -158,7 +177,6 @@ class TestTransformerGraph(unittest.TestCase):
         self._assert_graph_has_edges(conditional, graph, expected_edges)
 
     def test_complex_conditional_case(self):
-
         then_graph = (
             sum1 >> square >> (
                 times2,
@@ -258,3 +276,32 @@ class TestTransformerGraph(unittest.TestCase):
         ]
 
         self._assert_graph_has_edges(init_graph, graph, expected_edges)
+
+    def test_nodes_properties_case(self):
+        then_graph = (
+            sum1 >> square >> (
+                times2,
+                divide_by_2
+            ) >> sum_tuple2
+        )
+        conditional = (
+            square_root >>
+            if_is_even.Then(then_graph).Else(forward) >>
+            minus1
+        )
+
+        graph = conditional.graph()
+
+        box_nodes = [
+            'sum1', 'square', 'time2', 'divide_by_2', 'sum_tuple2', 'square_root', ''
+        ]
+        nodes_properties = {
+            'square': {
+                'label': 'square',
+            },
+            'Converge': {
+                'label': '',
+            }
+        }
+
+        self._assert_nodes_properties(nodes_properties, conditional, graph)

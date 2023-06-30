@@ -8,13 +8,14 @@ from typing import Any, \
     ParamSpec, \
     Sequence, \
     TypeVar, \
-    Union, cast, \
+    cast, \
     overload
 
 from .transformers import Transformer
 
 _T = TypeVar("_T")
 _S = TypeVar("_S")
+_U = TypeVar("_U")
 P1 = ParamSpec("P1")
 
 
@@ -91,53 +92,77 @@ def output_ensurer(func: Callable):
     return LambdaEnsurer()
 
 
-@overload
-def ensure(
-    income: Sequence[Callable[[_T], Any]]
-) -> Callable[[Transformer[_T, _S]], Transformer[_T, _S]]:
-    pass
+class _ensure_income(Generic[_T]):
+    def __init__(self, income: Sequence[Callable[[_T], Any]]):
+        self.input_ensurers_instances = [
+            input_ensurer(ensurer) for ensurer in income
+        ]
 
+    @overload
+    def __call__(self, transformer: Transformer[_T, _U]) -> Transformer[_T, _U]:
+        pass
 
-@overload
-def ensure(
-    outcome: Sequence[Union[Callable[[_S], Any], Callable[[Any, _S], Any]]]
-) -> Callable[[Transformer[_T, _S]], Transformer[_T, _S]]:
-    pass
+    @overload
+    def __call__(
+        self, transformer_init: Callable[P1, Transformer[_T, _U]]
+    ) -> Callable[P1, Transformer[_T, _U]]:
+        pass
 
+    def __call__(self, arg):
+        if isinstance(arg, Transformer):
+            return self._generate_new_transformer(arg)
+        else:
+            transformer_init = arg
 
-@overload
-def ensure(
-    income: Sequence[Callable[[_T], Any]],
-    outcome: Sequence[Union[Callable[[_S], Any], Callable[[_T, _S], Any]]]
-) -> Callable[[Transformer[_T, _S]], Transformer[_T, _S]]:
-    pass
+            def ensured_transformer_init(*args, **kwargs):
+                transformer = transformer_init(*args, **kwargs)
+                return self._generate_new_transformer(transformer)
 
+            return ensured_transformer_init
 
-def ensure(*args, **kwargs):
-    if 'income' in kwargs:
-        input_ensurers = kwargs['income']
-    else:
-        input_ensurers = []
-
-    if 'outcome' in kwargs:
-        output_ensurers = kwargs['outcome']
-    else:
-        output_ensurers = []
-
-    input_ensurers_instances = [
-        input_ensurer(ensurer) for ensurer in input_ensurers
-    ]
-
-    output_ensurers_instances = [
-        output_ensurer(ensurer) for ensurer in output_ensurers
-    ]
-
-    def decorator(transformer: Transformer) -> Transformer:
-        def transform(self, data):
-            for ensurer in input_ensurers_instances:
+    def _generate_new_transformer(self, transformer: Transformer) -> Transformer:
+        def transform(_, data):
+            for ensurer in self.input_ensurers_instances:
                 ensurer.validate_input(data)
             output = transformer.transform(data)
-            for ensurer in output_ensurers_instances:
+            return output
+
+        transformer_cp = transformer.copy(transform)
+        return transformer_cp
+
+
+class _ensure_outcome(Generic[_S]):
+    def __init__(self, income: Sequence[Callable[[_S], Any]]):
+        self.output_ensurers_instances = [
+            output_ensurer(ensurer) for ensurer in income
+        ]
+
+    @overload
+    def __call__(self, transformer: Transformer[_U, _S]) -> Transformer[_U, _S]:
+        pass
+
+    @overload
+    def __call__(
+        self, transformer_init: Callable[P1, Transformer[_U, _S]]
+    ) -> Callable[P1, Transformer[_U, _S]]:
+        pass
+
+    def __call__(self, arg):
+        if isinstance(arg, Transformer):
+            return self._generate_new_transformer(arg)
+        else:
+            transformer_init = arg
+
+            def ensured_transformer_init(*args, **kwargs):
+                transformer = transformer_init(*args, **kwargs)
+                return self._generate_new_transformer(transformer)
+
+            return ensured_transformer_init
+
+    def _generate_new_transformer(self, transformer: Transformer) -> Transformer:
+        def transform(_, data):
+            output = transformer.transform(data)
+            for ensurer in self.output_ensurers_instances:
                 ensurer.validate_output(data, output)
             return output
 
@@ -145,66 +170,174 @@ def ensure(*args, **kwargs):
 
         return transformer_cp
 
-    return decorator
+
+class _ensure_changes(Generic[_T, _S]):
+    def __init__(self, changes: Sequence[Callable[[_T, _S], Any]]):
+        self.changes_ensurers_instances = [
+            output_ensurer(ensurer) for ensurer in changes
+        ]
+
+    @overload
+    def __call__(self, transformer: Transformer[_T, _S]) -> Transformer[_T, _S]:
+        pass
+
+    @overload
+    def __call__(
+        self, transformer_init: Callable[P1, Transformer[_T, _S]]
+    ) -> Callable[P1, Transformer[_T, _S]]:
+        pass
+
+    def __call__(self, arg):
+        if isinstance(arg, Transformer):
+            return self._generate_new_transformer(arg)
+        else:
+            transformer_init = arg
+
+            def ensured_transformer_init(*args, **kwargs):
+                transformer = transformer_init(*args, **kwargs)
+                return self._generate_new_transformer(transformer)
+
+            return ensured_transformer_init
+
+    def _generate_new_transformer(self, transformer: Transformer) -> Transformer:
+        def transform(_, data):
+            output = transformer.transform(data)
+            for ensurer in self.changes_ensurers_instances:
+                ensurer.validate_output(data, output)
+            return output
+
+        transformer_cp = transformer.copy(transform)
+
+        return transformer_cp
+
+
+class _ensure_both(Generic[_T, _S]):
+
+    def __init__(
+        self,
+        income: Sequence[Callable[[_T], Any]],
+        outcome: Sequence[Callable[[_S], Any]],
+        changes: Sequence[Callable[[_T, _S], Any]]
+    ):
+        income_seq = income if type(income) == list else [income]
+        self.input_ensurers_instances = [
+            input_ensurer(ensurer) for ensurer in income_seq
+        ]
+
+        outcome_seq = outcome if type(outcome) == list else [outcome]
+        self.output_ensurers_instances = [
+            output_ensurer(ensurer) for ensurer in outcome_seq
+        ]
+
+        changes_seq = changes if type(changes) == list else [changes]
+        self.output_ensurers_instances = self.output_ensurers_instances + [
+            output_ensurer(ensurer) for ensurer in changes_seq
+        ]
+
+    @overload
+    def __call__(self, transformer: Transformer[_T, _S]) -> Transformer[_T, _S]:
+        pass
+
+    @overload
+    def __call__(
+        self, transformer_init: Callable[P1, Transformer[_T, _S]]
+    ) -> Callable[P1, Transformer[_T, _S]]:
+        pass
+
+    def __call__(self, arg):
+        if isinstance(arg, Transformer):
+            return self._generate_new_transformer(arg)
+        else:
+            transformer_init = arg
+
+            def ensured_transformer_init(*args, **kwargs):
+                transformer = transformer_init(*args, **kwargs)
+                return self._generate_new_transformer(transformer)
+
+            return ensured_transformer_init
+
+    def _generate_new_transformer(self, transformer: Transformer) -> Transformer:
+        def transform(_, data):
+            for ensurer in self.input_ensurers_instances:
+                ensurer.validate_input(data)
+            output = transformer.transform(data)
+            for ensurer in self.output_ensurers_instances:
+                ensurer.validate_output(data, output)
+            return output
+
+        transformer_cp = transformer.copy(transform)
+        return transformer_cp
 
 
 @overload
-def ensured_init(
-    income: Sequence[Callable[[_T], Any]]
-) -> Callable[[Callable[P1, Transformer[_T, _S]]], Callable[P1, Transformer[_T, _S]]]:
+def ensure(income: Sequence[Callable[[_T], Any]]) -> _ensure_income[_T]:
     pass
 
 
 @overload
-def ensured_init(
-    outcome: Sequence[Union[Callable[[_S], Any], Callable[[Any, _S], Any]]]
-) -> Callable[[Callable[P1, Transformer[_T, _S]]], Callable[P1, Transformer[_T, _S]]]:
+def ensure(outcome: Sequence[Callable[[_S], Any]]) -> _ensure_outcome[_S]:
     pass
 
 
 @overload
-def ensured_init(
+def ensure(changes: Sequence[Callable[[_T, _S], Any]]) -> _ensure_changes[_T, _S]:
+    pass
+
+
+@overload
+def ensure(
     income: Sequence[Callable[[_T], Any]],
-    outcome: Sequence[Union[Callable[[_S], Any], Callable[[_T, _S], Any]]]
-) -> Callable[[Callable[P1, Transformer[_T, _S]]], Callable[P1, Transformer[_T, _S]]]:
+    outcome: Sequence[Callable[[_S], Any]]
+) -> _ensure_both[_T, _S]:
     pass
 
 
-def ensured_init(*args, **kwargs):
-    if 'income' in kwargs:
-        input_ensurers = kwargs['income']
-    else:
-        input_ensurers = []
+@overload
+def ensure(
+    income: Sequence[Callable[[_T], Any]],
+    changes: Sequence[Callable[[_T, _S], Any]]
+) -> _ensure_both[_T, _S]:
+    pass
 
-    if 'outcome' in kwargs:
-        output_ensurers = kwargs['outcome']
-    else:
-        output_ensurers = []
 
-    input_ensurers_instances = [
-        input_ensurer(ensurer) for ensurer in input_ensurers
-    ]
+@overload
+def ensure(
+    outcome: Sequence[Callable[[_T], Any]],
+    changes: Sequence[Callable[[_T, _S], Any]]
+) -> _ensure_both[_T, _S]:
+    pass
 
-    output_ensurers_instances = [
-        output_ensurer(ensurer) for ensurer in output_ensurers
-    ]
 
-    def decorator(transformer_init: Callable[P1, Transformer]) -> Callable[P1, Transformer]:
-        def ensured_transformer_init(*args, **kwargs):
-            transformer = transformer_init(*args, **kwargs)
+@overload
+def ensure(
+    income: Sequence[Callable[[_T], Any]],
+    outcome: Sequence[Callable[[_S], Any]],
+    changes: Sequence[Callable[[_T, _S], Any]]
+) -> _ensure_both[_T, _S]:
+    pass
 
-            def transform(self, data):
-                for ensurer in input_ensurers_instances:
-                    ensurer.validate_input(data)
-                output = transformer.transform(data)
-                for ensurer in output_ensurers_instances:
-                    ensurer.validate_output(data, output)
-                return output
 
-            transformer_cp = transformer.copy(transform)
+def ensure(*args, **kwargs):
+    if len(kwargs.keys()) == 1 and 'income' in kwargs:
+        return _ensure_income(kwargs['income'])
 
-            return transformer_cp
+    if len(kwargs.keys()) == 1 and 'outcome' in kwargs:
+        return _ensure_outcome(kwargs['outcome'])
 
-        return ensured_transformer_init
+    if len(kwargs.keys()) == 1 and 'changes' in kwargs:
+        return _ensure_changes(kwargs['changes'])
 
-    return decorator
+    if len(kwargs.keys()) > 1:
+        income = []
+        if 'income' in kwargs:
+            income = kwargs['income']
+
+        outcome = []
+        if 'outcome' in kwargs:
+            outcome = kwargs['outcome']
+
+        changes = []
+        if 'changes' in kwargs:
+            changes = kwargs['changes']
+
+        return _ensure_both(income, outcome, changes)

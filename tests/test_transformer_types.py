@@ -5,10 +5,10 @@ from typing import Iterable
 
 from typing_extensions import assert_type
 
-from src.gloe import Begin, ensured_init
+from src.gloe import Begin, ensure
 from src.gloe.collections import Map
 from tests.lib.conditioners import *
-from tests.lib.ensurers import is_even, same_value, same_value_int
+from tests.lib.ensurers import is_even, same_value, same_value_int, is_greater_than_10
 from tests.lib.transformers import *
 from src.gloe.transformers import Transformer
 from mypy import api
@@ -110,28 +110,66 @@ class TestTransformerTypes(unittest.TestCase):
 
         assert_type(mapped_logarithm, Transformer[Iterable[float], Iterable[str]])
 
+    def _test_transformer_ensurer(self):
+        @ensure(income=[is_even])
+        @transformer
+        def t1(n1: int) -> int:
+            return n1 * n1
+
+        @ensure(outcome=[is_even])
+        @transformer
+        def t2(n1: int) -> int:
+            return n1 * n1
+
+        @ensure(changes=[same_value_int])
+        @transformer
+        def t3(n1: int) -> int:
+            return n1 * n1
+
+        @ensure(income=[is_even], outcome=[is_even])
+        @transformer
+        def t4(n1: int) -> int:
+            return n1 * n1
+
+        @ensure(income=[is_even], outcome=[is_greater_than_10], changes=[same_value])
+        @transformer
+        def t5(n1: int) -> float:
+            return n1 * n1
+
+        @ensure(outcome=[is_greater_than_10], changes=[same_value])
+        @transformer
+        def t6(num: float) -> float:
+            return num
+
+        assert_type(t1, Transformer[int, int])
+        assert_type(t2, Transformer[int, int])
+        assert_type(t3, Transformer[int, int])
+        assert_type(t4, Transformer[int, int])
+        assert_type(t5, Transformer[int, float])
+        assert_type(t6, Transformer[float, float])
+
     def _test_transformer_init_ensurer(self):
-        @ensured_init(income=[is_even])
+        @ensure(income=[is_even])
         @transformer_init
         def ti1(n1: int, n2: int) -> int:
             return n1 * n2
 
-        @ensured_init(outcome=[is_even])
+        @ensure(outcome=[is_even])
         @transformer_init
         def ti2(n1: int, n2: int) -> int:
             return n1 * n2
 
-        @ensured_init(outcome=[same_value_int])
+        @ensure(changes=[same_value_int])
         @transformer_init
         def ti3(n1: int, n2: int) -> int:
             return n1 * n2
 
-        @ensured_init(income=[is_even], outcome=[is_even])
+        @ensure(income=[is_even], outcome=[is_even])
         @transformer_init
         def ti4(n1: int, n2: int) -> int:
             return n1 * n2
 
-        @ensured_init(income=[is_even], outcome=[same_value_int])
+        @ensure(income=[is_even], changes=[same_value_int])
         @transformer_init
         def ti5(n1: int, n2: int) -> int:
             return n1 * n2

@@ -10,17 +10,17 @@ _U = TypeVar("_U")
 
 
 class MapOver(Generic[_T, _U], Transformer[_T, Iterable[_U]]):
-    def __init__(self, iterable: Iterable[_S], looping_transformer: Transformer[tuple[_T, _S], _U]):
+    def __init__(self, iterable: Iterable[_S], mapping_transformer: Transformer[tuple[_T, _S], _U]):
         super().__init__()
         self.iterable = iterable
-        self.looping_transformer = looping_transformer
+        self.mapping_transformer = mapping_transformer
         self.invisible = True
-        self.children = [looping_transformer]
+        self.children = [mapping_transformer]
 
     def transform(self, data: _T) -> Iterable[_U]:
         lopping_result = []
         for item in self.iterable:
-            lopping_result.append(self.looping_transformer((data, item)))
+            lopping_result.append(self.mapping_transformer((data, item)))
         return lopping_result
 
     def _add_child_node(

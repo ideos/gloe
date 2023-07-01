@@ -293,14 +293,21 @@ class TestTransformerGraph(unittest.TestCase):
         graph = conditional.graph()
 
         box_nodes = [
-            'sum1', 'square', 'time2', 'divide_by_2', 'sum_tuple2', 'square_root', ''
+            'sum1', 'square', 'times2', 'divide_by_2', 'sum_tuple2', 'square_root', 'minus1',
         ]
+        box_nodes_properties = {
+            node: {'label': node, 'shape': 'box'}
+            for node in box_nodes
+        }
         nodes_properties = {
-            'square': {
-                'label': 'square',
-            },
+            **box_nodes_properties,
             'Converge': {
                 'label': '',
+                'shape': 'diamond'
+            },
+            'if_is_even': {
+                'label': 'if_is_even',
+                'shape': 'diamond'
             }
         }
 

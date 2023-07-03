@@ -6,6 +6,7 @@ from typing import Iterable
 from typing_extensions import assert_type
 
 from src.gloe import Begin, ensure
+from src.gloe.bridge import bridge
 from src.gloe.collections import Map
 from tests.lib.conditioners import *
 from tests.lib.ensurers import is_even, same_value, same_value_int, is_greater_than_10
@@ -179,6 +180,13 @@ class TestTransformerTypes(unittest.TestCase):
         assert_type(ti3(2), Transformer[int, int])
         assert_type(ti4(2), Transformer[int, int])
         assert_type(ti5(2), Transformer[int, int])
+
+    def _test_bridge(self):
+        num_bridge = bridge[float]("num")
+
+        graph = sum1 >> num_bridge.pick() >> minus1 >> num_bridge.drop()
+
+        assert_type(graph, Transformer[float, tuple[float, float]])
 
     def test_all(self):
         file_path = Path(os.path.abspath(__file__))

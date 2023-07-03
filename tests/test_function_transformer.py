@@ -16,7 +16,7 @@ class TestFunctionTransformer(unittest.TestCase):
         integer = 10
         result = linear_graph(integer)
 
-        self.assertEqual(result, integer)
+        self.assertEqual(integer, result)
 
     def test_previous_property(self):
         """
@@ -67,7 +67,7 @@ class TestFunctionTransformer(unittest.TestCase):
         integer = 10
         result = convergent_graph(integer)
 
-        self.assertEqual(result, 10000 + 10)
+        self.assertEqual(10000 + 10, result)
 
     def test_divergent_many_branches_flow(self):
         """

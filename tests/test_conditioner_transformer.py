@@ -1,6 +1,6 @@
 import unittest
 
-from lib.conditioners import if_is_even
+from tests.lib.conditioners import if_is_even
 from tests.lib.conditioners import if_not_zero
 from tests.lib.transformers import *
 

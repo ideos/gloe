@@ -11,7 +11,7 @@ S = TypeVar("S")
 P1 = ParamSpec("P1")
 
 
-def transformer_init(func: Callable[Concatenate[A, P1], S]) -> Callable[P1, Transformer[A, S]]:
+def partial_transformer(func: Callable[Concatenate[A, P1], S]) -> Callable[P1, Transformer[A, S]]:
     func_signature = inspect.signature(func)
 
     def init_func(*args: P1.args, **kwargs: P1.kwargs) -> Transformer[A, S]:

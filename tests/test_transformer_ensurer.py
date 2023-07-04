@@ -6,7 +6,7 @@ from tests.lib.exceptions import NumberIsEven, \
     NumbersNotEqual, \
     NumberIsOdd
 from tests.lib.ensurers import is_odd, same_value, is_even, is_greater_than_10, same_value_int
-from src.gloe import transformer, ensure, transformer_init
+from src.gloe import transformer, ensure, partial_transformer
 
 
 class TestTransformerEnsurer(unittest.TestCase):
@@ -62,7 +62,7 @@ class TestTransformerEnsurer(unittest.TestCase):
 
     def test_ensurer_init_income(self):
         @ensure(income=[is_even])
-        @transformer_init
+        @partial_transformer
         def multiply_by_even(n1: int, n2: int) -> int:
             return n1 * n2
 
@@ -71,7 +71,7 @@ class TestTransformerEnsurer(unittest.TestCase):
 
     def test_ensurer_init_outcome(self):
         @ensure(income=[is_even])
-        @transformer_init
+        @partial_transformer
         def multiply_by_equals_even(n1: int, n2: int) -> int:
             return n1 * n2
 
@@ -80,12 +80,12 @@ class TestTransformerEnsurer(unittest.TestCase):
 
     def test_ensurer_init_income_outcome(self):
         @ensure(income=[is_even], outcome=[is_even])
-        @transformer_init
+        @partial_transformer
         def multiply_by_even_equals_even(n1: int, n2: int) -> int:
             return n1 * n2
 
         @ensure(income=[is_odd], outcome=[is_even])
-        @transformer_init
+        @partial_transformer
         def multiply_by_odd_equals_even(n1: int, n2: int) -> int:
             return n1 * n2
 

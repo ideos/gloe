@@ -151,27 +151,27 @@ class TestTransformerTypes(unittest.TestCase):
 
     def _test_transformer_init_ensurer(self):
         @ensure(income=[is_even])
-        @transformer_init
+        @partial_transformer
         def ti1(n1: int, n2: int) -> int:
             return n1 * n2
 
         @ensure(outcome=[is_even])
-        @transformer_init
+        @partial_transformer
         def ti2(n1: int, n2: int) -> int:
             return n1 * n2
 
         @ensure(changes=[same_value_int])
-        @transformer_init
+        @partial_transformer
         def ti3(n1: int, n2: int) -> int:
             return n1 * n2
 
         @ensure(income=[is_even], outcome=[is_even])
-        @transformer_init
+        @partial_transformer
         def ti4(n1: int, n2: int) -> int:
             return n1 * n2
 
         @ensure(income=[is_even], changes=[same_value_int])
-        @transformer_init
+        @partial_transformer
         def ti5(n1: int, n2: int) -> int:
             return n1 * n2
 

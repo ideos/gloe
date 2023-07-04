@@ -2,7 +2,7 @@ import math
 from typing import Tuple
 
 from tests.lib.exceptions import LnOfNegativeNumber
-from src.gloe import transformer, transformer_init
+from src.gloe import transformer, partial_transformer
 
 
 @transformer
@@ -67,17 +67,17 @@ def natural_logarithm(num: float) -> float:
         return math.log(num, math.e)
 
 
-@transformer_init
+@partial_transformer
 def logarithm(arg: float, base: float) -> float:
     return math.log(arg) / math.log(base)
 
 
-@transformer_init
+@partial_transformer
 def format_currency(number: float, thousands_separator: str) -> str:
     return f'{number}:{thousands_separator}.2f'
 
 
-@transformer_init
+@partial_transformer
 def repeat(content: str, n_times: int, linebreak: bool) -> str:
     repeated = content * n_times
     if linebreak:

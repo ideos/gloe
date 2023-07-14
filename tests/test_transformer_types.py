@@ -6,7 +6,7 @@ from typing import Iterable
 from typing_extensions import assert_type
 
 from src.gloe import Begin, ensure
-from src.gloe.bridge import bridge
+from src.gloe.experimental.bridge import bridge
 from src.gloe.collections import Map
 from tests.lib.conditioners import *
 from tests.lib.ensurers import is_even, same_value, same_value_int, is_greater_than_10

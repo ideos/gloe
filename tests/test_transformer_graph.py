@@ -10,7 +10,7 @@ from lib.transformers import divide_by_2, logarithm, minus1, \
     square_root, \
     sum1, \
     sum_tuple2, \
-    sum_tuple3, times2
+    sum_tuple3, times2, to_string, tuple_concatenate
 from src.gloe import Begin, Transformer
 from src.gloe.utils import forward
 
@@ -38,6 +38,23 @@ class TestTransformerGraph(unittest.TestCase):
 
         for edge in edges_with_id:
             self.assertIn(edge, edges)
+
+    def _assert_edge_properties(
+        self,
+        transformer: Transformer,
+        graph: DiGraph,
+        expected_edges_props: dict[tuple[str, str], Any]
+    ):
+        ids_by_name = self._get_nodes_by_name(transformer)
+        edges_with_id = {
+            (ids_by_name[edge[0]], ids_by_name[edge[1]]): props
+            for edge, props in expected_edges_props.items()
+        }
+        current_edge_props = {(u, v): graph.get_edge_data(u, v) for u, v in edges_with_id}
+
+        for edge, current_props in current_edge_props.items():
+            expected_props = edges_with_id[edge]
+            self.assertDictEqual(current_props | expected_props, current_props)
 
     def _assert_nodes_count(self, expected: int, graph: DiGraph):
         nodes = graph.nodes.items()
@@ -312,3 +329,45 @@ class TestTransformerGraph(unittest.TestCase):
         }
 
         self._assert_nodes_properties(nodes_properties, conditional, graph)
+
+    def test_edge_labels_case(self):
+        single_edge = sum1 >> square
+        graph = single_edge.graph()
+
+        expected_edge_props = {
+            ('sum1', 'square'): {
+                'label': 'float'
+            }
+        }
+
+        self._assert_edge_properties(single_edge, graph, expected_edge_props)
+
+        divergent_edges = sum1 >> (
+            square >> to_string,
+            square_root
+        ) >> tuple_concatenate
+        graph = divergent_edges.graph()
+
+        expected_edge_props = {
+            ('sum1', 'square'): {
+                'label': 'float'
+            },
+            ('sum1', 'square_root'): {
+                'label': 'float'
+            },
+            ('square', 'to_string'): {
+                'label': 'float'
+            },
+            ('to_string', 'Converge'): {
+                'label': 'str'
+            },
+            ('square_root', 'Converge'): {
+                'label': 'float'
+            },
+            ('Converge', 'tuple_concatenate'): {
+                'label': '(str, float)'
+            }
+        }
+
+        self._assert_edge_properties(divergent_edges, graph, expected_edge_props)
+

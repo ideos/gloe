@@ -401,7 +401,12 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
             if child_final_node != next_node_id:
                 net.add_edge(child_final_node, next_node_id, label=next_node.input_annotation)
 
-    def _dag(self, net: DiGraph, next_node: Union['Transformer', None] = None, custom_data: dict[str, Any] = {}):
+    def _dag(
+        self,
+        net: DiGraph,
+        next_node: Union['Transformer', None] = None,
+        custom_data: dict[str, Any] = {}
+    ):
         in_nodes = [edge[1] for edge in net.in_edges()]
 
         previous = self.previous
@@ -435,7 +440,7 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
 
                 if len(previous.children) == 0 and (not previous.invisible or previous.previous is None):
                     previous_node_id = previous._add_net_node(net)
-                    net.add_edge(previous_node_id, next_node_id, label=_next_node.output_annotation)
+                    net.add_edge(previous_node_id, next_node_id, label=previous.output_annotation)
 
                 if previous_node_id not in in_nodes:
                     previous._dag(net, _next_node, custom_data)

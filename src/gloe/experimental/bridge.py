@@ -1,7 +1,7 @@
 from contextvars import ContextVar
 from typing import Generic, TypeVar
 
-from .transformers import Transformer
+from src.gloe.transformers import Transformer
 
 T = TypeVar("T")
 B = TypeVar("B")

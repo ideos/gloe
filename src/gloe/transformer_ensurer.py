@@ -16,7 +16,7 @@ from .transformers import Transformer
 _T = TypeVar("_T")
 _S = TypeVar("_S")
 _U = TypeVar("_U")
-P1 = ParamSpec("P1")
+_P1 = ParamSpec("_P1")
 
 
 class TransformerEnsurer(Generic[_T, _S]):
@@ -104,8 +104,8 @@ class _ensure_income(Generic[_T]):
 
     @overload
     def __call__(
-        self, transformer_init: Callable[P1, Transformer[_T, _U]]
-    ) -> Callable[P1, Transformer[_T, _U]]:
+        self, transformer_init: Callable[_P1, Transformer[_T, _U]]
+    ) -> Callable[_P1, Transformer[_T, _U]]:
         pass
 
     def __call__(self, arg):
@@ -143,8 +143,8 @@ class _ensure_outcome(Generic[_S]):
 
     @overload
     def __call__(
-        self, transformer_init: Callable[P1, Transformer[_U, _S]]
-    ) -> Callable[P1, Transformer[_U, _S]]:
+        self, transformer_init: Callable[_P1, Transformer[_U, _S]]
+    ) -> Callable[_P1, Transformer[_U, _S]]:
         pass
 
     def __call__(self, arg):
@@ -183,8 +183,8 @@ class _ensure_changes(Generic[_T, _S]):
 
     @overload
     def __call__(
-        self, transformer_init: Callable[P1, Transformer[_T, _S]]
-    ) -> Callable[P1, Transformer[_T, _S]]:
+        self, transformer_init: Callable[_P1, Transformer[_T, _S]]
+    ) -> Callable[_P1, Transformer[_T, _S]]:
         pass
 
     def __call__(self, arg):
@@ -240,8 +240,8 @@ class _ensure_both(Generic[_T, _S]):
 
     @overload
     def __call__(
-        self, transformer_init: Callable[P1, Transformer[_T, _S]]
-    ) -> Callable[P1, Transformer[_T, _S]]:
+        self, transformer_init: Callable[_P1, Transformer[_T, _S]]
+    ) -> Callable[_P1, Transformer[_T, _S]]:
         pass
 
     def __call__(self, arg):

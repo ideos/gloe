@@ -1,6 +1,6 @@
 import unittest
 
-from src.gloe import EmptyBridgeOnDrop, bridge
+from src.gloe.experimental import EmptyBridgeOnDrop, bridge
 from tests.lib.transformers import *
 
 

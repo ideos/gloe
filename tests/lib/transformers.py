@@ -60,6 +60,16 @@ def to_string(num: float) -> str:
 
 
 @transformer
+def tuple_concatenate(strs: Tuple[str, float]) -> str:
+    return strs[0] + str(strs[1])
+
+
+@transformer
+def duplicate(string: str) -> str:
+    return string + string
+
+
+@transformer
 def natural_logarithm(num: float) -> float:
     if num < 0:
         raise LnOfNegativeNumber(num)

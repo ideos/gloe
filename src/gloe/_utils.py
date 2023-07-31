@@ -1,5 +1,5 @@
 from types import GenericAlias
-from typing import ForwardRef, _GenericAlias
+from typing import _GenericAlias  # type: ignore
 
 
 def _format_tuple(tuple_annotation: tuple) -> str:
@@ -37,5 +37,3 @@ def _format_return_annotation(return_annotation) -> str:
         return _format_generic_alias(return_annotation)
 
     return str(return_annotation.__name__)
-
-ForwardRef

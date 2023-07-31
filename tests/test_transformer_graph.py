@@ -11,8 +11,7 @@ from lib.transformers import divide_by_2, logarithm, minus1, \
     sum1, \
     sum_tuple2, \
     sum_tuple3, times2, to_string, tuple_concatenate
-from src.gloe import Begin, Transformer
-from src.gloe.utils import forward
+from src.gloe import forward, Transformer
 
 
 class TestTransformerGraph(unittest.TestCase):
@@ -121,7 +120,7 @@ class TestTransformerGraph(unittest.TestCase):
 
     def test_complex_divergent_case(self):
         divergent = square >> (
-            sum1 >> if_is_even.Then(square_root).Else(forward),
+            sum1 >> if_is_even.Then(square_root).Else(forward()),
             minus1 >> natural_logarithm,
             times2 >> divide_by_2
         ) >> sum_tuple3
@@ -176,7 +175,7 @@ class TestTransformerGraph(unittest.TestCase):
 
     def test_simple_conditional_case(self):
 
-        conditional = square_root >> if_is_even.Then(sum1).Else(forward) >> minus1
+        conditional = square_root >> if_is_even.Then(sum1).Else(forward()) >> minus1
 
         graph: DiGraph = conditional.graph()
 
@@ -202,7 +201,7 @@ class TestTransformerGraph(unittest.TestCase):
         )
         conditional = (
             square_root >>
-            if_is_even.Then(then_graph).Else(forward) >>
+            if_is_even.Then(then_graph).Else(forward()) >>
             minus1
         )
 
@@ -241,41 +240,41 @@ class TestTransformerGraph(unittest.TestCase):
 
     def test_begin_node_case(self):
 
-        begin = Begin[float]() >> (
+        begin1 = forward[float]() >> (
             sum1,
             minus1
         ) >> sum_tuple2
 
-        graph: DiGraph = begin.graph()
+        graph: DiGraph = begin1.graph()
 
         self._assert_nodes_count(5, graph)
         self._assert_edges_count(5, graph)
 
         expected_edges = [
-            ('Begin', 'sum1'),
-            ('Begin', 'minus1'),
+            ('forward', 'sum1'),
+            ('forward', 'minus1'),
             ('sum1', 'Converge'),
             ('minus1', 'Converge'),
             ('Converge', 'sum_tuple2')
         ]
 
-        self._assert_graph_has_edges(begin, graph, expected_edges)
+        self._assert_graph_has_edges(begin1, graph, expected_edges)
 
     def test_invisible_nodes_case(self):
 
-        begin1 = Begin[float]() >> (
+        begin1 = forward[float]() >> (
             sum1,
             minus1
         ) >> sum_tuple2
 
-        begin2 = Begin[float]() >> (
+        begin2 = forward[float]() >> (
             divide_by_2,
             times2
         ) >> mul_tuple2
 
-        begin = begin1 >> begin2
+        begin3 = begin1 >> begin2
 
-        graph: DiGraph = begin.graph()
+        graph: DiGraph = begin3.graph()
 
         self._assert_nodes_count(9, graph)
         self._assert_edges_count(10, graph)
@@ -303,7 +302,7 @@ class TestTransformerGraph(unittest.TestCase):
         )
         conditional = (
             square_root >>
-            if_is_even.Then(then_graph).Else(forward) >>
+            if_is_even.Then(then_graph).Else(forward()) >>
             minus1
         )
 

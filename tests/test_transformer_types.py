@@ -5,7 +5,7 @@ from typing import Iterable
 
 from typing_extensions import assert_type
 
-from src.gloe import Begin, ensure
+from src.gloe import forward, ensure
 from src.gloe.experimental.bridge import bridge
 from src.gloe.collections import Map
 from tests.lib.conditioners import *
@@ -107,7 +107,7 @@ class TestTransformerTypes(unittest.TestCase):
         Test the transformer map collection operation
         """
 
-        mapped_logarithm = Begin[Iterable[float]]() >> Map(format_currency(thousands_separator=','))
+        mapped_logarithm = forward[Iterable[float]]() >> Map(format_currency(thousands_separator=','))
 
         assert_type(mapped_logarithm, Transformer[Iterable[float], Iterable[str]])
 

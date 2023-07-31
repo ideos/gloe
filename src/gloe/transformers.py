@@ -1,10 +1,12 @@
 import copy
+import traceback
 import types
 import uuid
 import inspect
 from abc import ABC, abstractmethod
 from functools import cached_property
 from inspect import Signature
+
 import networkx as nx
 from networkx import DiGraph, Graph
 from types import GenericAlias
@@ -13,10 +15,9 @@ from typing import Any, \
     Generic, \
     Tuple, \
     TypeAlias, TypeVar, \
-    Union, cast, overload
+    Union, cast, overload, Iterable
 from uuid import UUID
 from itertools import groupby
-from typing_extensions import Self
 
 from ._utils import _format_return_annotation
 from .sequential_pass import SequentialPass
@@ -59,11 +60,15 @@ class TransformerException(Exception):
         raiser_transformer: 'Transformer',
         message: str | None = None
     ):
-        self.internal_exception = internal_exception
+        self._internal_exception = internal_exception
         self.raiser_transformer = raiser_transformer
-        internal_exception.__context__ = self
+        self._traceback = internal_exception.__traceback__
+        internal_exception.__cause__ = self
         super().__init__(message)
 
+    @property
+    def internal_exception(self):
+        return self._internal_exception.with_traceback(self._traceback)
 
 class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
     """
@@ -216,7 +221,7 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
         self,
         transform: Callable[['Transformer', _A], _S] | None = None,
         regenerate_instance_id: bool = False
-    ) -> Self:
+    ) -> 'Transformer[_A, _S]':
         copied = copy.copy(self)
 
         func_type = types.MethodType
@@ -467,7 +472,7 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
                 net.edges[u, v]['label'] = ''
 
         agraph = nx.nx_agraph.to_agraph(net)
-        subgraphs = groupby(boxed_nodes, key=lambda x: x[1]['parent_id'])
+        subgraphs: Iterable[Tuple] = groupby(boxed_nodes, key=lambda x: x[1]['parent_id'])
         for parent_id, nodes in subgraphs:
             nodes = list(nodes)
             node_ids = [node[0] for node in nodes]
@@ -488,28 +493,40 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
 
             for handler in self._handlers:
                 handler.handle(data, transformed)
-        except TransformerException as exception:
-            transform_exception = TransformerException(
-                internal_exception=exception.internal_exception,
-                raiser_transformer=self,
-                message=f"Error occurred in node with ID {self.id}."
-            )
         except Exception as exception:
-            if type(exception.__context__) == TransformerException:
-                transform_exception = cast(TransformerException, exception.__context__)
+            if type(exception.__cause__) == TransformerException:
+                transform_exception = exception.__cause__
             else:
+                tb = traceback.extract_tb(exception.__traceback__)
+
+                # TODO: Make this filter condition stronger
+                transformer_frames = [
+                    frame for frame in tb
+                    if frame.name == self.__class__.__name__ or frame.name == 'transform'
+                ]
+
+                if len(transformer_frames) == 1:
+                    transformer_frame = transformer_frames[0]
+                    exception_message = (
+                        f'\n  '
+                        f'File "{transformer_frame.filename}", line {transformer_frame.lineno}, '
+                        f'in transformer "{self.__class__.__name__}"\n  '
+                        f'  >> {transformer_frame.line}'
+                    )
+                else:
+                    exception_message = f'An error occurred in transformer "{self.__class__.__name__}"'
+
                 transform_exception = TransformerException(
                     internal_exception=exception,
                     raiser_transformer=self,
-                    message=f"Error occurred in node [{self.__class__.__name__}]."
+                    message=exception_message
                 )
 
         if transform_exception is not None:
-            # print(traceback.format_tb(internal_exception.previous_exception.__traceback__))
             raise transform_exception.internal_exception
 
         if type(transformed) is not None:
-            return transformed
+            return cast(_S, transformed)
 
         raise NotImplementedError
 
@@ -539,7 +556,8 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
     def __rshift__(
         self,
         transformers: Tuple[
-            'Transformer[_S, _U]', 'Transformer[_S, _R1]', 'Transformer[_S, _R2]', 'Transformer[_S, _R3]', 'Transformer[_S, _R4]'
+            'Transformer[_S, _U]', 'Transformer[_S, _R1]', 'Transformer[_S, _R2]', 'Transformer[_S, _R3]',
+            'Transformer[_S, _R4]'
         ]
     ) -> 'Transformer[_A, Tuple[_U, _R1, _R2, _R3, _R4]]':
         pass
@@ -548,7 +566,8 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
     def __rshift__(
         self,
         transformers: Tuple[
-            'Transformer[_S, _U]', 'Transformer[_S, _R1]', 'Transformer[_S, _R2]', 'Transformer[_S, _R3]', 'Transformer[_S, _R4]', 'Transformer[_S, _R5]'
+            'Transformer[_S, _U]', 'Transformer[_S, _R1]', 'Transformer[_S, _R2]', 'Transformer[_S, _R3]',
+            'Transformer[_S, _R4]', 'Transformer[_S, _R5]'
         ]
     ) -> 'Transformer[_A, Tuple[_U, _R1, _R2, _R3, _R4, _R5]]':
         pass
@@ -557,7 +576,8 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
     def __rshift__(
         self,
         transformers: Tuple[
-            'Transformer[_S, _U]', 'Transformer[_S, _R1]', 'Transformer[_S, _R2]', 'Transformer[_S, _R3]', 'Transformer[_S, _R4]', 'Transformer[_S, _R5]', 'Transformer[_S, _R6]'
+            'Transformer[_S, _U]', 'Transformer[_S, _R1]', 'Transformer[_S, _R2]', 'Transformer[_S, _R3]',
+            'Transformer[_S, _R4]', 'Transformer[_S, _R5]', 'Transformer[_S, _R6]'
         ]
     ) -> 'Transformer[_A, Tuple[_U, _R1, _R2, _R3, _R4, _R5, _R6]]':
         pass
@@ -583,7 +603,7 @@ class Transformer(Generic[_A, _S], SequentialPass['Transformer'], ABC):
             raise Exception("Unsupported transformer argument")
 
 
-class Begin(Generic[_A], Transformer[_A, _A]):
+class forward(Generic[_A], Transformer[_A, _A]):
     def __init__(self):
         super().__init__()
         self.invisible = True

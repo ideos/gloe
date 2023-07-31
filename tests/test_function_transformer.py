@@ -207,16 +207,16 @@ class TestFunctionTransformer(unittest.TestCase):
 
     def test_transformer_error_handling(self):
         """
-        Test if a raised error stores the correct TransformerException in its context
+        Test if a raised error stores the correct TransformerException as its cause
         """
 
         graph = minus1 >> natural_logarithm
         try:
             graph(0)
         except LnOfNegativeNumber as exception:
-            self.assertEqual(type(exception.__context__), TransformerException)
+            self.assertEqual(type(exception.__cause__), TransformerException)
 
-            exception_ctx = cast(TransformerException, exception.__context__)
+            exception_ctx = cast(TransformerException, exception.__cause__)
             self.assertEqual(natural_logarithm, exception_ctx.raiser_transformer)
 
     def test_curried_transformer(self):

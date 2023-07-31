@@ -51,8 +51,8 @@ class ConditionerTransformer(Generic[In, ThenOut, ElseOut], Transformer[In, Unio
         self,
         transform: Callable[['Transformer', In], Union[ThenOut, ElseOut]] | None = None,
         regenerate_instance_id: bool = False
-    ) -> Self:
-        copied: Self = super().copy(transform, regenerate_instance_id)
+    ) -> 'ConditionerTransformer[In, ThenOut, ElseOut]':
+        copied: ConditionerTransformer[In, ThenOut, ElseOut] = super().copy(transform, regenerate_instance_id)
         copied.then_transformer = copied.children[0]
         copied.else_transformer = copied.children[1]
         return copied
@@ -115,7 +115,7 @@ class If(Generic[In]):
             self.__class__.__name__ = name
 
     def Then(self, next_transformer: Transformer[In, ThenOut]) -> _IfThen[In, ThenOut]:
-        if_then = _IfThen(self._condition, next_transformer)
+        if_then = _IfThen[In, ThenOut](self._condition, next_transformer)
         if_then.__class__.__name__ = self.__class__.__name__
         return if_then
 

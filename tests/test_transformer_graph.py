@@ -11,7 +11,8 @@ from lib.transformers import divide_by_2, logarithm, minus1, \
     sum1, \
     sum_tuple2, \
     sum_tuple3, times2, to_string, tuple_concatenate
-from src.gloe import forward, Transformer
+from src.gloe import Transformer
+from src.gloe.utils import forward
 
 
 class TestTransformerGraph(unittest.TestCase):

@@ -219,7 +219,7 @@ class TestFunctionTransformer(unittest.TestCase):
             exception_ctx = cast(TransformerException, exception.__cause__)
             self.assertEqual(natural_logarithm, exception_ctx.raiser_transformer)
 
-    def test_curried_transformer(self):
+    def test_partial_transformer(self):
         """
         Test the curried transformer
         """

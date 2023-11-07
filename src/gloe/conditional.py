@@ -1,8 +1,6 @@
 from inspect import Signature
 from typing import Callable, Generic, Optional, TypeVar, Union
 
-from typing_extensions import Self
-
 from .transformers import Transformer
 from .utils import forget
 
@@ -101,7 +99,7 @@ class _ElseIf(Generic[In, ThenOut]):
         self,
         next_transformer: Transformer[In, ElseIfOut]
     ) -> _IfThen[In, Union[ThenOut, ElseIfOut]]:
-        if_then = _IfThen(self._condition, next_transformer)
+        if_then = _IfThen[In, Union[ThenOut, ElseIfOut]](self._condition, next_transformer)
         if_then.__class__.__name__ = self.__class__.__name__
         return if_then
 

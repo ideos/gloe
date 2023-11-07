@@ -3,3 +3,8 @@ testes
 docs/build
 .idea
 playground
+build
+
+src/*
+!src/gloe
+**/*.dot

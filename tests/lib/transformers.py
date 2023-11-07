@@ -1,5 +1,9 @@
 import math
 from typing import Tuple
+import numpy as np
+from numpy import ndarray
+
+
 
 from tests.lib.exceptions import LnOfNegativeNumber
 from src.gloe import transformer, partial_transformer
@@ -21,6 +25,19 @@ def sum1(num: float) -> float:
     Sum 1 to the number
     """
     return float(num + 1)
+
+
+@transformer
+def random_matrix(size: int) -> ndarray:
+    return np.zeros(shape=(size, size))
+
+
+@transformer
+def multiply_by_random(matrix: ndarray) -> ndarray:
+    size = matrix.shape[0]
+    rnd_matrix = np.zeros(shape=(size, size))
+    result = matrix @ rnd_matrix
+    return result
 
 
 @transformer

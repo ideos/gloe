@@ -1,11 +1,12 @@
 import os
 import unittest
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, TypeVar, Any
 
 from typing_extensions import assert_type
 
-from src.gloe import forward, ensure
+from src.gloe import ensure
+from src.gloe.utils import forward
 from src.gloe.experimental.bridge import bridge
 from src.gloe.collections import Map
 from tests.lib.conditioners import *
@@ -13,6 +14,9 @@ from tests.lib.ensurers import is_even, same_value, same_value_int, is_greater_t
 from tests.lib.transformers import *
 from src.gloe.transformers import Transformer
 from mypy import api
+
+
+In = TypeVar("In")
 
 
 class TestTransformerTypes(unittest.TestCase):
@@ -187,6 +191,19 @@ class TestTransformerTypes(unittest.TestCase):
         graph = sum1 >> num_bridge.pick() >> minus1 >> num_bridge.drop()
 
         assert_type(graph, Transformer[float, tuple[float, float]])
+
+    def _test_generic_transformer(self):
+        @partial_transformer
+        def tuplicate(income: In) -> Tuple[In, In]:
+            return income, income
+
+        @partial_transformer
+        def pick_first(income: Tuple[In, Any]) -> In:
+            return income[0]
+
+        graph = square >> tuplicate() >> pick_first() >> forward()
+
+        assert_type(graph, Transformer[float, float])
 
     def test_all(self):
         file_path = Path(os.path.abspath(__file__))

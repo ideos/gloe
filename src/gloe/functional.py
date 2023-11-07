@@ -2,7 +2,7 @@ import inspect
 import warnings
 from inspect import Signature
 from types import FunctionType
-from typing import Any, Callable, Concatenate, ParamSpec, Tuple, TypeVar, cast, overload
+from typing import Callable, Concatenate, ParamSpec, TypeVar, cast
 
 from .transformers import Transformer
 
@@ -45,7 +45,7 @@ def transformer(func: Callable[[A], S]) -> Transformer[A, S]:
             category=RuntimeWarning
         )
 
-    class LambdaTransformer(Transformer):
+    class LambdaTransformer(Transformer[A, S]):
         __doc__ = func.__doc__
         __annotations__ = cast(FunctionType, func).__annotations__
 

@@ -101,13 +101,6 @@ The term graph is motivated by the non-linearity characteristic of some flows. A
 Any branch or ramification (transformers 2 and 3 or transformers 4 and 5 in above example) can have its own input and output types and it can be of any length and including others ramifications.
 
 
-Validation in Execution-time
-````````````````````````````
-
-
-Extensibility
-`````````````
-
 
 Concepts
 --------

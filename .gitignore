@@ -4,7 +4,7 @@ docs/build
 .idea
 playground
 build
-
+__pycache__
 src/*
 !src/gloe
 **/*.dot

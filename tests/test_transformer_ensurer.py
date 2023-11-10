@@ -11,7 +11,7 @@ from src.gloe import transformer, ensure, partial_transformer
 
 class TestTransformerEnsurer(unittest.TestCase):
     def test_ensure_decorator(self):
-        @ensure(income=[is_even])
+        @ensure(incoming=[is_even])
         @transformer
         def divide_by_2(num: int) -> float:
             return num / 2
@@ -50,7 +50,7 @@ class TestTransformerEnsurer(unittest.TestCase):
         self.assertRaises(NumberLessThanOrEquals10, lambda: identity(9))
 
     def test_many_ensurers(self):
-        @ensure(income=[is_even], outcome=[is_greater_than_10])
+        @ensure(incoming=[is_even], outcome=[is_greater_than_10])
         @transformer
         def multiply_by_2(num: int) -> float:
             return num * 2
@@ -60,8 +60,8 @@ class TestTransformerEnsurer(unittest.TestCase):
         self.assertRaises(NumberIsOdd, lambda: multiply_by_2(7))
         self.assertEqual(multiply_by_2(6), 12)
 
-    def test_ensurer_init_income(self):
-        @ensure(income=[is_even])
+    def test_ensurer_init_incoming(self):
+        @ensure(incoming=[is_even])
         @partial_transformer
         def multiply_by_even(n1: int, n2: int) -> int:
             return n1 * n2
@@ -70,7 +70,7 @@ class TestTransformerEnsurer(unittest.TestCase):
         self.assertEqual(multiply_by_even(2)(4), 8)
 
     def test_ensurer_init_outcome(self):
-        @ensure(income=[is_even])
+        @ensure(incoming=[is_even])
         @partial_transformer
         def multiply_by_equals_even(n1: int, n2: int) -> int:
             return n1 * n2
@@ -78,13 +78,13 @@ class TestTransformerEnsurer(unittest.TestCase):
         self.assertRaises(NumberIsOdd, lambda: multiply_by_equals_even(3)(3))
         self.assertEqual(multiply_by_equals_even(3)(2), 6)
 
-    def test_ensurer_init_income_outcome(self):
-        @ensure(income=[is_even], outcome=[is_even])
+    def test_ensurer_init_incoming_outcome(self):
+        @ensure(incoming=[is_even], outcome=[is_even])
         @partial_transformer
         def multiply_by_even_equals_even(n1: int, n2: int) -> int:
             return n1 * n2
 
-        @ensure(income=[is_odd], outcome=[is_even])
+        @ensure(incoming=[is_odd], outcome=[is_even])
         @partial_transformer
         def multiply_by_odd_equals_even(n1: int, n2: int) -> int:
             return n1 * n2

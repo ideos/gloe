@@ -92,10 +92,10 @@ def output_ensurer(func: Callable):
     return LambdaEnsurer()
 
 
-class _ensure_income(Generic[_T]):
-    def __init__(self, income: Sequence[Callable[[_T], Any]]):
+class _ensure_incoming(Generic[_T]):
+    def __init__(self, incoming: Sequence[Callable[[_T], Any]]):
         self.input_ensurers_instances = [
-            input_ensurer(ensurer) for ensurer in income
+            input_ensurer(ensurer) for ensurer in incoming
         ]
 
     @overload
@@ -132,9 +132,9 @@ class _ensure_income(Generic[_T]):
 
 
 class _ensure_outcome(Generic[_S]):
-    def __init__(self, income: Sequence[Callable[[_S], Any]]):
+    def __init__(self, incoming: Sequence[Callable[[_S], Any]]):
         self.output_ensurers_instances = [
-            output_ensurer(ensurer) for ensurer in income
+            output_ensurer(ensurer) for ensurer in incoming
         ]
 
     @overload
@@ -215,13 +215,13 @@ class _ensure_both(Generic[_T, _S]):
 
     def __init__(
         self,
-        income: Sequence[Callable[[_T], Any]],
+        incoming: Sequence[Callable[[_T], Any]],
         outcome: Sequence[Callable[[_S], Any]],
         changes: Sequence[Callable[[_T, _S], Any]]
     ):
-        income_seq = income if type(income) == list else [income]
+        incoming_seq = incoming if type(incoming) == list else [incoming]
         self.input_ensurers_instances = [
-            input_ensurer(ensurer) for ensurer in income_seq
+            input_ensurer(ensurer) for ensurer in incoming_seq
         ]
 
         outcome_seq = outcome if type(outcome) == list else [outcome]
@@ -270,7 +270,7 @@ class _ensure_both(Generic[_T, _S]):
 
 
 @overload
-def ensure(income: Sequence[Callable[[_T], Any]]) -> _ensure_income[_T]:
+def ensure(incoming: Sequence[Callable[[_T], Any]]) -> _ensure_incoming[_T]:
     pass
 
 
@@ -286,7 +286,7 @@ def ensure(changes: Sequence[Callable[[_T, _S], Any]]) -> _ensure_changes[_T, _S
 
 @overload
 def ensure(
-    income: Sequence[Callable[[_T], Any]],
+    incoming: Sequence[Callable[[_T], Any]],
     outcome: Sequence[Callable[[_S], Any]]
 ) -> _ensure_both[_T, _S]:
     pass
@@ -294,7 +294,7 @@ def ensure(
 
 @overload
 def ensure(
-    income: Sequence[Callable[[_T], Any]],
+    incoming: Sequence[Callable[[_T], Any]],
     changes: Sequence[Callable[[_T, _S], Any]]
 ) -> _ensure_both[_T, _S]:
     pass
@@ -310,7 +310,7 @@ def ensure(
 
 @overload
 def ensure(
-    income: Sequence[Callable[[_T], Any]],
+    incoming: Sequence[Callable[[_T], Any]],
     outcome: Sequence[Callable[[_S], Any]],
     changes: Sequence[Callable[[_T, _S], Any]]
 ) -> _ensure_both[_T, _S]:
@@ -318,8 +318,8 @@ def ensure(
 
 
 def ensure(*args, **kwargs):
-    if len(kwargs.keys()) == 1 and 'income' in kwargs:
-        return _ensure_income(kwargs['income'])
+    if len(kwargs.keys()) == 1 and 'incoming' in kwargs:
+        return _ensure_incoming(kwargs['incoming'])
 
     if len(kwargs.keys()) == 1 and 'outcome' in kwargs:
         return _ensure_outcome(kwargs['outcome'])
@@ -328,9 +328,9 @@ def ensure(*args, **kwargs):
         return _ensure_changes(kwargs['changes'])
 
     if len(kwargs.keys()) > 1:
-        income = []
-        if 'income' in kwargs:
-            income = kwargs['income']
+        incoming = []
+        if 'incoming' in kwargs:
+            incoming = kwargs['incoming']
 
         outcome = []
         if 'outcome' in kwargs:
@@ -340,4 +340,4 @@ def ensure(*args, **kwargs):
         if 'changes' in kwargs:
             changes = kwargs['changes']
 
-        return _ensure_both(income, outcome, changes)
+        return _ensure_both(incoming, outcome, changes)

@@ -116,7 +116,7 @@ class TestTransformerTypes(unittest.TestCase):
         assert_type(mapped_logarithm, Transformer[Iterable[float], Iterable[str]])
 
     def _test_transformer_ensurer(self):
-        @ensure(income=[is_even])
+        @ensure(incoming=[is_even])
         @transformer
         def t1(n1: int) -> int:
             return n1 * n1
@@ -131,12 +131,12 @@ class TestTransformerTypes(unittest.TestCase):
         def t3(n1: int) -> int:
             return n1 * n1
 
-        @ensure(income=[is_even], outcome=[is_even])
+        @ensure(incoming=[is_even], outcome=[is_even])
         @transformer
         def t4(n1: int) -> int:
             return n1 * n1
 
-        @ensure(income=[is_even], outcome=[is_greater_than_10], changes=[same_value])
+        @ensure(incoming=[is_even], outcome=[is_greater_than_10], changes=[same_value])
         @transformer
         def t5(n1: int) -> float:
             return n1 * n1
@@ -154,7 +154,7 @@ class TestTransformerTypes(unittest.TestCase):
         assert_type(t6, Transformer[float, float])
 
     def _test_transformer_init_ensurer(self):
-        @ensure(income=[is_even])
+        @ensure(incoming=[is_even])
         @partial_transformer
         def ti1(n1: int, n2: int) -> int:
             return n1 * n2
@@ -169,12 +169,12 @@ class TestTransformerTypes(unittest.TestCase):
         def ti3(n1: int, n2: int) -> int:
             return n1 * n2
 
-        @ensure(income=[is_even], outcome=[is_even])
+        @ensure(incoming=[is_even], outcome=[is_even])
         @partial_transformer
         def ti4(n1: int, n2: int) -> int:
             return n1 * n2
 
-        @ensure(income=[is_even], changes=[same_value_int])
+        @ensure(incoming=[is_even], changes=[same_value_int])
         @partial_transformer
         def ti5(n1: int, n2: int) -> int:
             return n1 * n2
@@ -194,12 +194,12 @@ class TestTransformerTypes(unittest.TestCase):
 
     def _test_generic_transformer(self):
         @partial_transformer
-        def tuplicate(income: In) -> Tuple[In, In]:
-            return income, income
+        def tuplicate(data: In) -> Tuple[In, In]:
+            return data, data
 
         @partial_transformer
-        def pick_first(income: Tuple[In, Any]) -> In:
-            return income[0]
+        def pick_first(data: Tuple[In, Any]) -> In:
+            return data[0]
 
         graph = square >> tuplicate() >> pick_first() >> forward()
 

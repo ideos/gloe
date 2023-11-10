@@ -24,7 +24,7 @@ def same_value(data: float, output: float):
         raise NumbersNotEqual()
 
 
-def same_value_int(income: int, outcome: int):
-    if income != outcome:
+def same_value_int(incoming: int, outcome: int):
+    if incoming != outcome:
         raise NumbersNotEqual()
 

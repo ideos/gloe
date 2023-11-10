@@ -40,7 +40,7 @@ Basic structure of a Graph:
 (type A) -> [Transformer 1] -> (type B) -> [Transformer 2] -> ... -> (type X)
 ```
 
-> Type A is called **income type** and type X is called **outcome type** of
+> Type A is called **incoming type** and type X is called **outcome type** of
 the graph.
 
 A transformer must have an atomic and well-defined responsibility. As we will see later, implement a Transformer is a ridiculously easy task, so have many of them is not a problem. Keep it simple, make it easier to understand, document and test!
@@ -53,7 +53,7 @@ Its dependencies are only other python libraries, nothing external is required.
 
 ### Type-safety
 
-Gloe was implemented to be completely type-safe. It means, when using Gloe, you must provide all the type hints of the created transformers, which can be summed up in its income and outcome types. Using these definitions, Gloe can warn about a malformed graph right away in the IDE and make precise inferring of extremely complex types.
+Gloe was implemented to be completely type-safe. It means, when using Gloe, you must provide all the type hints of the created transformers, which can be summed up in its incoming and outcome types. Using these definitions, Gloe can warn about a malformed graph right away in the IDE and make precise inferring of extremely complex types.
 
 For example, consider the bellow Transformer:
 
@@ -69,7 +69,7 @@ must have the following signature:
 ```
 
 That is, the outcome type of `MyTransformer` must be the same
-as the income of `NextTransformer`. When building your
+as the incoming of `NextTransformer`. When building your
 graphs, you will know about any problem with types immediately.
 
 > The representation of a transformer with its name and types is called
@@ -291,7 +291,7 @@ def only_positive(numbers: list[int]):
     raise Exception(f"The numbers {', '.join(non_positives)} are not positive.")
 
 
-@ensure(income=[only_positive])
+@ensure(incoming=[only_positive])
 @transformer
 def filter_even(numbers: list[int]) -> list[int]:
     return [num for num in numbers if num % 2 == 0]
@@ -301,11 +301,11 @@ In this version we are validating the incoming data outside the transformer, wha
 
 The `@ensurer` decorator must be attached to a transformer and has the following parameters. All parameters receive a list of validators. A validator means just a normal function that perform a validation in the desired data and must throw an exception if the validation fails. The return of the validator is ignored.
 
-- `income: list[Callable[[In], ...]]`: list of input validators. `In` type is the transformer income type.
+- `incoming: list[Callable[[In], ...]]`: list of input validators. `In` type is the transformer incoming type.
 
 - `outcome: list[Callable[[Out], ...]]`: list of output validators. `Out` type is the transformer outcome type.
 
-- `changes: list[Callable[[In, Out], ...]]`: list of changes validators. A changes validator receives two parameters: the input and output data, which allow us to check if some kind of consistence is preserved after applying the transformation on the data. `In` and `Out` types are the transformer income type and outcome type, respectively.
+- `changes: list[Callable[[In, Out], ...]]`: list of changes validators. A changes validator receives two parameters: the input and output data, which allow us to check if some kind of consistence is preserved after applying the transformation on the data. `In` and `Out` types are the transformer incoming type and outcome type, respectively.
 
 #### A complete example
 
@@ -313,7 +313,7 @@ Suppose we have a Pandas dataframe of houses for sale, and we want to do an expl
 
 ```python
 @partial_transformer
-def filter_cities_more_expensive_than(houses_df: pd.DataFrame, min_price: float) -> pd.DataFrame:
+def cities_more_expensive_than(houses_df: pd.DataFrame, min_price: float) -> pd.DataFrame:
     ...
 ```
 
@@ -341,9 +341,9 @@ def lowest_price_gt_avg(houses_df: pd.DataFrame, city_prices_df: pd.DataFrame):
 Now we can add all these validations to our transformer:
 
 ```python
-@ensure(income=[has_no_nan_prices], outcome=[is_non_empty], changes=[lowest_price_gt_avg])
+@ensure(incoming=[has_no_nan_prices], outcome=[is_non_empty], changes=[lowest_price_gt_avg])
 @partial_transformer
-def filter_cities_more_expensive_than(houses_df: pd.DataFrame, min_price: float) -> pd.DataFrame:
+def cities_more_expensive_than(houses_df: pd.DataFrame, min_price: float) -> pd.DataFrame:
     ...
 ```
 

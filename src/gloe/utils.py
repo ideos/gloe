@@ -13,9 +13,9 @@ def forget(data: Any) -> None:
 
 
 @transformer
-def debug(income: _In) -> _In:
+def debug(incoming: _In) -> _In:
     breakpoint()
-    return income
+    return incoming
 
 
 
@@ -33,7 +33,7 @@ class forward(Generic[_In], Transformer[_In, _In]):
 
 
 
-def forward_income(
+def forward_incoming(
     inner_transformer: Transformer[_In, _Out]
 ) -> Transformer[_In, Tuple[_Out, _In]]:
     return forward[_In]() >> (inner_transformer, forward())

@@ -4,14 +4,13 @@
   <img src="./docs/assets/gloe-logo.png"><br>
 </div>
 
-# Let Gloe help you
+Let Gloe help you
+===
 
 Gloe (pronounced /ɡloʊ/, like "glow") is a general purpose library made to help developers to create, maintain, document and test operational and data flows. It can be used in data science and machine learning pipelines as well in servers, scripts or wherever else one identifies a lack between the code and the understanding of logical business. Gloe was not thought to be used in the entire application even less replacing any existing library, it was built to be integrated with other tools and to be implemented where the code complexity can be bigger than the desired.
 
 ## Table of Contents
 <!-- TOC -->
-* [Let Gloe help you](#let-gloe-help-you)
-  * [Table of Contents](#table-of-contents)
   * [Installing](#installing)
   * [Gloe\'s paradigm](#gloes-paradigm)
     * [Lightness](#lightness)
@@ -23,6 +22,7 @@ Gloe (pronounced /ɡloʊ/, like "glow") is a general purpose library made to hel
     * [Building a Pipeline](#building-a-pipeline)
     * [Partial Transformers](#partial-transformers)
     * [Ensurers](#ensurers)
+      * [A complete example](#a-complete-example)
 <!-- TOC -->
 
 ## Installing
@@ -173,7 +173,7 @@ class FilterEven(Transformer[list[int], list[int]]):
         return [num for num in numbers if num % 2 == 0]
 ```
 
-However, in this case, we need first to instantiate the `FilterEvent` class and then use the instance as a transformer:
+However, in this case, we need first to instantiate the `FilterEven` class and then use the instance as a transformer:
 
 ```python
 filter_even = FilterEven()

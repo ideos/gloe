@@ -2,7 +2,7 @@ from typing import Generic, Iterable, TypeVar
 
 from networkx import DiGraph
 
-from src.gloe.transformers import Transformer
+from ..transformers import Transformer
 
 _T = TypeVar("_T")
 _S = TypeVar("_S")

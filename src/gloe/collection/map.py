@@ -1,8 +1,6 @@
 from typing import Generic, Iterable, TypeVar
 
-from networkx import DiGraph
-
-from src.gloe.transformers import Transformer
+from ..transformers import Transformer
 
 _T = TypeVar("_T")
 _S = TypeVar("_S")
@@ -16,7 +14,7 @@ class Map(Generic[_T, _U], Transformer[Iterable[_T], Iterable[_U]]):
         self.invisible = True
         self.children = [mapping_transformer]
 
-        mapping_transformer.graph_node_props = {
+        mapping_transformer.graph_node_props = mapping_transformer.graph_node_props | {
             'parent_id': self.instance_id,
             'bounding_box': True,
             'box_label': 'mapping'

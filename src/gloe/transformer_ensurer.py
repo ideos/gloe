@@ -1,6 +1,5 @@
 import inspect
-import warnings
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from types import FunctionType
 from typing import Any, \
     Callable, \
@@ -19,15 +18,15 @@ _U = TypeVar("_U")
 _P1 = ParamSpec("_P1")
 
 
-class TransformerEnsurer(Generic[_T, _S]):
+class TransformerEnsurer(Generic[_T, _S], ABC):
 
     @abstractmethod
     def validate_input(self, data: _T):
-        pass
+        """Perform a validation on incoming data before execute the transformer code"""
 
     @abstractmethod
     def validate_output(self, data: _T, output: _S):
-        pass
+        """Perform a validation on outcome data after execute the transformer code"""
 
     def __call__(self, transformer: Transformer[_T, _S]) -> Transformer[_T, _S]:
 
@@ -42,16 +41,6 @@ class TransformerEnsurer(Generic[_T, _S]):
 
 
 def input_ensurer(func: Callable[[_T], Any]) -> TransformerEnsurer[_T, Any]:
-    func_signature = inspect.signature(func)
-    if len(func_signature.parameters) > 1:
-        warnings.warn(
-            "Only one parameter is allowed on Transformer Ensurer. "
-            f"Function '{func.__name__}' has the following signature: {func_signature}. "
-            "To pass a complex data, use a complex type like named tuples, "
-            "typed dicts, dataclasses or anything else.",
-            category=RuntimeWarning
-        )
-
     class LambdaEnsurer(TransformerEnsurer[_T, _S]):
         __doc__ = func.__doc__
         __annotations__ = cast(FunctionType, func).__annotations__

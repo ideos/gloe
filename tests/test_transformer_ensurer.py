@@ -1,5 +1,4 @@
 import unittest
-from typing import Callable
 
 from tests.lib.exceptions import NumberIsEven, \
     NumberLessThanOrEquals10, \
@@ -30,10 +29,10 @@ class TestTransformerEnsurer(unittest.TestCase):
 
         @ensure(changes=[same_value_int])
         @transformer
-        def sum1(num: int) -> int:
+        def _plus1(num: int) -> int:
             return num + 1
 
-        self.assertRaises(NumbersNotEqual, lambda: sum1(4))
+        self.assertRaises(NumbersNotEqual, lambda: _plus1(4))
 
         @ensure(outcome=[is_greater_than_10], changes=[same_value])
         @transformer

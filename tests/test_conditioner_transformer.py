@@ -11,7 +11,7 @@ class TestConditionerTransformer(unittest.TestCase):
         Test the most simple conditioned case
         """
 
-        conditioned_graph = square >> square_root >> if_not_zero.Then(sum1).Else(minus1)
+        conditioned_graph = square >> square_root >> if_not_zero.Then(plus1).Else(minus1)
 
         self.assertEqual(conditioned_graph(1), 2)
         self.assertEqual(conditioned_graph(0), -1)
@@ -22,7 +22,7 @@ class TestConditionerTransformer(unittest.TestCase):
         """
 
         conditioned_graph = square >> square_root >> (
-            if_not_zero.Then(sum1 >> minus1).Else(minus1),
+            if_not_zero.Then(plus1 >> minus1).Else(minus1),
             if_not_zero.Then(to_string).Else(to_string)
         )
 
@@ -33,20 +33,22 @@ class TestConditionerTransformer(unittest.TestCase):
         """
         Test the case of a flow with chained conditions
         """
+        def check(x: float) -> bool:
+            print('\nx\n')
+            return x == 1.0
 
         conditioned_graph = square >> (
-            if_is_even
-            .Then(sum1 >> minus1)
-            .ElseIf(lambda x: x == 1)
-            .Then(sum1 >> sum1)
-            .ElseIf(lambda x: x == 25)
-            .Then(minus1 >> minus1)
+            if_is_even.Then(plus1 >> minus1)
+            .ElseIf(check).Then(plus1 >> plus1)
+            .ElseIf(lambda x: x == 25.0).Then(minus1 >> minus1)
             .Else(square_root)
         )
-
-        self.assertEqual(conditioned_graph(3.0), 3.0)
-        self.assertEqual(conditioned_graph(4.0), 4.0)
-        self.assertEqual(conditioned_graph(5.0), 23.0)
+        print(conditioned_graph(1.0))
+        print(conditioned_graph(3.0))
+        # self.assertEqual(3.0, conditioned_graph(1.0))
+        self.assertEqual(3.0, conditioned_graph(3.0))
+        self.assertEqual(4.0, conditioned_graph(4.0))
+        self.assertEqual(23.0, conditioned_graph(5.0))
 
 
 if __name__ == '__main__':

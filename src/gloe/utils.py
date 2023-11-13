@@ -18,8 +18,6 @@ def debug(incoming: _In) -> _In:
     return incoming
 
 
-
-
 class forward(Generic[_In], Transformer[_In, _In]):
     def __init__(self):
         super().__init__()
@@ -30,7 +28,6 @@ class forward(Generic[_In], Transformer[_In, _In]):
 
     def transform(self, data: _In) -> _In:
         return data
-
 
 
 def forward_incoming(

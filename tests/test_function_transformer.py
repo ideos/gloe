@@ -2,10 +2,20 @@ import unittest
 from typing import cast
 
 from tests.lib.transformers import *
-from src.gloe import transformer, TransformerException
+from src.gloe import transformer, TransformerException, UnsupportedTransformerArgException
 
 
 class TestFunctionTransformer(unittest.TestCase):
+
+    def test_transformer_wrong_signature(self):
+        with self.assertWarns(RuntimeWarning):
+            @transformer  # type: ignore
+            def many_args(arg1: str, arg2: int):
+                return arg1, arg2
+
+    def test_transformer_hash(self):
+        self.assertEqual(hash(square.id), square.__hash__())
+
     def test_linear_flow(self):
         """
         Test the most simple linear case
@@ -17,6 +27,25 @@ class TestFunctionTransformer(unittest.TestCase):
         result = linear_graph(integer)
 
         self.assertEqual(integer, result)
+
+    def test_unsupported_argument(self):
+        def just_a_normal_function():
+            return None
+
+        with self.assertRaises(
+            UnsupportedTransformerArgException,
+            msg=f"Unsupported transformer argument: {just_a_normal_function}"
+        ):
+            _ = square >> just_a_normal_function  # type: ignore
+
+        with self.assertRaises(
+            UnsupportedTransformerArgException,
+            msg=f"Unsupported transformer argument: {just_a_normal_function}"
+        ):
+            _ = square >> (  # type: ignore
+                just_a_normal_function,
+                plus1
+            )
 
     def test_previous_property(self):
         """
@@ -105,10 +134,11 @@ class TestFunctionTransformer(unittest.TestCase):
         """
         Test the instantiation of large graph
         """
-        graph = sum1
-        max_iters = 488
+        graph = plus1
+
+        max_iters = 475
         for i in range(max_iters):
-            graph = graph >> sum1
+            graph = graph >> plus1
 
         result = graph(0)
         self.assertEqual(result, max_iters + 1)
@@ -117,7 +147,7 @@ class TestFunctionTransformer(unittest.TestCase):
         """
         Test the instantiation of large graph
         """
-        graph = sum1 >> sum1
+        graph = plus1 >> plus1
         graph = graph >> graph
         graph = graph >> graph
         graph = graph >> graph

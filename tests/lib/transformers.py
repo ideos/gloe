@@ -3,15 +3,8 @@ from typing import Tuple
 import numpy as np
 from numpy import ndarray
 
-
-
 from tests.lib.exceptions import LnOfNegativeNumber
 from src.gloe import transformer, partial_transformer
-
-
-@transformer
-def square(num: float) -> float:
-    return num * num
 
 
 @transformer
@@ -20,11 +13,16 @@ def square_root(num: float) -> float:
 
 
 @transformer
-def sum1(num: float) -> float:
+def plus1(num: float) -> float:
     """
     Sum 1 to the number
     """
-    return float(num + 1)
+    return num + 1
+
+
+@transformer
+def square(num: float) -> float:
+    return num * num
 
 
 @transformer

@@ -65,7 +65,7 @@ class _IfThen(Generic[In, ThenOut]):
         self._condition = condition
         self._then_transformer: Transformer[In, ThenOut] = then_transformer
 
-    def Else(self, else_transformer: Transformer[In, ElseOut]) -> Transformer[In, Union[ElseOut, ThenOut]]:
+    def Else(self, else_transformer: Transformer[In, ElseOut]) -> ConditionerTransformer[In, ThenOut, ElseOut]:
 
         new_transformer: ConditionerTransformer[In, ThenOut, ElseOut] = ConditionerTransformer(
             self._condition, self._then_transformer, else_transformer

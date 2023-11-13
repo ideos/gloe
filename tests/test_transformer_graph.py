@@ -3,16 +3,11 @@ from typing import Any
 
 from networkx import DiGraph
 
-from lib.conditioners import if_is_even
-from lib.transformers import divide_by_2, logarithm, minus1, \
-    mul_tuple2, natural_logarithm, \
-    square, \
-    square_root, \
-    sum1, \
-    sum_tuple2, \
-    sum_tuple3, times2, to_string, tuple_concatenate
 from src.gloe import Transformer
 from src.gloe.utils import forward
+
+from tests.lib.conditioners import if_is_even
+from tests.lib.transformers import *
 
 
 class TestTransformerGraph(unittest.TestCase):
@@ -79,7 +74,7 @@ class TestTransformerGraph(unittest.TestCase):
             self.assertDictEqual(current_props | expected_props, current_props)
 
     def test_simplest_case(self):
-        identity = square >> square_root >> sum1 >> minus1
+        identity = square >> square_root >> plus1 >> minus1
         graph: DiGraph = identity.graph()
 
         self._assert_nodes_count(4, graph)
@@ -87,15 +82,15 @@ class TestTransformerGraph(unittest.TestCase):
 
         expected_edges = [
             ('square', 'square_root'),
-            ('square_root', 'sum1'),
-            ('sum1', 'minus1')
+            ('square_root', 'plus1'),
+            ('plus1', 'minus1')
         ]
 
         self._assert_graph_has_edges(identity, graph, expected_edges)
 
     def test_simple_divergent_case(self):
         divergent = square >> (
-            sum1,
+            plus1,
             minus1
         ) >> sum_tuple2
 
@@ -104,15 +99,15 @@ class TestTransformerGraph(unittest.TestCase):
         self._assert_nodes_count(5, graph)
 
         # Five edges:
-        #           +---->  sum1  ----+
+        #           +---->  plus1  ----+
         #  square --+                 +--> (Converge) --> sum_tuple2
         #           +----> minus1 ----+
         self._assert_edges_count(5, graph)
 
         expected_edges = [
-            ('square', 'sum1'),
+            ('square', 'plus1'),
             ('square', 'minus1'),
-            ('sum1', 'Converge'),
+            ('plus1', 'Converge'),
             ('minus1', 'Converge'),
             ('Converge', 'sum_tuple2')
         ]
@@ -121,7 +116,7 @@ class TestTransformerGraph(unittest.TestCase):
 
     def test_complex_divergent_case(self):
         divergent = square >> (
-            sum1 >> if_is_even.Then(square_root).Else(forward()),
+            plus1 >> if_is_even.Then(square_root).Else(forward()),
             minus1 >> natural_logarithm,
             times2 >> divide_by_2
         ) >> sum_tuple3
@@ -132,10 +127,10 @@ class TestTransformerGraph(unittest.TestCase):
         self._assert_edges_count(13, graph)
 
         expected_edges = [
-            ('square', 'sum1'),
+            ('square', 'plus1'),
             ('square', 'minus1'),
             ('square', 'times2'),
-            ('sum1', 'if_is_even'),
+            ('plus1', 'if_is_even'),
             ('if_is_even', 'square_root'),
             ('if_is_even', 'forward'),
             ('square_root', 'Converge'),
@@ -151,7 +146,7 @@ class TestTransformerGraph(unittest.TestCase):
 
     def test_nested_divergent_case(self):
         divergent = square >> (
-            square_root >> sum1 >> (
+            square_root >> plus1 >> (
                 minus1,
                 natural_logarithm
             ),
@@ -166,9 +161,9 @@ class TestTransformerGraph(unittest.TestCase):
         expected_edges = [
             ('square', 'square_root'),
             ('square', 'times2'),
-            ('square_root', 'sum1'),
-            ('sum1', 'minus1'),
-            ('sum1', 'natural_logarithm'),
+            ('square_root', 'plus1'),
+            ('plus1', 'minus1'),
+            ('plus1', 'natural_logarithm'),
             ('times2', 'divide_by_2'),
         ]
 
@@ -176,7 +171,7 @@ class TestTransformerGraph(unittest.TestCase):
 
     def test_simple_conditional_case(self):
 
-        conditional = square_root >> if_is_even.Then(sum1).Else(forward()) >> minus1
+        conditional = square_root >> if_is_even.Then(plus1).Else(forward()) >> minus1
 
         graph: DiGraph = conditional.graph()
 
@@ -185,9 +180,9 @@ class TestTransformerGraph(unittest.TestCase):
 
         expected_edges = [
             ('square_root', 'if_is_even'),
-            ('if_is_even', 'sum1'),
+            ('if_is_even', 'plus1'),
             ('if_is_even', 'forward'),
-            ('sum1', 'minus1'),
+            ('plus1', 'minus1'),
             ('forward', 'minus1'),
         ]
 
@@ -195,7 +190,7 @@ class TestTransformerGraph(unittest.TestCase):
 
     def test_complex_conditional_case(self):
         then_graph = (
-            sum1 >> square >> (
+            plus1 >> square >> (
                 times2,
                 divide_by_2
             ) >> sum_tuple2
@@ -213,9 +208,9 @@ class TestTransformerGraph(unittest.TestCase):
 
         expected_edges = [
             ('square_root', 'if_is_even'),
-            ('if_is_even', 'sum1'),
+            ('if_is_even', 'plus1'),
             ('if_is_even', 'forward'),
-            ('sum1', 'square'),
+            ('plus1', 'square'),
             ('square', 'times2'),
             ('square', 'divide_by_2'),
             ('times2', 'Converge'),
@@ -229,8 +224,8 @@ class TestTransformerGraph(unittest.TestCase):
 
     def test_repeated_nodes_case(self):
 
-        repeated = sum1 >> sum1 >> (
-            sum1 >> sum1 >> sum1,
+        repeated = plus1 >> plus1 >> (
+            plus1 >> plus1 >> plus1,
             minus1 >> minus1
         ) >> sum_tuple2
 
@@ -242,7 +237,7 @@ class TestTransformerGraph(unittest.TestCase):
     def test_begin_node_case(self):
 
         begin1 = forward[float]() >> (
-            sum1,
+            plus1,
             minus1
         ) >> sum_tuple2
 
@@ -252,9 +247,9 @@ class TestTransformerGraph(unittest.TestCase):
         self._assert_edges_count(5, graph)
 
         expected_edges = [
-            ('forward', 'sum1'),
+            ('forward', 'plus1'),
             ('forward', 'minus1'),
-            ('sum1', 'Converge'),
+            ('plus1', 'Converge'),
             ('minus1', 'Converge'),
             ('Converge', 'sum_tuple2')
         ]
@@ -264,7 +259,7 @@ class TestTransformerGraph(unittest.TestCase):
     def test_invisible_nodes_case(self):
 
         begin1 = forward[float]() >> (
-            sum1,
+            plus1,
             minus1
         ) >> sum_tuple2
 
@@ -296,7 +291,7 @@ class TestTransformerGraph(unittest.TestCase):
 
     def test_nodes_properties_case(self):
         then_graph = (
-            sum1 >> square >> (
+            plus1 >> square >> (
                 times2,
                 divide_by_2
             ) >> sum_tuple2
@@ -310,7 +305,7 @@ class TestTransformerGraph(unittest.TestCase):
         graph = conditional.graph()
 
         box_nodes = [
-            'sum1', 'square', 'times2', 'divide_by_2', 'sum_tuple2', 'square_root', 'minus1',
+            'plus1', 'square', 'times2', 'divide_by_2', 'sum_tuple2', 'square_root', 'minus1',
         ]
         box_nodes_properties = {
             node: {'label': node, 'shape': 'box'}
@@ -331,28 +326,28 @@ class TestTransformerGraph(unittest.TestCase):
         self._assert_nodes_properties(nodes_properties, conditional, graph)
 
     def test_edge_labels_case(self):
-        single_edge = sum1 >> square
+        single_edge = plus1 >> square
         graph = single_edge.graph()
 
         expected_edge_props = {
-            ('sum1', 'square'): {
+            ('plus1', 'square'): {
                 'label': 'float'
             }
         }
 
         self._assert_edge_properties(single_edge, graph, expected_edge_props)
 
-        divergent_edges = sum1 >> (
+        divergent_edges = plus1 >> (
             square >> to_string,
             square_root
         ) >> tuple_concatenate
         graph = divergent_edges.graph()
 
         expected_edge_props = {
-            ('sum1', 'square'): {
+            ('plus1', 'square'): {
                 'label': 'float'
             },
-            ('sum1', 'square_root'): {
+            ('plus1', 'square_root'): {
                 'label': 'float'
             },
             ('square', 'to_string'): {

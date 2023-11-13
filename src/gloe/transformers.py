@@ -15,12 +15,12 @@ from typing import Any, \
     Generic, \
     Tuple, \
     TypeAlias, TypeVar, \
-    Union, cast, overload, Iterable, get_args, get_origin, Type
+    Union, cast, overload, Iterable, get_args, get_origin
 from uuid import UUID
 from itertools import groupby
 
 from ._utils import _format_return_annotation, _match_types, _specify_types
-
+from .exceptions import UnsupportedTransformerArgException
 
 _In = TypeVar("_In")
 _Out = TypeVar("_Out")
@@ -32,13 +32,6 @@ _Out4 = TypeVar("_Out4")
 _Out5 = TypeVar("_Out5")
 _Out6 = TypeVar("_Out6")
 _Out7 = TypeVar("_Out7")
-
-
-# class TransformerHandler(Generic[_H, _S], ABC):
-#
-#     @abstractmethod
-#     def handle(self, input_data: _H, output: _S):
-#         pass
 
 
 PreviousTransformer: TypeAlias = Union[
@@ -84,7 +77,6 @@ class Transformer(Generic[_In, _Out], ABC):
         ...
 
     """
-
 
     @staticmethod
     def _merge_serial_connection(
@@ -217,7 +209,6 @@ class Transformer(Generic[_In, _Out], ABC):
         return new_transformer
 
     def __init__(self):
-        # self._handlers: list[TransformerHandler[_A, _S]] = []
         self.previous: PreviousTransformer = None
         self.children: list[Transformer] = []
         self.invisible = False
@@ -230,8 +221,8 @@ class Transformer(Generic[_In, _Out], ABC):
         self.events = []
         self.__class__.__annotations__ = self.transform.__annotations__
 
-    def __hash__(self):
-        return self.id.int
+    def __hash__(self) -> int:
+        return hash(self.id)
 
     def __eq__(self, other):
         if isinstance(other, Transformer):
@@ -240,19 +231,7 @@ class Transformer(Generic[_In, _Out], ABC):
 
     @abstractmethod
     def transform(self, data: _In) -> _Out:
-        pass
-
-    # def add_handler(self, handler: TransformerHandler[_A, _S]):
-    #     if handler not in self._handlers:
-    #         self._handlers = self._handlers + [handler]
-    #
-    #     previous = self.previous
-    #     if previous is not None:
-    #         if type(previous) == tuple:
-    #             for previous_transformer in previous:
-    #                 previous_transformer.add_handler(handler)
-    #         elif isinstance(previous, Transformer):
-    #             previous.add_handler(handler)
+        """Main method to be implemented and responsible to perform the transformer logic"""
 
     def copy(
         self,
@@ -316,20 +295,6 @@ class Transformer(Generic[_In, _Out], ABC):
                 previous_transformer._set_previous(previous)
         elif isinstance(self.previous, Transformer):
             self.previous._set_previous(previous)
-
-    def ancestors(self) -> set['Transformer']:
-        ancestors: set['Transformer'] = set()
-        previous = self.previous
-        if previous is not None:
-            if type(previous) == tuple:
-                ancestors = set(previous)
-                for previous_transformer in previous:
-                    ancestors = ancestors.union(previous_transformer.ancestors())
-            elif isinstance(previous, Transformer):
-                ancestors = {previous}
-                ancestors = ancestors.union(previous.ancestors())
-
-        return ancestors
 
     def signature(self) -> Signature:
         orig_bases = getattr(self, '__orig_bases__', [])
@@ -519,6 +484,7 @@ class Transformer(Generic[_In, _Out], ABC):
         self._dag(net)
         return net
 
+    # pragma: not covered
     def export(self, path: str, with_edge_labels: bool = True):
         net = self.graph()
         boxed_nodes = [
@@ -548,9 +514,6 @@ class Transformer(Generic[_In, _Out], ABC):
         transformed: _Out | None = None
         try:
             transformed = self.transform(data)
-
-            # for handler in self._handlers:
-            #     handler.handle(data, transformed)
         except Exception as exception:
             if type(exception.__cause__) == TransformerException:
                 transform_exception = exception.__cause__
@@ -649,7 +612,6 @@ class Transformer(Generic[_In, _Out], ABC):
     def __rshift__(self, next_step: Any):
         if isinstance(next_step, Transformer):
             return self._merge_serial_connection(self, next_step)
-
         elif type(next_step) == tuple:
             is_all_transformers = all(
                 isinstance(next_transformer, Transformer)
@@ -658,8 +620,13 @@ class Transformer(Generic[_In, _Out], ABC):
             if is_all_transformers:
                 return self._merge_diverging_connection(self, *next_step)
 
-            raise Exception("Unsupported transformer argument")
+            unsupported_elem = [
+                elem
+                for elem in next_step
+                if not isinstance(elem, Transformer)
+            ]
+            raise UnsupportedTransformerArgException(unsupported_elem[0])
         else:
-            raise Exception("Unsupported transformer argument")
+            raise UnsupportedTransformerArgException(next_step)
 
 

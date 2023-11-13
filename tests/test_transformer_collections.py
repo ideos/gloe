@@ -1,7 +1,6 @@
 import unittest
-from typing import cast
 
-from src.gloe.collections import Map, MapOver
+from src.gloe.collection import Map, MapOver
 from tests.lib.transformers import *
 
 
@@ -11,8 +10,8 @@ class TestTransformerCollections(unittest.TestCase):
         Test the mapping transformer
         """
 
-        mapping1 = Map(square) >> Map(sum1)
-        mapping2 = Map(square >> sum1)
+        mapping1 = Map(square) >> Map(plus1)
+        mapping2 = Map(square >> plus1)
 
         seq = [10.0, 9.0, 3.0, 2.0, -1.0]
         result1 = list(mapping1(seq))
@@ -28,7 +27,7 @@ class TestTransformerCollections(unittest.TestCase):
         """
 
         data = [10.0, 9.0, 3.0, 2.0, -1.0]
-        mapping = MapOver(data, sum_tuple2) >> Map(sum1)
+        mapping = MapOver(data, sum_tuple2) >> Map(plus1)
 
         result = list(mapping(-1.0))
 

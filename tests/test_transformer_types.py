@@ -5,14 +5,14 @@ from typing import Iterable, TypeVar, Any
 
 from typing_extensions import assert_type
 
+from src.gloe.transformers import Transformer
 from src.gloe import ensure
 from src.gloe.utils import forward
 from src.gloe.experimental.bridge import bridge
-from src.gloe.collections import Map
+from src.gloe.collection import Map
 from tests.lib.conditioners import *
 from tests.lib.ensurers import is_even, same_value, same_value_int, is_greater_than_10
 from tests.lib.transformers import *
-from src.gloe.transformers import Transformer
 from mypy import api
 
 
@@ -63,7 +63,7 @@ class TestTransformerTypes(unittest.TestCase):
         Test the most simple transformer typing
         """
 
-        conditioned_graph = square >> square_root >> if_not_zero.Then(sum1).Else(minus1)
+        conditioned_graph = square >> square_root >> if_not_zero.Then(plus1).Else(minus1)
 
         assert_type(conditioned_graph, Transformer[float, float])
 
@@ -188,7 +188,7 @@ class TestTransformerTypes(unittest.TestCase):
     def _test_bridge(self):
         num_bridge = bridge[float]("num")
 
-        graph = sum1 >> num_bridge.pick() >> minus1 >> num_bridge.drop()
+        graph = plus1 >> num_bridge.pick() >> minus1 >> num_bridge.drop()
 
         assert_type(graph, Transformer[float, tuple[float, float]])
 

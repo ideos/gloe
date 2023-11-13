@@ -20,6 +20,7 @@ Gloe (pronounced /ɡloʊ/, like "glow") is a general purpose library made to hel
   * [Getting Started](#getting-started)
     * [Creating a Transformer](#creating-a-transformer)
     * [Building a Pipeline](#building-a-pipeline)
+      * [Creating branches](#creating-branches)
     * [Partial Transformers](#partial-transformers)
     * [Ensurers](#ensurers)
       * [A complete example](#a-complete-example)

@@ -12,7 +12,8 @@ Gloe (pronounced /ɡloʊ/, like "glow") is a general purpose library made to hel
 ## Table of Contents
 <!-- TOC -->
   * [Installing](#installing)
-  * [Gloe\'s paradigm](#gloes-paradigm)
+  * [Motivation](#motivation)
+  * [Gloe\'s theory](#gloes-theory)
     * [Lightness](#lightness)
     * [Type-safety](#type-safety)
     * [Immutability](#immutability)
@@ -32,9 +33,17 @@ Gloe (pronounced /ɡloʊ/, like "glow") is a general purpose library made to hel
 pip install gloe
 ```
 
-## Gloe\'s paradigm
+## Motivation
 
-The main idea behind Gloe is constraint the implementation of a specific flow into a formalized and type-safe pipeline (or execution graph). Every piece (or node) of this pipeline is responsible to transform its input into the input of the next piece, composing a sequential execution process. No code of this flow can be executed out of these pieces. Each node of a graph is called Transformer.
+The software development has a lot of patterns and good practices related to the code itself, like how to document, to test, to structure and what code paradigm to use. However, beyond all that, we believe that the key point of a well succeed software project is a good communication between everyone involved in the development. Of course, this communication is not necessarily restricted to meetings or text messages, it is present also in documentation artefacts and in a well-written code.
+
+When a developer writes a code, he/she is telling a story to the next person who will read or/and refactor it. Depending on the quality of this code, this story could be quite confusing, with no clear roles of the characters and a messy plot (sometimes with an undesired twist). The next person to maintain the software will take a long time to understand the narrative and make it clear, or it will give up and leave it as it is.
+
+Gloe comes to turn this story coherent, logically organized and easy to follow. This intends to be done dividing the code into concise steps with an unambiguous responsibility and explicit interface. Then, Gloe allow you to connect these steps, making clear how they can work together and where you need to make changes when doing some refactoring. Therefore, you will be able to quickly visualize all the story told. Inspired by things like [natural transformation](https://ncatlab.org/nlab/show/natural+transformation) and Free Monad (present in [Scala](https://typelevel.org/cats/datatypes/freemonad.html) and [Haskell](https://serokell.io/blog/introduction-to-free-monads)), Gloe implemented this approach using functional programming and strong typing concepts.
+
+## Gloe\'s theory
+
+The main idea behind Gloe is constraint the implementation of a specific flow into a formalized and type-safe pipeline (or execution graph). Every piece (or node) of this pipeline is responsible to transform its input into the input of the next piece, composing a sequential execution process. No code of this flow can be executed out of these pieces and each node of a graph is called Transformer.
 
 Basic structure of a Graph:
 ``` 
@@ -69,9 +78,7 @@ must have the following signature:
 (type B) -> [NextTransformer] -> (some type C)
 ```
 
-That is, the outcome type of `MyTransformer` must be the same
-as the incoming of `NextTransformer`. When building your
-graphs, you will know about any problem with types immediately.
+That is, the outcome type of `MyTransformer` must be the same as the incoming type of `NextTransformer`. When building your graphs, you will know about any problem with types immediately.
 
 > The representation of a transformer with its name and types is called
 **signature**.
@@ -148,7 +155,9 @@ def filter_even(numbers: list[int]) -> list[int]:
     return [num for num in numbers if num % 2 == 0]
 ```
 
-Transformer works like functions, so you can create a function and then apply the `@transformer` decorator to it. That's it, transformer created! Some important things to notice:
+Transformer works like functions, so you can create a function and then apply the `@transformer` decorator to it. That's it, transformer created!
+
+Some important things to notice:
 
 - We **strongly recommend** you to type the transformers. Because of Python, it is not mandatory, but Gloe was designed to be used with typed code. Take a look at the [Python typing
 library](https://docs.python.org/3/library/typing.html) to learn more about the Python type notation.

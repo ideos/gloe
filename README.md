@@ -11,8 +11,8 @@ Gloe (pronounced /ɡloʊ/, like "glow") is a general purpose library made to hel
 
 ## Table of Contents
 <!-- TOC -->
-  * [Installing](#installing)
   * [Motivation](#motivation)
+  * [Installing](#installing)
   * [Gloe\'s theory](#gloes-theory)
     * [Lightness](#lightness)
     * [Type-safety](#type-safety)
@@ -25,21 +25,32 @@ Gloe (pronounced /ɡloʊ/, like "glow") is a general purpose library made to hel
     * [Partial Transformers](#partial-transformers)
     * [Ensurers](#ensurers)
       * [A complete example](#a-complete-example)
+    * [Conditioned Flows](#conditioned-flows)
+    * [Utilities](#utilities)
+    * [Visualizing the graph (under development)](#visualizing-the-graph-under-development)
+  * [Advanced Topics](#advanced-topics)
+    * [Generic transformers](#generic-transformers)
+    * [Transformer overloads](#transformer-overloads)
+    * [Creating your own utilities](#creating-your-own-utilities)
+  * [Integrating with other libs](#integrating-with-other-libs)
+  * [Limitations](#limitations)
+    * [Work in progress](#work-in-progress)
+    * [Python limitations](#python-limitations)
 <!-- TOC -->
+
+## Motivation
+
+The software development has a lot of patterns and good practices related to the code itself, like how to document, to test, to structure and what programming paradigm to use. However, beyond all that, we believe that the key point of a well succeed software project is a good communication between everyone involved in the development. Of course, this communication is not necessarily restricted to meetings or text messages, it is present also in documentation artefacts and in a well-written code.
+
+When a developer writes a code, he/she is telling a story to the next person who will read or/and refactor it. Depending on the quality of this code, this story could be quite confusing, with no clear roles of the characters and a messy plot (sometimes with an undesired twist). The next person to maintain the software will take a long time to understand the narrative and make it clear, or it will give up and leave it as it is.
+
+Gloe comes to turn this story coherent, logically organized and easy to follow. This intends to be done dividing the code into concise steps with an unambiguous responsibility and explicit interface. Then, Gloe allow you to connect these steps, making clear how they can work together and where you need to make changes when doing some refactoring. Therefore, you will be able to quickly visualize all the story told. Inspired by things like [natural transformation](https://ncatlab.org/nlab/show/natural+transformation) and Free Monad (present in [Scala](https://typelevel.org/cats/datatypes/freemonad.html) and [Haskell](https://serokell.io/blog/introduction-to-free-monads)), Gloe implemented this approach using functional programming and strong typing concepts.
 
 ## Installing
 
 ```shell
 pip install gloe
 ```
-
-## Motivation
-
-The software development has a lot of patterns and good practices related to the code itself, like how to document, to test, to structure and what code paradigm to use. However, beyond all that, we believe that the key point of a well succeed software project is a good communication between everyone involved in the development. Of course, this communication is not necessarily restricted to meetings or text messages, it is present also in documentation artefacts and in a well-written code.
-
-When a developer writes a code, he/she is telling a story to the next person who will read or/and refactor it. Depending on the quality of this code, this story could be quite confusing, with no clear roles of the characters and a messy plot (sometimes with an undesired twist). The next person to maintain the software will take a long time to understand the narrative and make it clear, or it will give up and leave it as it is.
-
-Gloe comes to turn this story coherent, logically organized and easy to follow. This intends to be done dividing the code into concise steps with an unambiguous responsibility and explicit interface. Then, Gloe allow you to connect these steps, making clear how they can work together and where you need to make changes when doing some refactoring. Therefore, you will be able to quickly visualize all the story told. Inspired by things like [natural transformation](https://ncatlab.org/nlab/show/natural+transformation) and Free Monad (present in [Scala](https://typelevel.org/cats/datatypes/freemonad.html) and [Haskell](https://serokell.io/blog/introduction-to-free-monads)), Gloe implemented this approach using functional programming and strong typing concepts.
 
 ## Gloe\'s theory
 
@@ -144,7 +155,7 @@ Now we have already learned the Gloe theory, so it's time to jump into code.
 
 ### Creating a Transformer
 
-As previously said, creating a Transformer is easy:
+As previously said, creating a transformer is easy:
 
 ```python
 from gloe import transformer
@@ -155,13 +166,13 @@ def filter_even(numbers: list[int]) -> list[int]:
     return [num for num in numbers if num % 2 == 0]
 ```
 
-Transformer works like functions, so you can create a function and then apply the `@transformer` decorator to it. That's it, transformer created!
+Transformers works like functions, so you can create a function and then apply the `@transformer` decorator to it. That's it, transformer created!
 
 Some important things to notice:
 
 - We **strongly recommend** you to type the transformers. Because of Python, it is not mandatory, but Gloe was designed to be used with typed code. Take a look at the [Python typing
 library](https://docs.python.org/3/library/typing.html) to learn more about the Python type notation.
-- Transformers must have only one parameter. Any complex data you need to use in its code must be passed in a complex structure like a [tuple](https://docs.python.org/3/tutorial/datastructures.html#tuples-and-sequences), a [dict](https://docs.python.org/3/tutorial/datastructures.html#dictionaries), a [TypedDict](https://docs.python.org/3/library/typing.html#typing.TypedDict), a [dataclass](https://docs.python.org/3/library/dataclasses.html), a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple) or any other. We will see later why it is necessary.
+- Transformers must have only one parameter. Any complex data you need to use in its code must be passed in a complex structure like a [tuple](https://docs.python.org/3/tutorial/datastructures.html#tuples-and-sequences), a [dict](https://docs.python.org/3/tutorial/datastructures.html#dictionaries), a [TypedDict](https://docs.python.org/3/library/typing.html#typing.TypedDict), a [dataclass](https://docs.python.org/3/library/dataclasses.html), a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple) or any other. We will see later [why it is necessary](#partial-transformers).
 - Documentations with pydoc will be preserved in transformers.
 - After apply the `@transformer` decorator to a function, it will become an instance of class `Transformer`.
 
@@ -250,7 +261,7 @@ send_promotion = get_users >> (
 
 > You can't assume any **order of execution** between the branches.
 
-The right shift operator can receive a transformer or a tuple of transformers as an argument. In the second case, the transformer returned will be as described bellow.
+The right shift operator can receive a transformer or a tuple of transformers as an argument. In the second case, the transformer returned will be as described bellow (pay attention at the types).
 
 Consider the following transformers:
 
@@ -427,3 +438,35 @@ def cities_more_expensive_than(houses_df: pd.DataFrame, min_price: float) -> pd.
 ```
 
 > As you can see, the `@ensure` decorator works to partial transformers as well.
+
+### Conditioned Flows
+
+### Utilities
+
+### Visualizing the graph (under development)
+
+## Advanced Topics
+
+### Generic transformers
+
+### Transformer overloads
+
+### Creating your own utilities
+
+## Integrating with other libs
+
+## Limitations
+
+### Work in progress
+
+The bellow limitations are already being investigated and will be released in the next versions.
+
+- Parallel branches in a graph are not executed in parallel nor concurrently yet.
+- 
+
+### Python limitations
+
+The following limitations are inherited from Python and can be only solved when it is solved by the language.
+
+- **Overload transformers**:
+- [**Higher Kinded Types**](https://returns.readthedocs.io/en/latest/pages/hkt.html)

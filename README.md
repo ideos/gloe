@@ -27,12 +27,14 @@ Gloe (pronounced /ɡloʊ/, like "glow") is a general purpose library made to hel
       * [A complete example](#a-complete-example)
     * [Conditioned Flows](#conditioned-flows)
     * [Utilities](#utilities)
+      * [`forward`](#forward)
+      * [`forward_incoming`](#forwardincoming)
+      * [`side_effect`](#sideeffect)
+      * [`debug`](#debug)
     * [Visualizing the graph (under development)](#visualizing-the-graph-under-development)
   * [Advanced Topics](#advanced-topics)
-    * [Generic transformers](#generic-transformers)
-    * [Transformer overloads](#transformer-overloads)
+    * [Transformers with Generics](#transformers-with-generics)
     * [Creating your own utilities](#creating-your-own-utilities)
-  * [Integrating with other libs](#integrating-with-other-libs)
   * [Limitations](#limitations)
     * [Work in progress](#work-in-progress)
     * [Python limitations](#python-limitations)
@@ -44,7 +46,7 @@ The software development has a lot of patterns and good practices related to the
 
 When a developer writes a code, he/she is telling a story to the next person who will read or/and refactor it. Depending on the quality of this code, this story could be quite confusing, with no clear roles of the characters and a messy plot (sometimes with an undesired twist). The next person to maintain the software will take a long time to understand the narrative and make it clear, or it will give up and leave it as it is.
 
-Gloe comes to turn this story coherent, logically organized and easy to follow. This intends to be done dividing the code into concise steps with an unambiguous responsibility and explicit interface. Then, Gloe allow you to connect these steps, making clear how they can work together and where you need to make changes when doing some refactoring. Therefore, you will be able to quickly visualize all the story told. Inspired by things like [natural transformation](https://ncatlab.org/nlab/show/natural+transformation) and Free Monad (present in [Scala](https://typelevel.org/cats/datatypes/freemonad.html) and [Haskell](https://serokell.io/blog/introduction-to-free-monads)), Gloe implemented this approach using functional programming and strong typing concepts.
+Gloe comes to turn this story coherent, logically organized and easy to follow. This intends to be done dividing the code into concise steps with an unambiguous responsibility and explicit interface. Then, Gloe allow you to connect these steps, making clear how they can work together and where you need to make changes when doing some refactoring. Therefore, you will be able to quickly visualize all the story told and improve it. Inspired by things like [natural transformation](https://ncatlab.org/nlab/show/natural+transformation) and Free Monad (present in [Scala](https://typelevel.org/cats/datatypes/freemonad.html) and [Haskell](https://serokell.io/blog/introduction-to-free-monads)), Gloe implemented this approach using functional programming and strong typing concepts.
 
 ## Installing
 
@@ -443,17 +445,54 @@ def cities_more_expensive_than(houses_df: pd.DataFrame, min_price: float) -> pd.
 
 ### Utilities
 
+`forward`
+
+`forward_incoming`
+
+`side_effect`
+
+`debug`
+
+
 ### Visualizing the graph (under development)
 
 ## Advanced Topics
 
-### Generic transformers
+### Transformers with Generics
 
-### Transformer overloads
+If you need to use [generic types](https://mypy.readthedocs.io/en/stable/generics.html) in a transformer, this transformer must be partial. For example, suppose that, for some reason, you a need a transformer that swap the two elements of a tuple. If you don't care about the types within this tuple, you need generics:
+
+```python
+from typing import TypeVar
+from gloe import partial_transformer
+
+A = TypeVar("A")
+B = TypeVar("B")
+
+@partial_transformer
+def swap_elements(pair: tuple[A, B]) -> tuple[B, A]:
+  return pair[1], pair[0]
+```
+> When creating a partial transformer with only the input parameter, you must instantiate it with no arguments: `swap_elements()`.
+
+> Of course, you can have a combination of generic types and multiple arguments, nothing changes.
+
+In this case, the use of a partial transformer is required because Python can't infer the generic types from an instance of transformer when appending it to a graph, only from a function. Partial transformers are, in fact, builder functions that builds a transformer. So, when calling this function inside a graph, the transformer returned by the builder will already have the inferred types. For example:
+
+```python
+@transformer
+def get_name_and_age(data: ...) -> tuple[str, int]: ...
+
+
+graph = get_name_and_age >> swap_elements    # ❌ ERROR!
+
+graph = get_name_and_age >> swap_elements()  # ✅ SUCCESS! 
+```
+
+The outcome type of the transformer `graph` in the success case is `tuple[int, str]`.
+
 
 ### Creating your own utilities
-
-## Integrating with other libs
 
 ## Limitations
 
@@ -461,12 +500,13 @@ def cities_more_expensive_than(houses_df: pd.DataFrame, min_price: float) -> pd.
 
 The bellow limitations are already being investigated and will be released in the next versions.
 
-- Parallel branches in a graph are not executed in parallel nor concurrently yet.
-- 
+- **Parallel execution**: branches in a graph are not executed in parallel nor concurrently yet.
+- **Graph size limit**: Gloe was implemented using recursion to sequentially apply the transformations. Because of that, the graph size has a limit of nodes about 470, considering the default value of 1000 for the maximum depth of the Python interpreter stack. If you need an extremely large graph with thousands of nodes, you will need to [increase the recursion limit](https://docs.python.org/3/library/sys.html#sys.setrecursionlimit) or wait us to release a recursion free version.
 
 ### Python limitations
 
-The following limitations are inherited from Python and can be only solved when it is solved by the language.
+The following limitations are inherited from Python and can be only solved when it is solved by the language or resorting to the use of third-party workarounds.
 
-- **Overload transformers**:
-- [**Higher Kinded Types**](https://returns.readthedocs.io/en/latest/pages/hkt.html)
+- **Overload transformers**: Python provide us a way to [overload function](https://docs.python.org/3/library/typing.html#typing.overload) definitions and [get its overloads](https://docs.python.org/3/library/typing.html#typing.get_overloads) at execution time. However, apparently, there is no way to forward all this overloads to a complex structure created from the overloaded function (like transformers). It is possible to be done considering only the execution but the type checker will not be aware of the overloads.
+
+- **Higher-Kinded Types**: this is a feature of strong typed languages, like [Scala](https://www.baeldung.com/scala/higher-kinded-types), [Haskell](https://serokell.io/blog/kinds-and-hkts-in-haskell) and [Rust](https://hugopeters.me/posts/14/). However, even in Typescript there is an [open issue](https://github.com/microsoft/TypeScript/issues/1213) for that and in Java this must be [simulated](https://medium.com/@johnmcclean/simulating-higher-kinded-types-in-java-b52a18b72c74). So, it was to be expected that we can't use it natively in Python yet. But, there already is [a workaround](https://returns.readthedocs.io/en/latest/pages/hkt.html) for that from the [Returns](https://returns.readthedocs.io) library.

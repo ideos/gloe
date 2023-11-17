@@ -20,7 +20,7 @@ dependencies = [
     'typing_extensions~=4.7.1',
     'schemdraw~=0.16',
     'setuptools~=61.2.0',
-    'mypy~=1.5.1',
+    'mypy~=1.7.0',
     'networkx~=3.1'
 ]
 

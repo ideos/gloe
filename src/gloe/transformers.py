@@ -13,7 +13,6 @@ from types import GenericAlias
 from typing import Any, \
     Callable, \
     Generic, \
-    Tuple, \
     TypeAlias, TypeVar, \
     Union, cast, overload, Iterable, get_args, get_origin
 from uuid import UUID
@@ -173,16 +172,16 @@ class Transformer(Generic[_In, _Out], ABC):
             if receiving_transformer.previous == incident_transformer:
                 setattr(receiving_transformer, 'signature', types.MethodType(_signature, receiving_transformer))
 
-        def split_result(data: _In) -> Tuple[Any, ...]:
+        def split_result(data: _In) -> tuple[Any, ...]:
             intermediate_result = incident_transformer(data)
             return tuple([
                 receiving_transformer(intermediate_result)
                 for receiving_transformer in receiving_transformers
             ])
 
-        class NewTransformer(Transformer[_In, Tuple[Any, ...]]):
+        class NewTransformer(Transformer[_In, tuple[Any, ...]]):
 
-            def transform(self, data: _In) -> Tuple[Any, ...]:
+            def transform(self, data: _In) -> tuple[Any, ...]:
                 return split_result(data)
 
             def signature(self) -> Signature:
@@ -496,7 +495,7 @@ class Transformer(Generic[_In, _Out], ABC):
                 net.edges[u, v]['label'] = ''
 
         agraph = nx.nx_agraph.to_agraph(net)
-        subgraphs: Iterable[Tuple] = groupby(boxed_nodes, key=lambda x: x[1]['parent_id'])
+        subgraphs: Iterable[tuple] = groupby(boxed_nodes, key=lambda x: x[1]['parent_id'])
         for parent_id, nodes in subgraphs:
             nodes = list(nodes)
             node_ids = [node[0] for node in nodes]
@@ -553,56 +552,56 @@ class Transformer(Generic[_In, _Out], ABC):
 
     @overload
     def __rshift__(
-        self, transformers: Tuple['Transformer[_Out, _NextOut]', 'Transformer[_Out, _Out2]']
-    ) -> 'Transformer[_In, Tuple[_NextOut, _Out2]]':
+        self, transformers: tuple['Transformer[_Out, _NextOut]', 'Transformer[_Out, _Out2]']
+    ) -> 'Transformer[_In, tuple[_NextOut, _Out2]]':
         pass
 
     @overload
     def __rshift__(
         self,
-        transformers: Tuple['Transformer[_Out, _NextOut]', 'Transformer[_Out, _Out2]', 'Transformer[_Out, _Out3]']
-    ) -> 'Transformer[_In, Tuple[_NextOut, _Out2, _Out3]]':
+        transformers: tuple['Transformer[_Out, _NextOut]', 'Transformer[_Out, _Out2]', 'Transformer[_Out, _Out3]']
+    ) -> 'Transformer[_In, tuple[_NextOut, _Out2, _Out3]]':
         pass
 
     @overload
     def __rshift__(
         self,
-        transformers: Tuple[
+        transformers: tuple[
             'Transformer[_Out, _NextOut]', 'Transformer[_Out, _Out2]', 'Transformer[_Out, _Out3]',
             'Transformer[_Out, _Out4]'
         ]
-    ) -> 'Transformer[_In, Tuple[_NextOut, _Out2, _Out3, _Out4]]':
+    ) -> 'Transformer[_In, tuple[_NextOut, _Out2, _Out3, _Out4]]':
         pass
 
     @overload
     def __rshift__(
         self,
-        transformers: Tuple[
+        transformers: tuple[
             'Transformer[_Out, _NextOut]', 'Transformer[_Out, _Out2]', 'Transformer[_Out, _Out3]',
             'Transformer[_Out, _Out4]', 'Transformer[_Out, _Out5]'
         ]
-    ) -> 'Transformer[_In, Tuple[_NextOut, _Out2, _Out3, _Out4, _Out5]]':
+    ) -> 'Transformer[_In, tuple[_NextOut, _Out2, _Out3, _Out4, _Out5]]':
         pass
 
     @overload
     def __rshift__(
         self,
-        transformers: Tuple[
+        transformers: tuple[
             'Transformer[_Out, _NextOut]', 'Transformer[_Out, _Out2]', 'Transformer[_Out, _Out3]',
             'Transformer[_Out, _Out4]', 'Transformer[_Out, _Out5]', 'Transformer[_Out, _Out6]'
         ]
-    ) -> 'Transformer[_In, Tuple[_NextOut, _Out2, _Out3, _Out4, _Out5, _Out6]]':
+    ) -> 'Transformer[_In, tuple[_NextOut, _Out2, _Out3, _Out4, _Out5, _Out6]]':
         pass
 
     @overload
     def __rshift__(
         self,
-        transformers: Tuple[
+        transformers: tuple[
             'Transformer[_Out, _NextOut]', 'Transformer[_Out, _Out2]', 'Transformer[_Out, _Out3]',
             'Transformer[_Out, _Out4]', 'Transformer[_Out, _Out5]', 'Transformer[_Out, _Out6]',
             'Transformer[_Out, _Out7]'
         ]
-    ) -> 'Transformer[_In, Tuple[_NextOut, _Out2, _Out3, _Out4, _Out5, _Out6, _Out7]]':
+    ) -> 'Transformer[_In, tuple[_NextOut, _Out2, _Out3, _Out4, _Out5, _Out6, _Out7]]':
         pass
 
     @overload

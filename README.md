@@ -12,6 +12,7 @@ Gloe (pronounced /ɡloʊ/, like "glow") is a general purpose library made to hel
 ## Table of Contents
 <!-- TOC -->
   * [Motivation](#motivation)
+    * [Gloe is not a workflow orchestrator](#gloe-is-not-a-workflow-orchestrator)
   * [Installing](#installing)
   * [Gloe\'s theory](#gloes-theory)
     * [Lightness](#lightness)
@@ -27,10 +28,6 @@ Gloe (pronounced /ɡloʊ/, like "glow") is a general purpose library made to hel
       * [A complete example](#a-complete-example)
     * [Conditioned Flows](#conditioned-flows)
     * [Utilities](#utilities)
-      * [`forward`](#forward)
-      * [`forward_incoming`](#forwardincoming)
-      * [`side_effect`](#sideeffect)
-      * [`debug`](#debug)
     * [Visualizing the graph (under development)](#visualizing-the-graph-under-development)
   * [Advanced Topics](#advanced-topics)
     * [Transformers with Generics](#transformers-with-generics)
@@ -47,6 +44,10 @@ The software development has a lot of patterns and good practices related to the
 When a developer writes a code, he/she is telling a story to the next person who will read or/and refactor it. Depending on the quality of this code, this story could be quite confusing, with no clear roles of the characters and a messy plot (sometimes with an undesired twist). The next person to maintain the software will take a long time to understand the narrative and make it clear, or it will give up and leave it as it is.
 
 Gloe comes to turn this story coherent, logically organized and easy to follow. This intends to be done dividing the code into concise steps with an unambiguous responsibility and explicit interface. Then, Gloe allow you to connect these steps, making clear how they can work together and where you need to make changes when doing some refactoring. Therefore, you will be able to quickly visualize all the story told and improve it. Inspired by things like [natural transformation](https://ncatlab.org/nlab/show/natural+transformation) and Free Monad (present in [Scala](https://typelevel.org/cats/datatypes/freemonad.html) and [Haskell](https://serokell.io/blog/introduction-to-free-monads)), Gloe implemented this approach using functional programming and strong typing concepts.
+
+### Gloe is not a workflow orchestrator
+
+Currently, Gloe has not a scheduler backend like [Air Flow](https://airflow.apache.org/) or others solutions. It was built to help development. The graph structure we will see in the next sections is responsible to make the code [more flat and hence readable](https://en.wikibooks.org/wiki/Computer_Programming/Coding_Style/Minimize_nesting), but not to execute tasks in a dedicated environment. In terms of execution time or scalability, Gloe does not improve anything.
 
 ## Installing
 

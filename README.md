@@ -27,8 +27,12 @@ Gloe (pronounced /ɡloʊ/, like "glow") is a general purpose library made to hel
     * [Ensurers](#ensurers)
       * [A complete example](#a-complete-example)
     * [Conditioned Flows](#conditioned-flows)
-    * [Utilities](#utilities)
     * [Visualizing the graph (under development)](#visualizing-the-graph-under-development)
+  * [Utilities](#utilities)
+    * [forward](#forward)
+    * [forward_incoming](#forward_incoming)
+    * [side_effect](#side_effect)
+    * [debug](#debug)
   * [Advanced Topics](#advanced-topics)
     * [Transformers with Generics](#transformers-with-generics)
     * [Creating your own utilities](#creating-your-own-utilities)
@@ -444,18 +448,41 @@ def cities_more_expensive_than(houses_df: pd.DataFrame, min_price: float) -> pd.
 
 ### Conditioned Flows
 
-### Utilities
+Sometimes it seems to be useful externalize some conditional rule to outside the transformers, because the condition belongs to the whole flow, instead to a particular transformer logic. For example, suppose we have a flow to email a particular user. 
 
-`forward`
 
-`forward_incoming`
+```python
 
-`side_effect`
+# Create an example of conditional flow in context of machine learning and pytorch
 
-`debug`
+send_user_email = get_user_details >> send_email
+```
 
 
 ### Visualizing the graph (under development)
+
+## Utilities
+
+### forward
+
+The `forward` utility is quite useful when your flow starts with a divergent connection. For example:
+
+```python
+send_emails = forward[list[User]]() >> (
+    filter_basic_subscription >> send_basic_subscription_promotion_email,
+    filter_premium_subscription >> send_premium_subscription_promotion_email,
+    filter_unsubscribed >> send_unsubscribed_promotion_email
+)
+```
+
+In this case, we have nothing to do before split the groups of users. So, when starting the pipeline with `forward` transformer, we are able to forward the incoming data to the next transformer directly.
+> We have to explicitly define the incoming type of the forward transformer, because it is not known at the time of the definition.
+
+### forward_incoming
+
+### side_effect
+
+### debug
 
 ## Advanced Topics
 
@@ -510,4 +537,4 @@ The following limitations are inherited from Python and can be only solved when 
 
 - **Overload transformers**: Python provide us a way to [overload function](https://docs.python.org/3/library/typing.html#typing.overload) definitions and [get its overloads](https://docs.python.org/3/library/typing.html#typing.get_overloads) at execution time. However, apparently, there is no way to forward all this overloads to a complex structure created from the overloaded function (like transformers). It is possible to be done considering only the execution but the type checker will not be aware of the overloads.
 
-- **Higher-Kinded Types**: this is a feature of strong typed languages, like [Scala](https://www.baeldung.com/scala/higher-kinded-types), [Haskell](https://serokell.io/blog/kinds-and-hkts-in-haskell) and [Rust](https://hugopeters.me/posts/14/). However, even in Typescript there is an [open issue](https://github.com/microsoft/TypeScript/issues/1213) for that and in Java this must be [simulated](https://medium.com/@johnmcclean/simulating-higher-kinded-types-in-java-b52a18b72c74). So, it was to be expected that we can't use it natively in Python yet. Although there already is [a workaround](https://returns.readthedocs.io/en/latest/pages/hkt.html) for that from the [Returns](https://returns.readthedocs.io) library, we didn't investigate a consistent way to integrate it to Gloe yet.
+  - **Higher-Kinded Types**: this is a feature of strong typed languages, like [Scala](https://www.baeldung.com/scala/higher-kinded-types), [Haskell](https://serokell.io/blog/kinds-and-hkts-in-haskell) and [Rust](https://hugopeters.me/posts/14/). However, even in Typescript there is an [open issue](https://github.com/microsoft/TypeScript/issues/1213) for that and in Java this must be [simulated](https://medium.com/@johnmcclean/simulating-higher-kinded-types-in-java-b52a18b72c74). So, it was to be expected that we can't use it natively in Python yet. Although there already is [a workaround](https://returns.readthedocs.io/en/latest/pages/hkt.html) for that from the [Returns](https://returns.readthedocs.io) library, we didn't investigate a consistent way to integrate it to Gloe yet.

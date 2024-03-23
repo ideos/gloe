@@ -1,0 +1,10 @@
+.headerlink {
+    font-size: 1.2rem !important;
+    vertical-align: text-top;
+    opacity: 0;
+    text-decoration-line: none !important;
+}
+
+h1:hover > .headerlink {
+    opacity: 0.6;
+}

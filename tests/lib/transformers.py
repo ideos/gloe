@@ -4,7 +4,7 @@ import numpy as np
 from numpy import ndarray
 
 from tests.lib.exceptions import LnOfNegativeNumber
-from src.gloe import transformer, partial_transformer
+from gloe import transformer, partial_transformer
 
 
 @transformer
@@ -99,12 +99,12 @@ def logarithm(arg: float, base: float) -> float:
 
 @partial_transformer
 def format_currency(number: float, thousands_separator: str) -> str:
-    return f'{number}:{thousands_separator}.2f'
+    return f"{number}:{thousands_separator}.2f"
 
 
 @partial_transformer
 def repeat(content: str, n_times: int, linebreak: bool) -> str:
     repeated = content * n_times
     if linebreak:
-        repeated += '\n'
+        repeated += "\n"
     return repeated

@@ -27,3 +27,8 @@ dependencies = [
 [project.urls]
 "Homepage" = "https://gitlab.com/ideos_dev/gloe"
 "Bug Tracker" = "https://gitlab.com/ideos_dev/gloe/-/issues"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "src"
+]

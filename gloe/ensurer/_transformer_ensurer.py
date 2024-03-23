@@ -1,16 +1,9 @@
 import inspect
 from abc import abstractmethod, ABC
 from types import FunctionType
-from typing import Any, \
-    Callable, \
-    Generic, \
-    ParamSpec, \
-    Sequence, \
-    TypeVar, \
-    cast, \
-    overload
+from typing import Any, Callable, Generic, ParamSpec, Sequence, TypeVar, cast, overload
 
-from .transformers import Transformer
+from gloe.transformers import Transformer
 
 _T = TypeVar("_T")
 _S = TypeVar("_S")
@@ -19,7 +12,6 @@ _P1 = ParamSpec("_P1")
 
 
 class TransformerEnsurer(Generic[_T, _S], ABC):
-
     @abstractmethod
     def validate_input(self, data: _T):
         """Perform a validation on incoming data before execute the transformer code"""
@@ -29,7 +21,6 @@ class TransformerEnsurer(Generic[_T, _S], ABC):
         """Perform a validation on outcome data after execute the transformer code"""
 
     def __call__(self, transformer: Transformer[_T, _S]) -> Transformer[_T, _S]:
-
         def transform(this: Transformer, data: _T) -> _S:
             self.validate_input(data)
             output = transformer.transform(data)
@@ -83,9 +74,7 @@ def output_ensurer(func: Callable):
 
 class _ensure_incoming(Generic[_T]):
     def __init__(self, incoming: Sequence[Callable[[_T], Any]]):
-        self.input_ensurers_instances = [
-            input_ensurer(ensurer) for ensurer in incoming
-        ]
+        self.input_ensurers_instances = [input_ensurer(ensurer) for ensurer in incoming]
 
     @overload
     def __call__(self, transformer: Transformer[_T, _U]) -> Transformer[_T, _U]:
@@ -201,12 +190,11 @@ class _ensure_changes(Generic[_T, _S]):
 
 
 class _ensure_both(Generic[_T, _S]):
-
     def __init__(
         self,
         incoming: Sequence[Callable[[_T], Any]],
         outcome: Sequence[Callable[[_S], Any]],
-        changes: Sequence[Callable[[_T, _S], Any]]
+        changes: Sequence[Callable[[_T, _S], Any]],
     ):
         incoming_seq = incoming if type(incoming) == list else [incoming]
         self.input_ensurers_instances = [
@@ -275,24 +263,21 @@ def ensure(changes: Sequence[Callable[[_T, _S], Any]]) -> _ensure_changes[_T, _S
 
 @overload
 def ensure(
-    incoming: Sequence[Callable[[_T], Any]],
-    outcome: Sequence[Callable[[_S], Any]]
+    incoming: Sequence[Callable[[_T], Any]], outcome: Sequence[Callable[[_S], Any]]
 ) -> _ensure_both[_T, _S]:
     pass
 
 
 @overload
 def ensure(
-    incoming: Sequence[Callable[[_T], Any]],
-    changes: Sequence[Callable[[_T, _S], Any]]
+    incoming: Sequence[Callable[[_T], Any]], changes: Sequence[Callable[[_T, _S], Any]]
 ) -> _ensure_both[_T, _S]:
     pass
 
 
 @overload
 def ensure(
-    outcome: Sequence[Callable[[_T], Any]],
-    changes: Sequence[Callable[[_T, _S], Any]]
+    outcome: Sequence[Callable[[_T], Any]], changes: Sequence[Callable[[_T, _S], Any]]
 ) -> _ensure_both[_T, _S]:
     pass
 
@@ -301,32 +286,32 @@ def ensure(
 def ensure(
     incoming: Sequence[Callable[[_T], Any]],
     outcome: Sequence[Callable[[_S], Any]],
-    changes: Sequence[Callable[[_T, _S], Any]]
+    changes: Sequence[Callable[[_T, _S], Any]],
 ) -> _ensure_both[_T, _S]:
     pass
 
 
 def ensure(*args, **kwargs):
-    if len(kwargs.keys()) == 1 and 'incoming' in kwargs:
-        return _ensure_incoming(kwargs['incoming'])
+    if len(kwargs.keys()) == 1 and "incoming" in kwargs:
+        return _ensure_incoming(kwargs["incoming"])
 
-    if len(kwargs.keys()) == 1 and 'outcome' in kwargs:
-        return _ensure_outcome(kwargs['outcome'])
+    if len(kwargs.keys()) == 1 and "outcome" in kwargs:
+        return _ensure_outcome(kwargs["outcome"])
 
-    if len(kwargs.keys()) == 1 and 'changes' in kwargs:
-        return _ensure_changes(kwargs['changes'])
+    if len(kwargs.keys()) == 1 and "changes" in kwargs:
+        return _ensure_changes(kwargs["changes"])
 
     if len(kwargs.keys()) > 1:
         incoming = []
-        if 'incoming' in kwargs:
-            incoming = kwargs['incoming']
+        if "incoming" in kwargs:
+            incoming = kwargs["incoming"]
 
         outcome = []
-        if 'outcome' in kwargs:
-            outcome = kwargs['outcome']
+        if "outcome" in kwargs:
+            outcome = kwargs["outcome"]
 
         changes = []
-        if 'changes' in kwargs:
-            changes = kwargs['changes']
+        if "changes" in kwargs:
+            changes = kwargs["changes"]
 
         return _ensure_both(incoming, outcome, changes)

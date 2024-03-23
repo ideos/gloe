@@ -1,14 +1,28 @@
 import unittest
 from typing import cast
 
-from tests.lib.transformers import *
-from src.gloe import transformer, TransformerException, UnsupportedTransformerArgException
+from tests.lib.transformers import (
+    square,
+    square_root,
+    sum_tuple2,
+    sum_tuple3,
+    plus1,
+    minus1,
+    natural_logarithm,
+    logarithm,
+    LnOfNegativeNumber,
+)
+from gloe import (
+    TransformerException,
+    UnsupportedTransformerArgException,
+    transformer,
+)
 
 
 class TestFunctionTransformer(unittest.TestCase):
-
     def test_transformer_wrong_signature(self):
         with self.assertWarns(RuntimeWarning):
+
             @transformer  # type: ignore
             def many_args(arg1: str, arg2: int):
                 return arg1, arg2
@@ -34,18 +48,15 @@ class TestFunctionTransformer(unittest.TestCase):
 
         with self.assertRaises(
             UnsupportedTransformerArgException,
-            msg=f"Unsupported transformer argument: {just_a_normal_function}"
+            msg=f"Unsupported transformer argument: {just_a_normal_function}",
         ):
             _ = square >> just_a_normal_function  # type: ignore
 
         with self.assertRaises(
             UnsupportedTransformerArgException,
-            msg=f"Unsupported transformer argument: {just_a_normal_function}"
+            msg=f"Unsupported transformer argument: {just_a_normal_function}",
         ):
-            _ = square >> (  # type: ignore
-                just_a_normal_function,
-                plus1
-            )
+            _ = square >> (just_a_normal_function, plus1)  # type: ignore
 
     def test_previous_property(self):
         """
@@ -56,27 +67,22 @@ class TestFunctionTransformer(unittest.TestCase):
 
         self.assertEqual(linear_graph.previous, square)
 
-        divergent_graph = square >> square_root >> (
-            square >> (
-                square_root,
-                square_root
-            ),
-            square >> square_root >> (
-                square
-            )
+        divergent_graph = (
+            square
+            >> square_root
+            >> (square >> (square_root, square_root), square >> square_root >> square)
         )
 
-        self.assertIsNone(divergent_graph.previous[0].previous[0].previous.previous.previous.previous)
+        self.assertIsNone(
+            divergent_graph.previous[0].previous[0].previous.previous.previous.previous
+        )
 
     def test_divergence_flow(self):
         """
         Test the most simple divergent case
         """
 
-        divergent_graph = square >> (
-            square_root,
-            square
-        )
+        divergent_graph = square >> (square_root, square)
 
         integer = 10
         result = divergent_graph(integer)
@@ -88,10 +94,7 @@ class TestFunctionTransformer(unittest.TestCase):
         Test the most simple convergent case
         """
 
-        convergent_graph = square >> (
-            square_root,
-            square
-        ) >> sum_tuple2
+        convergent_graph = square >> (square_root, square) >> sum_tuple2
 
         integer = 10
         result = convergent_graph(integer)
@@ -109,7 +112,7 @@ class TestFunctionTransformer(unittest.TestCase):
             square_root,
             square,
             square_root,
-            square
+            square,
         )
 
         integer = 10
@@ -167,13 +170,14 @@ class TestFunctionTransformer(unittest.TestCase):
 
         self.assertEqual(len(graph), 160 * 2 + 2)
 
-        graph2 = square >> square_root >> (
-            square >> square_root,
-            square >> square_root,
-            square >> square_root
-        ) >> sum_tuple3 >> square >> square_root >> (
-            square >> square_root,
-            square >> square_root
+        graph2 = (
+            square
+            >> square_root
+            >> (square >> square_root, square >> square_root, square >> square_root)
+            >> sum_tuple3
+            >> square
+            >> square_root
+            >> (square >> square_root, square >> square_root)
         )
 
         self.assertEqual(len(graph2), 15)
@@ -186,7 +190,6 @@ class TestFunctionTransformer(unittest.TestCase):
         self.assertNotEqual(square, square_root)
 
     def test_transformer_pydoc_keeping(self):
-
         @transformer
         def to_string(num: int) -> str:
             """
@@ -198,13 +201,13 @@ class TestFunctionTransformer(unittest.TestCase):
             to_string.__doc__,
             """
             This transformer receives a number as input and return its representation as a string
-            """
+            """,
         )
 
     def test_transformer_signature_representation(self):
         signature = square.signature()
 
-        self.assertEqual(str(signature), '(num: float) -> float')
+        self.assertEqual(str(signature), "(num: float) -> float")
 
     # def test_transformer_nodes_retrieve(self):
     #     graph = square >> square_root >> square >> square_root
@@ -256,8 +259,8 @@ class TestFunctionTransformer(unittest.TestCase):
 
         graph = logarithm(base=2)
         self.assertEqual(graph(2), 1)
-        self.assertEqual(graph.label, 'logarithm')
+        self.assertEqual(graph.label, "logarithm")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

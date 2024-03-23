@@ -1,11 +1,19 @@
 import unittest
 
-from tests.lib.exceptions import NumberIsEven, \
-    NumberLessThanOrEquals10, \
-    NumbersNotEqual, \
-    NumberIsOdd
-from tests.lib.ensurers import is_odd, same_value, is_even, is_greater_than_10, same_value_int
-from src.gloe import transformer, ensure, partial_transformer
+from tests.lib.exceptions import (
+    NumberIsEven,
+    NumberLessThanOrEquals10,
+    NumbersNotEqual,
+    NumberIsOdd,
+)
+from tests.lib.ensurers import (
+    is_odd,
+    same_value,
+    is_even,
+    is_greater_than_10,
+    same_value_int,
+)
+from gloe import ensure, transformer, partial_transformer
 
 
 class TestTransformerEnsurer(unittest.TestCase):

@@ -5,14 +5,29 @@ from typing import Iterable, TypeVar, Any
 
 from typing_extensions import assert_type
 
-from src.gloe.transformers import Transformer
-from src.gloe import ensure
-from src.gloe.utils import forward
-from src.gloe.experimental.bridge import bridge
-from src.gloe.collection import Map
-from tests.lib.conditioners import *
+from tests.lib.conditioners import if_not_zero, if_is_even
 from tests.lib.ensurers import is_even, same_value, same_value_int, is_greater_than_10
-from tests.lib.transformers import *
+from tests.lib.transformers import (
+    square,
+    square_root,
+    plus1,
+    minus1,
+    to_string,
+    logarithm,
+    repeat,
+    format_currency,
+)
+from gloe import (
+    Transformer,
+    transformer,
+    partial_transformer,
+    ensure,
+    async_transformer,
+    AsyncTransformer,
+)
+from gloe.utils import forward
+from gloe.experimental import bridge
+from gloe.collection import Map
 from mypy import api
 
 
@@ -51,23 +66,24 @@ class TestTransformerTypes(unittest.TestCase):
         Test the most simple transformer typing
         """
 
-        graph = square >> square_root >> (
-            to_string,
-            square
-        )
+        graph = square >> square_root >> (to_string, square)
 
-        assert_type(graph, Transformer[float, Tuple[str, float]])
+        assert_type(graph, Transformer[float, tuple[str, float]])
 
     def _test_conditioned_flow_types(self):
         """
         Test the most simple transformer typing
         """
 
-        conditioned_graph = square >> square_root >> if_not_zero.Then(plus1).Else(minus1)
+        conditioned_graph = (
+            square >> square_root >> if_not_zero.Then(plus1).Else(minus1)
+        )
 
         assert_type(conditioned_graph, Transformer[float, float])
 
-        conditioned_graph2 = square >> square_root >> if_not_zero.Then(to_string).Else(square)
+        conditioned_graph2 = (
+            square >> square_root >> if_not_zero.Then(to_string).Else(square)
+        )
 
         assert_type(conditioned_graph2, Transformer[float, str | float])
 
@@ -77,11 +93,7 @@ class TestTransformerTypes(unittest.TestCase):
         """
 
         chained_conditions_graph = (
-            if_is_even
-            .Then(square)
-            .ElseIf(lambda x: x < 10)
-            .Then(to_string)
-            .ElseNone()
+            if_is_even.Then(square).ElseIf(lambda x: x < 10).Then(to_string).ElseNone()
         )
 
         assert_type(chained_conditions_graph, Transformer[float, float | str | None])
@@ -92,17 +104,17 @@ class TestTransformerTypes(unittest.TestCase):
         """
 
         log2 = logarithm(base=2)
-        assert_type(log2, Transformer[float,  float])
+        assert_type(log2, Transformer[float, float])
 
         repeater = repeat(n_times=2, linebreak=True)
-        assert_type(repeater, Transformer[str,  str])
+        assert_type(repeater, Transformer[str, str])
 
     def _test_transformer_init(self):
         """
         Test the transformer initializer typing
         """
 
-        formatter = format_currency(thousands_separator=',')
+        formatter = format_currency(thousands_separator=",")
 
         assert_type(formatter, Transformer[float, str])
 
@@ -111,7 +123,9 @@ class TestTransformerTypes(unittest.TestCase):
         Test the transformer map collection operation
         """
 
-        mapped_logarithm = forward[Iterable[float]]() >> Map(format_currency(thousands_separator=','))
+        mapped_logarithm = forward[Iterable[float]]() >> Map(
+            format_currency(thousands_separator=",")
+        )
 
         assert_type(mapped_logarithm, Transformer[Iterable[float], Iterable[str]])
 
@@ -194,23 +208,41 @@ class TestTransformerTypes(unittest.TestCase):
 
     def _test_generic_transformer(self):
         @partial_transformer
-        def tuplicate(data: In) -> Tuple[In, In]:
+        def tuplicate(data: In) -> tuple[In, In]:
             return data, data
 
         @partial_transformer
-        def pick_first(data: Tuple[In, Any]) -> In:
+        def pick_first(data: tuple[In, Any]) -> In:
             return data[0]
 
         graph = square >> tuplicate() >> pick_first() >> forward()
 
         assert_type(graph, Transformer[float, float])
 
+    def _test_async_transformer(self):
+        @async_transformer
+        async def _square(num: int) -> float:
+            return float(num * num)
+
+        async_pipeline = _square >> to_string
+        async_pipeline2 = forward[int]() >> _square >> to_string
+
+        assert_type(_square, AsyncTransformer[int, float])
+        assert_type(async_pipeline, AsyncTransformer[int, str])
+        assert_type(async_pipeline2, AsyncTransformer[int, str])
+
     def test_all(self):
         file_path = Path(os.path.abspath(__file__))
-        config_path = (file_path.parent.parent / 'mypy.ini').absolute()
-        result = api.run([__file__, '--follow-imports=silent', f'--config-file={config_path}'])
-        self.assertRegex(result[0], 'Success')
+        config_path = (file_path.parent.parent / "mypy.ini").absolute()
+        result = api.run(
+            [
+                __file__,
+                "--follow-imports=silent",
+                f"--config-file={config_path}",
+            ]
+        )
+        self.assertRegex(result[0], "Success")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -1,7 +1,7 @@
 import unittest
 
-from src.gloe.experimental import EmptyBridgeOnDrop, bridge
-from tests.lib.transformers import *
+from gloe.experimental import EmptyBridgeOnDrop, bridge
+from tests.lib.transformers import plus1, minus1
 
 
 class TestTransformerBridges(unittest.TestCase):

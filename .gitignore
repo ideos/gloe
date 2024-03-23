@@ -6,7 +6,7 @@ playground
 build
 __pycache__
 src/*
-!src/gloe
+!gloe
 **/*.dot
 .coverage
 htmlcov

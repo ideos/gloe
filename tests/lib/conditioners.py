@@ -1,4 +1,4 @@
-from src.gloe.conditional import conditioner
+from gloe import conditioner
 
 
 @conditioner

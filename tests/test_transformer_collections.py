@@ -1,7 +1,7 @@
 import unittest
 
-from src.gloe.collection import Map, MapOver
-from tests.lib.transformers import *
+from gloe.collection import Map, MapOver
+from tests.lib.transformers import square, plus1, sum_tuple2
 
 
 class TestTransformerCollections(unittest.TestCase):

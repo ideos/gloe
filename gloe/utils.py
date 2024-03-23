@@ -1,7 +1,7 @@
 from typing import Any, Tuple, TypeVar, Generic
 
-from .functional import transformer
-from .transformers import Transformer
+from gloe.functional import transformer
+from gloe.transformers import Transformer
 
 _In = TypeVar("_In")
 _Out = TypeVar("_Out")
@@ -21,10 +21,13 @@ def debug(incoming: _In) -> _In:
 class forward(Generic[_In], Transformer[_In, _In]):
     def __init__(self):
         super().__init__()
-        self.invisible = True
+        self._invisible = True
 
     def __repr__(self):
-        return str(self.previous)
+        if self.previous is not None:
+            return str(self.previous)
+
+        return super().__repr__()
 
     def transform(self, data: _In) -> _In:
         return data

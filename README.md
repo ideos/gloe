@@ -364,6 +364,17 @@ pipeline = filter_man >> filter_older_than(min_age=21)
 
 ### Async Transformers
 
+```python
+import httpx
+from gloe import async_transformer
+
+@async_transformer
+async def fetch_data(resource: str) -> Response:
+    async with httpx.AsyncClient() as client:
+        r = await client.get(f'{BASE_URL}/{resource}')
+    return r
+```
+
 ### Ensurers
 
 Although the type annotations are good enough to statically ensure a correct pipeline shape, on the other hand, there are some dynamic validations we may want to do on a transformer input and output during execution time. 

@@ -8,10 +8,8 @@ from typing import (
     ParamSpec,
     TypeVar,
     cast,
-    Coroutine,
-    Any,
-    overload,
     Awaitable,
+    Generic,
 )
 
 from gloe.async_transformer import AsyncTransformer
@@ -22,12 +20,14 @@ S = TypeVar("S")
 P1 = ParamSpec("P1")
 
 
-def partial_transformer(
-    func: Callable[Concatenate[A, P1], S]
-) -> Callable[P1, Transformer[A, S]]:
-    func_signature = inspect.signature(func)
+class _PartialTransformer(Generic[A, P1, S]):
+    def __init__(self, func: Callable[Concatenate[A, P1], S]):
+        self.func = func
 
-    def init_func(*args: P1.args, **kwargs: P1.kwargs) -> Transformer[A, S]:
+    def __call__(self, *args: P1.args, **kwargs: P1.kwargs) -> Transformer[A, S]:
+        func = self.func
+        func_signature = inspect.signature(func)
+
         class LambdaTransformer(Transformer[A, S]):
             __doc__ = func.__doc__
             __annotations__ = cast(FunctionType, func).__annotations__
@@ -43,7 +43,41 @@ def partial_transformer(
         lambda_transformer._label = func.__name__
         return lambda_transformer
 
-    return init_func
+
+def partial_transformer(
+    func: Callable[Concatenate[A, P1], S]
+) -> _PartialTransformer[A, P1, S]:
+    return _PartialTransformer(func)
+
+
+class _PartialAsyncTransformer(Generic[A, P1, S]):
+    def __init__(self, func: Callable[Concatenate[A, P1], Awaitable[S]]):
+        self.func = func
+
+    def __call__(self, *args: P1.args, **kwargs: P1.kwargs) -> AsyncTransformer[A, S]:
+        func = self.func
+        func_signature = inspect.signature(func)
+
+        class LambdaTransformer(AsyncTransformer[A, S]):
+            __doc__ = func.__doc__
+            __annotations__ = cast(FunctionType, func).__annotations__
+
+            def signature(self) -> Signature:
+                return func_signature
+
+            async def transform_async(self, data: A) -> S:
+                return await func(data, *args, **kwargs)
+
+        lambda_transformer = LambdaTransformer()
+        lambda_transformer.__class__.__name__ = func.__name__
+        lambda_transformer._label = func.__name__
+        return lambda_transformer
+
+
+def partial_async_transformer(
+    func: Callable[Concatenate[A, P1], Awaitable[S]]
+) -> _PartialAsyncTransformer[A, P1, S]:
+    return _PartialAsyncTransformer(func)
 
 
 def transformer(func: Callable[[A], S]) -> Transformer[A, S]:

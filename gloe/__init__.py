@@ -1,5 +1,10 @@
 from gloe._composition_utils import _compose_nodes
-from gloe.functional import transformer, partial_transformer, async_transformer
+from gloe.functional import (
+    transformer,
+    partial_transformer,
+    partial_async_transformer,
+    async_transformer,
+)
 from gloe.conditional import If, ConditionerTransformer, conditioner
 from gloe.ensurer import ensure
 from gloe.exceptions import UnsupportedTransformerArgException

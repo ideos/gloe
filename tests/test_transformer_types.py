@@ -1,3 +1,4 @@
+import asyncio
 import os
 import unittest
 from pathlib import Path
@@ -16,11 +17,13 @@ from tests.lib.transformers import (
     logarithm,
     repeat,
     format_currency,
+    tuple_concatenate,
 )
 from gloe import (
     Transformer,
     transformer,
     partial_transformer,
+    partial_async_transformer,
     ensure,
     async_transformer,
     AsyncTransformer,
@@ -215,7 +218,7 @@ class TestTransformerTypes(unittest.TestCase):
         def pick_first(data: tuple[In, Any]) -> In:
             return data[0]
 
-        graph = square >> tuplicate() >> pick_first() >> forward()
+        graph = square >> tuplicate() >> pick_first()
 
         assert_type(graph, Transformer[float, float])
 
@@ -226,10 +229,26 @@ class TestTransformerTypes(unittest.TestCase):
 
         async_pipeline = _square >> to_string
         async_pipeline2 = forward[int]() >> _square >> to_string
+        async_pipeline3 = forward[int]() >> (_square, _square >> to_string)
+        async_pipeline4 = _square >> (to_string, forward[float]())
+        async_pipeline5 = _square >> (to_string, forward[float]()) >> tuple_concatenate
 
         assert_type(_square, AsyncTransformer[int, float])
         assert_type(async_pipeline, AsyncTransformer[int, str])
         assert_type(async_pipeline2, AsyncTransformer[int, str])
+        assert_type(async_pipeline3, AsyncTransformer[int, tuple[float, str]])
+        assert_type(async_pipeline4, AsyncTransformer[int, tuple[str, float]])
+        assert_type(async_pipeline5, AsyncTransformer[int, str])
+
+    def _test_partial_async_transformer(self):
+        @partial_async_transformer
+        async def sleep_and_forward(data: dict[str, str], delay: int) -> dict[str, str]:
+            await asyncio.sleep(delay)
+            return data
+
+        pipeline = sleep_and_forward(1) >> forward()
+
+        assert_type(pipeline, AsyncTransformer[dict[str, str], dict[str, str]])
 
     def test_all(self):
         file_path = Path(os.path.abspath(__file__))

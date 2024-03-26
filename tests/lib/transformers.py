@@ -1,5 +1,4 @@
 import math
-from typing import Tuple
 import numpy as np
 from numpy import ndarray
 
@@ -54,17 +53,17 @@ def divide_by_2(num: float) -> float:
 
 
 @transformer
-def sum_tuple2(num: Tuple[float, float]) -> float:
+def sum_tuple2(num: tuple[float, float]) -> float:
     return num[0] + num[1]
 
 
 @transformer
-def mul_tuple2(num: Tuple[float, float]) -> float:
+def mul_tuple2(num: tuple[float, float]) -> float:
     return num[0] * num[1]
 
 
 @transformer
-def sum_tuple3(num: Tuple[float, float, float]) -> float:
+def sum_tuple3(num: tuple[float, float, float]) -> float:
     num1, num2, num3 = num
     return num1 + num2 + num3
 
@@ -75,7 +74,7 @@ def to_string(num: float) -> str:
 
 
 @transformer
-def tuple_concatenate(strs: Tuple[str, float]) -> str:
+def tuple_concatenate(strs: tuple[str, float]) -> str:
     return strs[0] + str(strs[1])
 
 

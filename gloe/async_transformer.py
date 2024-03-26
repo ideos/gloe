@@ -1,10 +1,16 @@
+import copy
 import traceback
+import types
+import uuid
 from abc import abstractmethod, ABC
 from inspect import Signature
-from typing import TypeVar, overload, cast, Any
+from typing import TypeVar, overload, cast, Any, Callable, Awaitable
 
-from gloe.base_transformer import TransformerException, BaseTransformer
-
+from gloe.base_transformer import (
+    TransformerException,
+    BaseTransformer,
+    PreviousTransformer,
+)
 
 _In = TypeVar("_In")
 _Out = TypeVar("_Out")
@@ -79,6 +85,37 @@ class AsyncTransformer(BaseTransformer[_In, _Out, "AsyncTransformer"], ABC):
             return cast(_Out, transformed)
 
         raise NotImplementedError
+
+    def copy(
+        self,
+        transform: Callable[[BaseTransformer, _In], Awaitable[_Out]] | None = None,
+        regenerate_instance_id: bool = False,
+    ) -> "AsyncTransformer[_In, _Out]":
+        copied = copy.copy(self)
+
+        func_type = types.MethodType
+        if transform is not None:
+            setattr(copied, "transform_async", func_type(transform, copied))
+
+        if regenerate_instance_id:
+            copied.instance_id = uuid.uuid4()
+
+        if self.previous is not None:
+            # copy_next_previous = 'none' if copy_previous == 'first_previous' else copy_previous
+            if type(self.previous) == tuple:
+                new_previous: list[BaseTransformer] = [
+                    previous_transformer.copy()
+                    for previous_transformer in self.previous
+                ]
+                copied._previous = cast(PreviousTransformer, tuple(new_previous))
+            elif isinstance(self.previous, BaseTransformer):
+                copied._previous = self.previous.copy()
+
+        copied._children = [
+            child.copy(regenerate_instance_id=True) for child in self.children
+        ]
+
+        return copied
 
     @overload
     def __rshift__(

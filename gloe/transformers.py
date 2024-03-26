@@ -1,4 +1,3 @@
-import inspect
 import traceback
 from abc import ABC, abstractmethod
 from inspect import Signature
@@ -8,14 +7,13 @@ from typing import (
     overload,
     cast,
     Any,
-    get_args,
-    get_origin,
-    Generic,
+    TypeAlias,
+    Union,
 )
 
-from gloe._utils import _format_return_annotation
 from gloe.base_transformer import BaseTransformer, TransformerException
 from gloe.async_transformer import AsyncTransformer
+
 
 _In = TypeVar("_In")
 _Out = TypeVar("_Out")
@@ -27,6 +25,75 @@ _Out4 = TypeVar("_Out4")
 _Out5 = TypeVar("_Out5")
 _Out6 = TypeVar("_Out6")
 _Out7 = TypeVar("_Out7")
+
+
+Trf: TypeAlias = "Transformer"
+ATrf: TypeAlias = AsyncTransformer
+BTrf: TypeAlias = BaseTransformer[_In, _Out, Any]
+
+AsyncNext2 = Union[
+    tuple[ATrf[_Out, _NextOut], BTrf[_Out, _Out2]],
+    tuple[BTrf[_Out, _NextOut], ATrf[_Out, _Out2]],
+]
+
+AsyncNext3 = Union[
+    tuple[ATrf[_Out, _NextOut], BTrf[_Out, _Out2], BTrf[_Out, _Out3]],
+    tuple[BTrf[_Out, _NextOut], ATrf[_Out, _Out2], BTrf[_Out, _Out3]],
+    tuple[BTrf[_Out, _NextOut], BTrf[_Out, _Out2], ATrf[_Out, _Out3]],
+]
+
+AsyncNext4 = Union[
+    tuple[
+        ATrf[_Out, _NextOut], BTrf[_Out, _Out2], BTrf[_Out, _Out3], BTrf[_Out, _Out4]
+    ],
+    tuple[
+        BTrf[_Out, _NextOut], ATrf[_Out, _Out2], BTrf[_Out, _Out3], BTrf[_Out, _Out4]
+    ],
+    tuple[
+        BTrf[_Out, _NextOut], BTrf[_Out, _Out2], ATrf[_Out, _Out3], BTrf[_Out, _Out4]
+    ],
+    tuple[
+        BTrf[_Out, _NextOut], BTrf[_Out, _Out2], BTrf[_Out, _Out3], ATrf[_Out, _Out4]
+    ],
+]
+
+AsyncNext5 = Union[
+    tuple[
+        ATrf[_Out, _NextOut],
+        BTrf[_Out, _Out2],
+        BTrf[_Out, _Out3],
+        BTrf[_Out, _Out4],
+        BTrf[_Out, _Out5],
+    ],
+    tuple[
+        BTrf[_Out, _NextOut],
+        ATrf[_Out, _Out2],
+        BTrf[_Out, _Out3],
+        BTrf[_Out, _Out4],
+        BTrf[_Out, _Out5],
+    ],
+    tuple[
+        BTrf[_Out, _NextOut],
+        BTrf[_Out, _Out2],
+        ATrf[_Out, _Out3],
+        BTrf[_Out, _Out4],
+        BTrf[_Out, _Out5],
+    ],
+    tuple[
+        BTrf[_Out, _NextOut],
+        BTrf[_Out, _Out2],
+        BTrf[_Out, _Out3],
+        ATrf[_Out, _Out4],
+        BTrf[_Out, _Out5],
+    ],
+    tuple[
+        BTrf[_Out, _NextOut],
+        BTrf[_Out, _Out2],
+        BTrf[_Out, _Out3],
+        BTrf[_Out, _Out4],
+        ATrf[_Out, _Out5],
+    ],
+]
 
 
 class Transformer(BaseTransformer[_In, _Out, "Transformer"], ABC):
@@ -106,18 +173,14 @@ class Transformer(BaseTransformer[_In, _Out, "Transformer"], ABC):
     @overload
     def __rshift__(
         self,
-        next_node: tuple["Transformer[_Out, _NextOut]", "Transformer[_Out, _Out2]"],
-    ) -> "Transformer[_In, tuple[_NextOut, _Out2]]":
+        next_node: tuple["Trf[_Out, _NextOut]", "Trf[_Out, _Out2]"],
+    ) -> "Trf[_In, tuple[_NextOut, _Out2]]":
         pass
 
     @overload
     def __rshift__(
         self,
-        next_node: tuple[
-            "Transformer[_Out, _NextOut]",
-            "Transformer[_Out, _Out2]",
-            "Transformer[_Out, _Out3]",
-        ],
+        next_node: tuple["Trf[_Out, _NextOut]", "Trf[_Out, _Out2]", "Trf[_Out, _Out3]"],
     ) -> "Transformer[_In, tuple[_NextOut, _Out2, _Out3]]":
         pass
 
@@ -125,119 +188,90 @@ class Transformer(BaseTransformer[_In, _Out, "Transformer"], ABC):
     def __rshift__(
         self,
         next_node: tuple[
-            "Transformer[_Out, _NextOut]",
-            "Transformer[_Out, _Out2]",
-            "Transformer[_Out, _Out3]",
-            "Transformer[_Out, _Out4]",
+            "Trf[_Out, _NextOut]",
+            "Trf[_Out, _Out2]",
+            "Trf[_Out, _Out3]",
+            "Trf[_Out, _Out4]",
         ],
-    ) -> "Transformer[_In, tuple[_NextOut, _Out2, _Out3, _Out4]]":
+    ) -> "Trf[_In, tuple[_NextOut, _Out2, _Out3, _Out4]]":
         pass
 
     @overload
     def __rshift__(
         self,
         next_node: tuple[
-            "Transformer[_Out, _NextOut]",
-            "Transformer[_Out, _Out2]",
-            "Transformer[_Out, _Out3]",
-            "Transformer[_Out, _Out4]",
-            "Transformer[_Out, _Out5]",
+            "Trf[_Out, _NextOut]",
+            "Trf[_Out, _Out2]",
+            "Trf[_Out, _Out3]",
+            "Trf[_Out, _Out4]",
+            "Trf[_Out, _Out5]",
         ],
-    ) -> "Transformer[_In, tuple[_NextOut, _Out2, _Out3, _Out4, _Out5]]":
+    ) -> "Trf[_In, tuple[_NextOut, _Out2, _Out3, _Out4, _Out5]]":
         pass
 
     @overload
     def __rshift__(
         self,
         next_node: tuple[
-            "Transformer[_Out, _NextOut]",
-            "Transformer[_Out, _Out2]",
-            "Transformer[_Out, _Out3]",
-            "Transformer[_Out, _Out4]",
-            "Transformer[_Out, _Out5]",
-            "Transformer[_Out, _Out6]",
+            "Trf[_Out, _NextOut]",
+            "Trf[_Out, _Out2]",
+            "Trf[_Out, _Out3]",
+            "Trf[_Out, _Out4]",
+            "Trf[_Out, _Out5]",
+            "Trf[_Out, _Out6]",
         ],
-    ) -> "Transformer[_In, tuple[_NextOut, _Out2, _Out3, _Out4, _Out5, _Out6]]":
+    ) -> "Trf[_In, tuple[_NextOut, _Out2, _Out3, _Out4, _Out5, _Out6]]":
         pass
 
     @overload
     def __rshift__(
         self,
         next_node: tuple[
-            "Transformer[_Out, _NextOut]",
-            "Transformer[_Out, _Out2]",
-            "Transformer[_Out, _Out3]",
-            "Transformer[_Out, _Out4]",
-            "Transformer[_Out, _Out5]",
-            "Transformer[_Out, _Out6]",
-            "Transformer[_Out, _Out7]",
+            "Trf[_Out, _NextOut]",
+            "Trf[_Out, _Out2]",
+            "Trf[_Out, _Out3]",
+            "Trf[_Out, _Out4]",
+            "Trf[_Out, _Out5]",
+            "Trf[_Out, _Out6]",
+            "Trf[_Out, _Out7]",
         ],
-    ) -> "Transformer[_In, tuple[_NextOut, _Out2, _Out3, _Out4, _Out5, _Out6, _Out7]]":
+    ) -> "Trf[_In, tuple[_NextOut, _Out2, _Out3, _Out4, _Out5, _Out6, _Out7]]":
         pass
 
     @overload
-    def __rshift__(
-        self, next_node: "Transformer[_Out, _NextOut]"
-    ) -> "Transformer[_In, _NextOut]":
+    def __rshift__(self, next_node: "Trf[_Out, _NextOut]") -> "Trf[_In, _NextOut]":
         pass
 
     @overload
-    def __rshift__(
-        self, next_node: "AsyncTransformer[_Out, _NextOut]"
-    ) -> "AsyncTransformer[_In, _NextOut]":
+    def __rshift__(self, next_node: ATrf[_Out, _NextOut]) -> ATrf[_In, _NextOut]:
         pass
 
     @overload
     def __rshift__(
         self,
-        next_node: tuple[
-            AsyncTransformer[_Out, _NextOut],
-            "AsyncTransformer[_Out, _Out2] | Transformer[_Out, _Out2]",
-        ],
-    ) -> AsyncTransformer[_In, tuple[_NextOut, _Out2]]:
+        next_node: AsyncNext2[_Out, _NextOut, _Out2],
+    ) -> ATrf[_In, tuple[_NextOut, _Out2]]:
         pass
 
     @overload
     def __rshift__(
         self,
-        next_node: tuple[
-            "AsyncTransformer[_Out, _NextOut] | Transformer[_Out, _NextOut]",
-            "AsyncTransformer[_Out, _Out2]",
-        ],
-    ) -> AsyncTransformer[_In, tuple[_NextOut, _Out2]]:
+        next_node: AsyncNext3[_Out, _NextOut, _Out2, _Out3],
+    ) -> ATrf[_In, tuple[_NextOut, _Out2, _Out3]]:
         pass
 
     @overload
     def __rshift__(
         self,
-        next_node: tuple[
-            "AsyncTransformer[_Out, _NextOut]",
-            "AsyncTransformer[_Out, _Out2] | Transformer[_Out, _Out2]",
-            "AsyncTransformer[_Out, _Out3] | Transformer[_Out, _Out3]",
-        ],
-    ) -> AsyncTransformer[_In, tuple[_NextOut, _Out2, _Out3]]:
+        next_node: AsyncNext4[_Out, _NextOut, _Out2, _Out3, _Out4],
+    ) -> ATrf[_In, tuple[_NextOut, _Out2, _Out3, _Out4]]:
         pass
 
     @overload
     def __rshift__(
         self,
-        next_node: tuple[
-            "AsyncTransformer[_Out, _NextOut] | Transformer[_Out, _NextOut]",
-            "AsyncTransformer[_Out, _Out2]",
-            "AsyncTransformer[_Out, _Out3] | Transformer[_Out, _Out3]",
-        ],
-    ) -> AsyncTransformer[_In, tuple[_NextOut, _Out2, _Out3]]:
-        pass
-
-    @overload
-    def __rshift__(
-        self,
-        next_node: tuple[
-            "AsyncTransformer[_Out, _NextOut] | Transformer[_Out, _NextOut]",
-            "AsyncTransformer[_Out, _Out2] | Transformer[_Out, _Out2]",
-            "AsyncTransformer[_Out, _Out3]",
-        ],
-    ) -> AsyncTransformer[_In, tuple[_NextOut, _Out2, _Out3]]:
+        next_node: AsyncNext5[_Out, _NextOut, _Out2, _Out3, _Out4, _Out5],
+    ) -> ATrf[_In, tuple[_NextOut, _Out2, _Out3, _Out4, _Out5]]:
         pass
 
     def __rshift__(self, next_node):

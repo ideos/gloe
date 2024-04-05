@@ -69,18 +69,42 @@ class TestTransformerTypes(unittest.TestCase):
         Test the most simple transformer typing
         """
 
-        graph = square >> square_root >> (to_string, square)
+        graph2 = square >> square_root >> (to_string, square)
+        assert_type(graph2, Transformer[float, tuple[str, float]])
 
-        assert_type(graph, Transformer[float, tuple[str, float]])
+        graph3 = square >> square_root >> (to_string, square, to_string)
+        assert_type(graph3, Transformer[float, tuple[str, float, str]])
+
+        graph4 = square >> square_root >> (to_string, square, to_string, square)
+        assert_type(graph4, Transformer[float, tuple[str, float, str, float]])
+
+        graph5 = (
+            square >> square_root >> (to_string, square, to_string, square, to_string)
+        )
+        assert_type(graph5, Transformer[float, tuple[str, float, str, float, str]])
+
+        graph6 = (
+            square
+            >> square_root
+            >> (to_string, square, to_string, square, to_string, square)
+        )
+        assert_type(graph6, Transformer[float, tuple[str, float, str, float, str, float]])
+
+        graph7 = (
+            square
+            >> square_root
+            >> (to_string, square, to_string, square, to_string, square, to_string)
+        )
+        assert_type(
+            graph7, Transformer[float, tuple[str, float, str, float, str, float, str]]
+        )
 
     def _test_conditioned_flow_types(self):
         """
         Test the most simple transformer typing
         """
 
-        conditioned_graph = (
-            square >> square_root >> if_not_zero.Then(plus1).Else(minus1)
-        )
+        conditioned_graph = square >> square_root >> if_not_zero.Then(plus1).Else(minus1)
 
         assert_type(conditioned_graph, Transformer[float, float])
 
@@ -101,7 +125,7 @@ class TestTransformerTypes(unittest.TestCase):
 
         assert_type(chained_conditions_graph, Transformer[float, float | str | None])
 
-    def _test_curried_transformer(self):
+    def _test_partial_transformer(self):
         """
         Test the curried transformer typing
         """

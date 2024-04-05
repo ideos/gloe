@@ -1,7 +1,7 @@
 ***
 
 <div align="center">
-  <img src="./docs/assets/gloe-logo.png"><br>
+  <img src="docs/source/_static/assets/gloe-logo.png"><br>
 </div>
 
 Let Gloe help you

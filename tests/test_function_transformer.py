@@ -1,6 +1,7 @@
 import unittest
 from typing import cast
 
+from lib.transformers import fib
 from tests.lib.transformers import (
     square,
     square_root,
@@ -260,6 +261,10 @@ class TestFunctionTransformer(unittest.TestCase):
         graph = logarithm(base=2)
         self.assertEqual(graph(2), 1)
         self.assertEqual(graph.label, "logarithm")
+
+    def test_recursive_transformer(self):
+        graph = square >> fib
+        print(graph(4))
 
 
 if __name__ == "__main__":

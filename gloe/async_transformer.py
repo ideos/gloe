@@ -27,6 +27,11 @@ _Out7 = TypeVar("_Out7")
 class AsyncTransformer(BaseTransformer[_In, _Out, "AsyncTransformer"], ABC):
     def __init__(self):
         super().__init__()
+
+        self._graph_node_props: dict[str, Any] = {
+            **self._graph_node_props,
+            "isAsync": True,
+        }
         self.__class__.__annotations__ = self.transform_async.__annotations__
 
     @abstractmethod
@@ -55,8 +60,7 @@ class AsyncTransformer(BaseTransformer[_In, _Out, "AsyncTransformer"], ABC):
                 transformer_frames = [
                     frame
                     for frame in tb
-                    if frame.name == self.__class__.__name__
-                    or frame.name == "transform"
+                    if frame.name == self.__class__.__name__ or frame.name == "transform"
                 ]
 
                 if len(transformer_frames) == 1:
@@ -104,8 +108,7 @@ class AsyncTransformer(BaseTransformer[_In, _Out, "AsyncTransformer"], ABC):
             # copy_next_previous = 'none' if copy_previous == 'first_previous' else copy_previous
             if type(self.previous) == tuple:
                 new_previous: list[BaseTransformer] = [
-                    previous_transformer.copy()
-                    for previous_transformer in self.previous
+                    previous_transformer.copy() for previous_transformer in self.previous
                 ]
                 copied._previous = cast(PreviousTransformer, tuple(new_previous))
             elif isinstance(self.previous, BaseTransformer):
@@ -194,7 +197,9 @@ class AsyncTransformer(BaseTransformer[_In, _Out, "AsyncTransformer"], ABC):
             BaseTransformer[_Out, _Out6, Any],
             BaseTransformer[_Out, _Out7, Any],
         ],
-    ) -> "AsyncTransformer[_In, tuple[_NextOut, _Out2, _Out3, _Out4, _Out5, _Out6, _Out7]]":
+    ) -> (
+        "AsyncTransformer[_In, tuple[_NextOut, _Out2, _Out3, _Out4, _Out5, _Out6, _Out7]]"
+    ):
         pass
 
     def __rshift__(self, next_node):

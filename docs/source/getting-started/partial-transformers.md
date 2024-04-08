@@ -50,5 +50,6 @@ In partial transformers, the first parameter is the input and all the remaining 
 ```python
 pipeline = filter_man >> filter_older_than(min_age=21)
 ```
-
-> When typing the partial transformer instantiation, the IDE will ignore the first argument during autocompletion.
+```{tip}
+When typing the partial transformer instantiation, the IDE will ignore the first argument during autocompletion.
+```

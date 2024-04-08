@@ -5,7 +5,7 @@ from gloe.functional import (
     partial_async_transformer,
     async_transformer,
 )
-from gloe.conditional import If, ConditionerTransformer, conditioner
+from gloe.conditional import If, ConditionerTransformer, condition
 from gloe.ensurer import ensure
 from gloe.exceptions import UnsupportedTransformerArgException
 from gloe.transformers import Transformer

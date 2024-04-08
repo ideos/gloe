@@ -69,9 +69,7 @@ class ConditionerTransformer(
             )
             for impl in copied.implications
         ]
-        copied.else_transformer = self.else_transformer.copy(
-            regenerate_instance_id=True
-        )
+        copied.else_transformer = self.else_transformer.copy(regenerate_instance_id=True)
         copied._children = [
             *[impl.then_transformer for impl in copied.implications],
             copied.else_transformer,
@@ -79,9 +77,7 @@ class ConditionerTransformer(
         return copied
 
     def __len__(self):
-        then_transformers_len = [
-            len(impl.then_transformer) for impl in self.implications
-        ]
+        then_transformers_len = [len(impl.then_transformer) for impl in self.implications]
         return sum(then_transformers_len) + len(self.else_transformer)
 
 
@@ -171,7 +167,7 @@ class If(Generic[In]):
         return if_then
 
 
-def conditioner(func: Callable[[In], bool]) -> If[In]:
+def condition(func: Callable[[In], bool]) -> If[In]:
     """
     The condition decorator is responsible to build an instance of `If[T]`
     class given a `Callable[[T], bool]`.

@@ -73,10 +73,15 @@ def lowest_price_gt_avg(houses_df: pd.DataFrame, city_prices_df: pd.DataFrame):
 Now we can add all these validations to our transformer:
 
 ```python
-@ensure(incoming=[has_no_nan_prices], outcome=[is_non_empty], changes=[lowest_price_gt_avg])
+@ensure(
+    incoming=[has_no_nan_prices],
+    outcome=[is_non_empty],
+    changes=[lowest_price_gt_avg]
+)
 @partial_transformer
 def cities_more_expensive_than(houses_df: pd.DataFrame, min_price: float) -> pd.DataFrame:
     ...
 ```
-
-> As you can see, the `@ensure` decorator works to partial transformers as well.
+```{important}
+As you can see, the `@ensure` decorator works to partial transformers as well. In fact, you can use it with all types of transformers, including async transformers and partial async transformers.
+```

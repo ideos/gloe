@@ -6,9 +6,12 @@ Basic structure of a Graph:
 ``` 
 (type A) -> [Transformer 1] -> (type B) -> [Transformer 2] -> ... -> (type X)
 ```
-
-> Type A is called **incoming type** and type X is called **outcome type** of
+```{admonition} Naming things
+:class: seealso
+Type A is called **incoming type** and type X is called **outcome type** of
 the graph.
+```
+
 
 A transformer must have an atomic and well-defined responsibility. As we will see later, implement a Transformer is a ridiculously easy task, so have many of them is not a problem. Keep it simple, make it easier to understand, document and test!
 
@@ -37,8 +40,11 @@ must have the following signature:
 
 That is, the outcome type of `MyTransformer` must be the same as the incoming type of `NextTransformer`. When building your graphs, you will know about any problem with types immediately.
 
-> The representation of a transformer with its name and types is called
+```{admonition} Naming things
+:class: seealso
+The representation of a transformer with its name and types is called
 **signature**.
+```
 
 To perform this kind of behavior, Gloe uses the most recent and
 sophisticated features of [Python typing
@@ -76,10 +82,11 @@ Transformer, recursively.
       |                       |                      |                                 |
 [Transformer 1]   ->   [Transformer 2]   ->   [Transformer 3]   ->   ...   ->   [Transformer N]
 ```
-
-> To make easy our communication in this documentation, we will continue
-to call the sequence of transformers as a **graph** and any range of
-this sequence as a **subgraph**.
+```{admonition} Naming things
+:class: seealso
+To make easy our communication in this documentation, we will continue
+to call the sequence of transformers as a **graph** or **pipeline**.
+```
 
 ## Non-linearity
 

@@ -32,7 +32,7 @@ exclude_patterns = ["Thumbs.db", ".DS_Store"]
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_title = " "
+html_title = "Gloe"
 # html_logo = "assets/gloe-logo-small.png"
 html_theme = "furo"
 html_last_updated_fmt = ""
@@ -40,12 +40,13 @@ html_last_updated_fmt = ""
 # html_domain_indices = False  # Don't need module indices
 # html_copy_source = False  # Don't need sources
 html_sidebars: dict[str, list[str]] = {
-    # "about": ["sidebar_main_nav_links.html"],
+    "Home": ["/"],
 }
 # autodoc_default_options = {"ignore-module-all": True}
 
 html_static_path = ["_static"]
 html_css_files = ["theme_customs.css"]
+html_favicon = "_static/assets/favicon.ico"
 html_theme_options = {
     # "main_nav_links": {"Docs": "/index", "About": "/about"},
     "light_logo": "assets/gloe-logo-small.png",

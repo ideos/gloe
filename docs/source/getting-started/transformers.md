@@ -1,5 +1,9 @@
 # Creating a Transformer
 
+```{warning}
+This page assumes you already have read the very short [Gloe's theory](/theory) page.
+```
+
 As previously said, creating a transformer is easy:
 
 ```python
@@ -13,13 +17,17 @@ def filter_even(numbers: list[int]) -> list[int]:
 
 Transformers works like functions, so you can create a function and then apply the `@transformer` decorator to it. That's it, transformer created!
 
-Some important things to notice:
+```{admonition} Some important things to notice:
+:class: important
 
 - We **strongly recommend** you to type the transformers. Because of Python, it is not mandatory, but Gloe was designed to be used with typed code. Take a look at the [Python typing
 library](https://docs.python.org/3/library/typing.html) to learn more about the Python type notation.
 - Transformers must have only one parameter. Any complex data you need to use in its code must be passed in a complex structure like a [tuple](https://docs.python.org/3/tutorial/datastructures.html#tuples-and-sequences), a [dict](https://docs.python.org/3/tutorial/datastructures.html#dictionaries), a [TypedDict](https://docs.python.org/3/library/typing.html#typing.TypedDict), a [dataclass](https://docs.python.org/3/library/dataclasses.html), a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple) or any other. We will see later [why it is necessary](#partial-transformers).
 - Documentations with pydoc will be preserved in transformers.
 - After apply the `@transformer` decorator to a function, it will become an instance of class `Transformer`.
+```
+
+
 
 Every transformer (instance of the Transformer class) can be called just like a normal function:
 
@@ -64,7 +72,10 @@ It is simple to compose these two transformers sequentially, it means, filter th
 ```python
 pipeline = filter_even >> square
 ```
-> We call this **serial connection**
+```{admonition} Naming things
+:class: seealso
+We call this **serial connection**
+```
 
 By doing that, the `pipeline` variable is also a transformer that execute sequentially the processing of the transformers used to build it. Of course, we can call it as well:
 
@@ -90,7 +101,10 @@ send_promotion = get_users >> (
     filter_unsubscribed >> send_unsubscribed_promotion_email
 )
 ```
-> We call this **divergent connection**.
+```{admonition} Naming things
+:class: seealso
+We call this **divergent connection**.
+```
 
 
 If it becomes necessary to treat each type of subscription, we can change the graph easily:
@@ -102,9 +116,12 @@ send_promotion = get_users >> (
     filter_unsubscribed >> send_unsubscribed_promotion_email
 )
 ```
-> This example makes clear how easy it is to understand and refactor the code when using Gloe to express the processing as a graph, with each node (transformer) having an atomic and well-defined responsibility.
 
-> You can't assume any **order of execution** between the branches.
+This example makes clear how easy it is to understand and refactor the code when using Gloe to express the processing as a graph, with each node (transformer) having an atomic and well-defined responsibility.
+
+```{important}
+You can't assume any **order of execution** between the branches.
+```
 
 The right shift operator can receive a transformer or a tuple of transformers as an argument. In the second case, the transformer returned will be as described bellow (pay attention at the types).
 
@@ -142,6 +159,11 @@ graph: Transformer[In, FinalOut] = begin >> (
     branchN
 ) >> end
 ```
-> We call this last connection **convergent**.
+```{admonition} Naming things
+:class: seealso
+We call this last connection **convergent**.
+```
 
-> Python doesn't provide a generic way to map the outcome type of an arbitrary number of branches on a tuple of arbitrary size. Due to this, the overload of possible sizes was treated one by one until the size 7, it means, considering the typing notation, it is possible to have at most 7 branches currently.
+```{attention}
+Python doesn't provide a generic way to map the outcome type of an arbitrary number of branches on a tuple of arbitrary size. Due to this, the overload of possible sizes was treated one by one until the size 7, it means, considering the typing notation, it is possible to have at most 7 branches currently.
+```

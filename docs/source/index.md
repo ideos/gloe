@@ -26,7 +26,7 @@ pip install gloe
 ```
 
 ```{toctree}
-:caption: 'Contents:'
+:caption: 'Contents'
 :maxdepth: 3
 :hidden:
 
@@ -36,14 +36,8 @@ limitations
 ```
 
 ```{toctree}
-:caption: 'Development:'
+:caption: 'Development'
 :maxdepth: 3
 
 gloe
 ```
-
-# Indices and tables
-
-- {ref}`genindex`
-- {ref}`modindex`
-- {ref}`search`

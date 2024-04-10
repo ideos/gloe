@@ -15,9 +15,19 @@ from typing import (
 from gloe.async_transformer import AsyncTransformer
 from gloe.transformers import Transformer
 
+__all__ = [
+    "transformer",
+    "partial_transformer",
+    "async_transformer",
+    "partial_async_transformer",
+]
+
 A = TypeVar("A")
 S = TypeVar("S")
+S2 = TypeVar("S2")
 P1 = ParamSpec("P1")
+P2 = ParamSpec("P2")
+O = TypeVar("O")
 
 
 class _PartialTransformer(Generic[A, P1, S]):
@@ -47,6 +57,11 @@ class _PartialTransformer(Generic[A, P1, S]):
 def partial_transformer(
     func: Callable[Concatenate[A, P1], S]
 ) -> _PartialTransformer[A, P1, S]:
+    """
+    Converts a callable into a partial transformer.
+    :param func:
+    :return:
+    """
     return _PartialTransformer(func)
 
 
@@ -81,6 +96,27 @@ def partial_async_transformer(
 
 
 def transformer(func: Callable[[A], S]) -> Transformer[A, S]:
+    """
+    Convert a callable to an instance of the Transformer class.
+
+    See Also:
+        Read more about this feature in the page :ref:`creating-a-transformer`.
+
+    Example:
+        The most common use is as a decorator::
+
+            @transformer
+            def filter_subscribed_users(users: list[User]) -> list[User]:
+               ...
+
+            get_user_by_role("admin")
+
+    Args:
+        func: callable with only one argument and returns an instance of the generic type
+            `~S`.
+    Returns:
+        The built transformer.
+    """
     func_signature = inspect.signature(func)
 
     if len(func_signature.parameters) > 1:
@@ -109,6 +145,26 @@ def transformer(func: Callable[[A], S]) -> Transformer[A, S]:
 
 
 def async_transformer(func: Callable[[A], Awaitable[S]]) -> AsyncTransformer[A, S]:
+    """
+    Convert a callable to an instance of the AsyncTransformer class.
+
+    See Also:
+        Read more about this feature in the page :ref:`async-transformers`.
+
+    Example:
+        The most common use is as a decorator::
+
+            @async_transformer
+            async def get_user_by_role(role: string) -> list[User]:
+               ...
+
+            await get_user_by_role("admin")
+
+    Args:
+        func: callable with only one argument and returns a Coroutine.
+    Returns:
+        The built async transformer.
+    """
     func_signature = inspect.signature(func)
 
     if len(func_signature.parameters) > 1:

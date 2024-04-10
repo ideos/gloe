@@ -1,6 +1,6 @@
 # Conditional Flows
 
-Often you need to write a flow with some conditions. For example, suppose you need to send an especific email to administrator users and another email to non-administrator users:
+Often you need to write a flow with some conditions. For example, suppose you need to send a specific email to administrator users and another email to non-administrator users:
 
 ```python
 from gloe.conditional import condition
@@ -23,7 +23,7 @@ send_email_to_user(user_id)
 ```
 > `fetch_admin_data`, `send_admin_email`, `send_member_email` and `get_user_by_id` are transformers.
 
-In the above example, the `@condition` decorator converts the `is_admin` function to a `Condition`. It allows us to use the `.Then` method, which receives a transformer as argument. You have to finish the condition chain with an `.Else`, which also receives a transformer as argument.
+In the above example, the `@condition` decorator converts the `is_admin` function to a `Condition`. It allows us to use the `.Then` method, which receives a transformer as an argument. You have to finish the condition chain with an `.Else`, which also receives a transformer as an argument.
 
 Another way to write the given flow is using the `If` class with a lambda function:
 

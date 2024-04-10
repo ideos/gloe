@@ -86,9 +86,7 @@ class _ensure_base:
         pass
 
     @overload
-    def __call__(
-        self, transformer: AsyncTransformer[_U, _S]
-    ) -> AsyncTransformer[_U, _S]:
+    def __call__(self, transformer: AsyncTransformer[_U, _S]) -> AsyncTransformer[_U, _S]:
         pass
 
     @overload
@@ -160,9 +158,7 @@ class _ensure_incoming(Generic[_T], _ensure_base):
 
 class _ensure_outcome(Generic[_S], _ensure_base):
     def __init__(self, incoming: Sequence[Callable[[_S], Any]]):
-        self.output_ensurers_instances = [
-            output_ensurer(ensurer) for ensurer in incoming
-        ]
+        self.output_ensurers_instances = [output_ensurer(ensurer) for ensurer in incoming]
 
     def _generate_new_transformer(self, transformer: Transformer) -> Transformer:
         def transform(_, data):
@@ -191,9 +187,7 @@ class _ensure_outcome(Generic[_S], _ensure_base):
 
 class _ensure_changes(Generic[_T, _S], _ensure_base):
     def __init__(self, changes: Sequence[Callable[[_T, _S], Any]]):
-        self.changes_ensurers_instances = [
-            output_ensurer(ensurer) for ensurer in changes
-        ]
+        self.changes_ensurers_instances = [output_ensurer(ensurer) for ensurer in changes]
 
     def _generate_new_transformer(self, transformer: Transformer) -> Transformer:
         def transform(_, data):
@@ -315,6 +309,13 @@ def ensure(
 
 
 def ensure(*args, **kwargs):
+    """
+
+    Args:
+        incoming: sequence of validators that will be applied to the incoming data.
+        outcome: sequence of validators that will be applied to the outcome data.
+        changes: sequence of validators that will be applied to both incoming and outcome data.
+    """
     if len(kwargs.keys()) == 1 and "incoming" in kwargs:
         return _ensure_incoming(kwargs["incoming"])
 

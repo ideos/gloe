@@ -1,3 +1,3 @@
-__all__ = ["ConditionerTransformer", "If", "condition"]
+__all__ = ["If", "condition"]
 
-from gloe.conditional._conditioner import ConditionerTransformer, If, condition
+from gloe.conditional._conditioner import If, condition

@@ -30,6 +30,7 @@ pip install gloe
 :maxdepth: 3
 :hidden:
 
+Introduction <self>
 theory
 getting-started/index
 limitations
@@ -38,6 +39,7 @@ limitations
 ```{toctree}
 :caption: 'Development'
 :maxdepth: 3
+:hidden:
 
-gloe
+api-reference/index
 ```

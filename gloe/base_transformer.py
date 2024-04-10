@@ -1,9 +1,7 @@
 import copy
-import traceback
 import types
 import uuid
 import inspect
-from abc import ABC, abstractmethod
 from functools import cached_property
 from inspect import Signature
 
@@ -19,7 +17,6 @@ from typing import (
     Iterable,
     get_args,
     get_origin,
-    overload,
     TypeAlias,
     Type,
 )
@@ -28,6 +25,7 @@ from itertools import groupby
 
 from gloe._utils import _format_return_annotation
 
+__all__ = ["BaseTransformer", "TransformerException", "PreviousTransformer"]
 
 _In = TypeVar("_In")
 _Out = TypeVar("_Out")
@@ -48,30 +46,9 @@ PreviousTransformer: TypeAlias = Union[
     tuple[_Self, _Self],
     tuple[_Self, _Self, _Self],
     tuple[_Self, _Self, _Self, _Self],
-    tuple[
-        _Self,
-        _Self,
-        _Self,
-        _Self,
-        _Self,
-    ],
-    tuple[
-        _Self,
-        _Self,
-        _Self,
-        _Self,
-        _Self,
-        _Self,
-    ],
-    tuple[
-        _Self,
-        _Self,
-        _Self,
-        _Self,
-        _Self,
-        _Self,
-        _Self,
-    ],
+    tuple[_Self, _Self, _Self, _Self, _Self],
+    tuple[_Self, _Self, _Self, _Self, _Self, _Self],
+    tuple[_Self, _Self, _Self, _Self, _Self, _Self, _Self],
 ]
 
 
@@ -95,8 +72,8 @@ class TransformerException(Exception):
 
 class BaseTransformer(Generic[_In, _Out, _Self]):
     def __init__(self):
-        self._previous: PreviousTransformer = None
-        self._children: list[_Self] = []
+        self._previous: PreviousTransformer["BaseTransformer"] = None
+        self._children: list["BaseTransformer"] = []
         self._invisible = False
         self.id = uuid.uuid4()
         self.instance_id = uuid.uuid4()
@@ -106,6 +83,15 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
 
     @property
     def label(self) -> str:
+        """
+        Label used in visualization.
+
+        When the transformer is created by the `@transformer` decorator, it is the
+        name of the function.
+
+        When creating a transformer by extending the `Transformer` class, it is the name of
+        the class.
+        """
         return self._label
 
     @property
@@ -113,11 +99,11 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
         return self._graph_node_props
 
     @property
-    def children(self) -> list[_Self]:
+    def children(self) -> list["BaseTransformer"]:
         return self._children
 
     @property
-    def previous(self) -> PreviousTransformer:
+    def previous(self) -> PreviousTransformer["BaseTransformer"]:
         return self._previous
 
     @property
@@ -150,8 +136,7 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
             # copy_next_previous = 'none' if copy_previous == 'first_previous' else copy_previous
             if type(self.previous) == tuple:
                 new_previous: list[BaseTransformer] = [
-                    previous_transformer.copy()
-                    for previous_transformer in self.previous
+                    previous_transformer.copy() for previous_transformer in self.previous
                 ]
                 copied._previous = cast(PreviousTransformer, tuple(new_previous))
             elif isinstance(self.previous, BaseTransformer):
@@ -164,7 +149,7 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
         return copied
 
     @property
-    def graph_nodes(self) -> dict[UUID, _Self]:
+    def graph_nodes(self) -> dict[UUID, "BaseTransformer"]:
         nodes = {self.instance_id: self}
 
         if self.previous is not None:
@@ -279,7 +264,7 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
         return str(self.instance_id)
 
     @cached_property
-    def visible_previous(self) -> PreviousTransformer:
+    def visible_previous(self) -> PreviousTransformer["BaseTransformer"]:
         previous = self.previous
 
         if isinstance(previous, BaseTransformer):
@@ -306,9 +291,9 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
             net.add_nodes_from(child_net.nodes.data())
             net.add_edges_from(child_net.edges.data())
 
-            child_root_node = [
-                n for n in child_net.nodes if child_net.in_degree(n) == 0
-            ][0]
+            child_root_node = [n for n in child_net.nodes if child_net.in_degree(n) == 0][
+                0
+            ]
             child_final_node = [
                 n for n in child_net.nodes if child_net.out_degree(n) == 0
             ][0]
@@ -408,9 +393,7 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
                 net.edges[u, v]["label"] = ""
 
         agraph = nx.nx_agraph.to_agraph(net)
-        subgraphs: Iterable[tuple] = groupby(
-            boxed_nodes, key=lambda x: x[1]["parent_id"]
-        )
+        subgraphs: Iterable[tuple] = groupby(boxed_nodes, key=lambda x: x[1]["parent_id"])
         for parent_id, nodes in subgraphs:
             nodes = list(nodes)
             node_ids = [node[0] for node in nodes]

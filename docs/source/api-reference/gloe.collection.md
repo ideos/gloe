@@ -1,6 +1,4 @@
-# gloe.collection package
-
-## Module contents
+# gloe.collection
 
 ```{eval-rst}
 .. automodule:: gloe.collection

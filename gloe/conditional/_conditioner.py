@@ -152,6 +152,19 @@ class _ElseIf(Generic[In, PrevThenOut]):
 class If(Generic[In]):
     """
     It is used to start a condition chaining
+
+    Example:
+        The below example send a different email for admin and non admin users::
+
+            send_email = (
+                If(lambda user: "admin" in user.roles)
+                    .Then(fetch_admin_data >> send_admin_email)
+                .Else(send_member_email)
+            )
+
+    Args:
+        condition: callable returning a boolean.
+        name: optional argument that adds a label to condition node during plotting.
     """
 
     def __init__(self, condition: Callable[[In], bool], name: str | None = None):
@@ -162,6 +175,7 @@ class If(Generic[In]):
     def Then(
         self, next_transformer: Transformer[In, ThenOut]
     ) -> _IfThen[In, ThenOut, ThenOut]:
+        """ """
         implication = _Implication[In, ThenOut](self._condition, next_transformer)
         if_then = _IfThen[In, ThenOut, ThenOut](implication, name=self._name)
         return if_then

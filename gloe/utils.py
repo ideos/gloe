@@ -3,12 +3,15 @@ from typing import Any, Tuple, TypeVar, Generic
 from gloe.functional import transformer
 from gloe.transformers import Transformer
 
+__all__ = ["forget", "debug", "forward", "forward_incoming"]
+
 _In = TypeVar("_In")
 _Out = TypeVar("_Out")
 
 
 @transformer
 def forget(data: Any) -> None:
+    """Transform any input data to `None`"""
     return None
 
 

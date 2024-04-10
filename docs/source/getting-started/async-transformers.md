@@ -1,3 +1,4 @@
+(async-transformers)=
 # Async Transformers
 
 Transformer can be also created from [coroutines](https://docs.python.org/3/library/asyncio-task.html#coroutines), but, in this case, you need to use the `@async_transformer` decorator. For example, consider the bellow transformer that fetchs data from an external http server:

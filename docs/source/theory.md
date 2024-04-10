@@ -1,6 +1,6 @@
-# Gloe\'s theory
+# Gloe's theory
 
-The main idea behind Gloe is constraint the implementation of a specific flow into a formalized and type-safe pipeline (or execution graph). Every piece (or node) of this pipeline is responsible to transform its input into the input of the next piece, composing a sequential execution process. No code of this flow can be executed out of these pieces and each node of a graph is called Transformer.
+The main idea behind Gloe is constraining the implementation of a specific flow into a formalized and type-safe pipeline (or execution graph). Every piece (or node) of this pipeline is responsible for transforming its input into the input of the next piece, thereby composing a sequential execution process. No code from this flow can be executed outside these pieces, and each node in the graph is called a Transformer.
 
 Basic structure of a Graph:
 ``` 
@@ -13,19 +13,20 @@ the graph.
 ```
 
 
-A transformer must have an atomic and well-defined responsibility. As we will see later, implement a Transformer is a ridiculously easy task, so have many of them is not a problem. Keep it simple, make it easier to understand, document and test!
+A transformer must have an atomic and well-defined responsibility. As we will see later, implementing a Transformer is an exceptionally straightforward task, so having many of them is not problematic. Keep it simple, hence making it easier to understand, document, and test!
+
 
 ## Lightness
 
-Gloe is a lightweight library, it is not a development environment nor an engine and nor even a heavy framework. It was built much more on top of **strong concepts** than an exhausting amount of code.
+Gloe is a lightweight library, it is not a development environment, an engine, or even a heavy framework; instead, it was built more on the basis of **strong concepts** than on an exhaustive amount of code.
 
 Its dependencies are only other python libraries, nothing external is required.
 
 ## Type-safety
 
-Gloe was implemented to be completely type-safe. It means, when using Gloe, you must provide all the type hints of the created transformers, which can be summed up in its incoming and outcome types. Using these definitions, Gloe can warn about a malformed graph right away in the IDE and make precise inferring of extremely complex types.
+Gloe was implemented to be completely type-safe. This means that when using Gloe, you must provide all the necessary type hints of the created transformers, which can be summed up in its incoming and outcome types. Using these definitions, Gloe can warn about a malformed graph right away in the IDE and make precise inferring of extremely complex types.
 
-For example, consider the bellow Transformer:
+For example, consider the below Transformer:
 
 ``` text
 (type A) -> [MyTransformer] -> (type B)
@@ -65,8 +66,7 @@ Above graph is in fact this:
 (type A) -> [Transformer 1 and 2] -> (type C)
 ```
 
-It means every time we talked about a graph we are talking about a
-Transformer too! A graph represents a Transformer that merge the
+This means that every time we talk about a graph, we are also referring to a Transformer! A graph represents a Transformer that merge the
 operations of its last node with the operations of the previous
 Transformer, recursively.
 
@@ -101,3 +101,9 @@ transformers:
 ```
 
 Any branch or ramification (transformers 2 and 3 or transformers 4 and 5 in above example) can have its own output types, and it can be of any length and including others ramifications.
+
+
+## Conclusion
+In summary, Gloe presents a sophisticated yet accessible framework designed to streamline the implementation of complex workflows through a type-safe, immutable, and lightweight pipeline architecture. At its core, Gloe emphasizes simplicity, modularity, and clarity by encapsulating transformation logic within discrete, well-defined units called Transformers. This design philosophy not only promotes ease of use and development efficiency but also enhances the maintainability and scalability of software solutions.
+
+In essence, Gloe embodies a set of strong conceptual foundations that empower developers to build robust, efficient, and flexible pipelines for data transformation and processing. By abstracting away the complexities associated with graph-based execution models and focusing on simplicity and strong typing, Gloe sets a new standard for software architecture within the Python ecosystem. Whether for small-scale projects or large-scale enterprise applications, Gloe offers a compelling solution for those seeking to implement streamlined, type-safe workflows with minimal overhead and maximum efficiency.

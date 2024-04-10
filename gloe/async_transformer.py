@@ -12,6 +12,8 @@ from gloe.base_transformer import (
     PreviousTransformer,
 )
 
+__all__ = ["AsyncTransformer"]
+
 _In = TypeVar("_In")
 _Out = TypeVar("_Out")
 _NextOut = TypeVar("_NextOut")
@@ -36,6 +38,15 @@ class AsyncTransformer(BaseTransformer[_In, _Out, "AsyncTransformer"], ABC):
 
     @abstractmethod
     async def transform_async(self, data: _In) -> _Out:
+        """
+        Method to perform the transformation asynchronously.
+
+        Args:
+            data: the incoming data passed to the transformer during the pipeline execution.
+
+        Return:
+            The outcome data, it means, the resulf of the transformation.
+        """
         pass
 
     def signature(self) -> Signature:

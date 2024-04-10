@@ -1,7 +1,8 @@
+(creating-a-transformer)=
 # Creating a Transformer
 
 ```{warning}
-This page assumes you already have read the very short [Gloe's theory](/theory) page.
+This page assumes that you have already read the brief [Gloe's theory](/theory) page.
 ```
 
 As previously said, creating a transformer is easy:
@@ -15,7 +16,7 @@ def filter_even(numbers: list[int]) -> list[int]:
     return [num for num in numbers if num % 2 == 0]
 ```
 
-Transformers works like functions, so you can create a function and then apply the `@transformer` decorator to it. That's it, transformer created!
+Transformers work like functions, so you can create a function and then apply the `@transformer` decorator to it. That's it, transformer created!
 
 ```{admonition} Some important things to notice:
 :class: important
@@ -24,7 +25,7 @@ Transformers works like functions, so you can create a function and then apply t
 library](https://docs.python.org/3/library/typing.html) to learn more about the Python type notation.
 - Transformers must have only one parameter. Any complex data you need to use in its code must be passed in a complex structure like a [tuple](https://docs.python.org/3/tutorial/datastructures.html#tuples-and-sequences), a [dict](https://docs.python.org/3/tutorial/datastructures.html#dictionaries), a [TypedDict](https://docs.python.org/3/library/typing.html#typing.TypedDict), a [dataclass](https://docs.python.org/3/library/dataclasses.html), a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple) or any other. We will see later [why it is necessary](#partial-transformers).
 - Documentations with pydoc will be preserved in transformers.
-- After apply the `@transformer` decorator to a function, it will become an instance of class `Transformer`.
+- After applying the `@transformer` decorator to a function, it becomes an instance of the `Transformer` class.
 ```
 
 
@@ -77,7 +78,7 @@ pipeline = filter_even >> square
 We call this **serial connection**
 ```
 
-By doing that, the `pipeline` variable is also a transformer that execute sequentially the processing of the transformers used to build it. Of course, we can call it as well:
+By doing this, the `pipeline` variable becomes a transformer that executes the processing of the composed transformers sequentially. Of course, we can call it as well:
 
 ```python
 pipeline([1, 2, 3, 4, 5, 6]) # returns [4, 16, 36]
@@ -167,3 +168,4 @@ We call this last connection **convergent**.
 ```{attention}
 Python doesn't provide a generic way to map the outcome type of an arbitrary number of branches on a tuple of arbitrary size. Due to this, the overload of possible sizes was treated one by one until the size 7, it means, considering the typing notation, it is possible to have at most 7 branches currently.
 ```
+

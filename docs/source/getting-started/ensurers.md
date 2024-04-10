@@ -1,13 +1,19 @@
+(ensurers)=
 # Ensurers
+
+```{admonition} API Reference
+:class: seealso
+- {func}`gloe.ensure`
+```
 
 Although the type annotations are good enough to statically ensure a correct pipeline shape, on the other hand, there are some dynamic validations we may want to do on a transformer input and output during execution time. 
 
-For example, consider the same `filter_even` transformer and suppose we only want positive numbers as its input. One first option is implement this logic inside the transformer code:
+For example, consider the same `filter_even` transformer and suppose we only want positive numbers as its input. One first option is to implement this logic inside the transformer code:
 
 ```python
 @transformer
 def filter_even(numbers: list[int]) -> list[int]:
-    non_positives = [num for num in numbers if num % 2 == 0]
+    non_positives = [num for num in numbers if num <= 0]
     if len(non_positives) > 0:
       raise Exception(f"The numbers {', '.join(non_positives)} are not positive.")
       
@@ -18,7 +24,7 @@ In the above example, we are assigning a new responsibility to the transformer: 
 
 ```python
 def only_positive(numbers: list[int]):
-  non_positives = [num for num in numbers if num % 2 == 0]
+  non_positives = [num for num in numbers if num <= 0]
   if len(non_positives) > 0:
     raise Exception(f"The numbers {', '.join(non_positives)} are not positive.")
 

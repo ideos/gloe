@@ -1,5 +1,10 @@
-
+(partial-transformers)=
 # Partial Transformers
+
+```{admonition} API Reference
+:class: seealso
+- {func}`gloe.partial_transformer`
+```
 
 The single parameter of a transformer represents the input data during the execution and this input will be the return of the previous transformer in the pipeline. Given that, doesn't make sense allow transformers to have multiple parameters, because functions can't return multiple things (only a tuple of multiple things). However, sometimes we need some accessory data to perform the desired transformation.
 

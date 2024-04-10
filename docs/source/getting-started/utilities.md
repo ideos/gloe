@@ -1,5 +1,13 @@
 # Utilities
 
+```{admonition} API Reference
+:class: seealso
+- {func}`gloe.utils.forward`
+- {func}`gloe.utils.forward_incoming`
+- {data}`gloe.utils.forget`
+- {func}`gloe.utils.debug`
+```
+
 ## forward
 
 The `forward` utility is quite useful when your flow starts with a divergent connection. For example:

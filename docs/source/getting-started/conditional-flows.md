@@ -1,4 +1,11 @@
+(conditional-flows)=
 # Conditional Flows
+
+```{admonition} API Reference
+:class: seealso
+- {func}`gloe.condition`
+- {class}`gloe.If`
+```
 
 Often you need to write a flow with some conditions. For example, suppose you need to send a specific email to administrator users and another email to non-administrator users:
 

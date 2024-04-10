@@ -152,15 +152,9 @@ class TestTransformerTypes(unittest.TestCase):
         Test the transformer map collection operation
         """
 
-        def _map(
-            transformer: Transformer[In, Out]
-        ) -> Transformer[Sequence[In], Sequence[Out]]:
-            ...
-
-        def _init() -> Transformer[int, list[float]]:
-            ...
-
-        mapped_logarithm = _init() >> _map(format_currency(thousands_separator=","))
+        mapped_logarithm = forward[list[float]]() >> Map(
+            format_currency(thousands_separator=",")
+        )
 
         assert_type(mapped_logarithm, Transformer[list[float], list[str]])
 

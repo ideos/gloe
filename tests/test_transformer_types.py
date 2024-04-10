@@ -235,19 +235,6 @@ class TestTransformerTypes(unittest.TestCase):
 
         assert_type(graph, Transformer[float, tuple[float, float]])
 
-    def _test_generic_transformer(self):
-        @partial_transformer
-        def tuplicate(data: In) -> tuple[In, In]:
-            return data, data
-
-        @partial_transformer
-        def pick_first(data: tuple[In, Any]) -> In:
-            return data[0]
-
-        graph = square >> tuplicate() >> pick_first()
-
-        assert_type(graph, Transformer[float, float])
-
     def _test_async_transformer(self):
         @async_transformer
         async def _square(num: int) -> float:

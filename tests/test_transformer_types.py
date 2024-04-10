@@ -1,6 +1,7 @@
 import asyncio
 import os
 import unittest
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Iterable, TypeVar, Any
 
@@ -35,6 +36,7 @@ from mypy import api
 
 
 In = TypeVar("In")
+Out = TypeVar("Out")
 
 
 class TestTransformerTypes(unittest.TestCase):
@@ -150,11 +152,17 @@ class TestTransformerTypes(unittest.TestCase):
         Test the transformer map collection operation
         """
 
-        mapped_logarithm = forward[Iterable[float]]() >> Map(
-            format_currency(thousands_separator=",")
-        )
+        def _map(
+            transformer: Transformer[In, Out]
+        ) -> Transformer[Sequence[In], Sequence[Out]]:
+            ...
 
-        assert_type(mapped_logarithm, Transformer[Iterable[float], Iterable[str]])
+        def _init() -> Transformer[int, list[float]]:
+            ...
+
+        mapped_logarithm = _init() >> _map(format_currency(thousands_separator=","))
+
+        assert_type(mapped_logarithm, Transformer[list[float], list[str]])
 
     def _test_transformer_ensurer(self):
         @ensure(incoming=[is_even])

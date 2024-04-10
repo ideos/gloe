@@ -29,12 +29,16 @@ gloe.experimental
 ```{eval-rst}
 .. autoclass:: gloe.BaseTransformer
    :members:
+   :show-inheritance:
 .. autoclass:: gloe.Transformer
    :members:
+   :show-inheritance:
 .. autoclass:: gloe.AsyncTransformer
    :members:
+   :show-inheritance:
 .. autoclass:: gloe.If
    :members:
+   :show-inheritance:
 ```
 
 ### Exceptions

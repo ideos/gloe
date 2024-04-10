@@ -104,6 +104,10 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
 
     @property
     def previous(self) -> PreviousTransformer["BaseTransformer"]:
+        """
+        Previous transformers. It can be None, a single transformer, or a tuple of many
+        transformers.
+        """
         return self._previous
 
     @property

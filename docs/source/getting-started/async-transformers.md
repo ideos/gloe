@@ -1,6 +1,14 @@
 (async-transformers)=
 # Async Transformers
 
+```{admonition} API Reference
+:class: seealso
+- {func}`gloe.async_transformer`
+- {func}`gloe.partial_async_transformer`
+- {class}`gloe.AsyncTransformer`
+```
+
+
 Transformer can be also created from [coroutines](https://docs.python.org/3/library/asyncio-task.html#coroutines), but, in this case, you need to use the `@async_transformer` decorator. For example, consider the bellow transformer that fetchs data from an external http server:
 
 ```python
@@ -52,7 +60,8 @@ get_user = extract_user_id >> get_user_by_id
 
 Briefly, you can mix async and sync transformers together without care about its concurrent nature, just about the types as before.
 
-## Async Partial Transformers
+(partial-async-transformers)=
+## Partial Async Transformers
 
 As well as in sync transformers, you can create [partial transformers](/getting-started/partial-transformers) with an async behavoir. It can be done using the `@partial_async_transformer`:
 

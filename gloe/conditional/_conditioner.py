@@ -183,8 +183,31 @@ class If(Generic[In]):
 
 def condition(func: Callable[[In], bool]) -> If[In]:
     """
-    The condition decorator is responsible to build an instance of `If[T]`
-    class given a `Callable[[T], bool]`.
+    The condition decorator is responsible to build an instance of :code:`If[T]`
+    class given a :code:`Callable[[T], bool]`.
+
+    When instantiating the :code:`If` class, the parameter :code:`name` will be the name
+    of the callable.
+
+    See Also:
+        For additional information about conditions and examples of its usage, consult
+        :ref:`conditional-flows`.
+
+    Example:
+        The below example send a different email for admin and non admin users::
+
+            @condition
+            def is_admin(user: User) -> bool:
+                return "admin" in user.roles
+
+            send_email = (
+                is_admin.Then(fetch_admin_data >> send_admin_email)
+                .Else(send_member_email)
+            )
+
+    Args:
+        func: A callable that check somenting about the incoming data and returns a
+            boolean.
     """
     condition = If(func, func.__name__)
     return condition

@@ -20,6 +20,7 @@ release = "0.4.3"
 
 extensions = [
     "sphinx_toolbox.more_autodoc.variables",
+    "sphinx.ext.autosectionlabel",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.viewcode",
@@ -31,6 +32,7 @@ extensions = [
 ]
 overloads_location = "bottom"
 napoleon_google_docstring = True
+autosectionlabel_prefix_document = True
 napoleon_use_rtype = False
 intersphinx_mapping = {"httpx": ("https://www.python-httpx.org/", None)}
 

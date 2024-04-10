@@ -19,16 +19,27 @@ release = "0.4.3"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
+    "sphinx_toolbox.more_autodoc.variables",
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
+    "sphinx.ext.intersphinx",
+    # "sphinx_autodoc_typehints",
     "myst_parser",
     "sphinx_copybutton",
 ]
+overloads_location = "bottom"
+napoleon_google_docstring = True
+napoleon_use_rtype = False
+intersphinx_mapping = {"httpx": ("https://www.python-httpx.org/", None)}
+
 templates_path = ["_templates"]
 exclude_patterns = ["Thumbs.db", ".DS_Store"]
-
-
+autodoc_typehints = "description"
+autodoc_type_aliases = {
+    "PreviousTransformer": "gloe.base_transformer.PreviousTransformer"
+}
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 

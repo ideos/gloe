@@ -1,9 +1,7 @@
-# gloe.ensurer package
-
-## Module contents
+# gloe.experimental
 
 ```{eval-rst}
-.. automodule:: gloe.ensurer
+.. automodule:: gloe.experimental
    :members:
    :undoc-members:
    :show-inheritance:

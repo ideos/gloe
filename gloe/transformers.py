@@ -14,6 +14,7 @@ from typing import (
 from gloe.base_transformer import BaseTransformer, TransformerException
 from gloe.async_transformer import AsyncTransformer
 
+__all__ = ["Transformer"]
 
 I = TypeVar("I")
 O = TypeVar("O")
@@ -78,14 +79,17 @@ AsyncNext7 = Union[
 
 class Transformer(BaseTransformer[I, O, "Transformer"], ABC):
     """
-    A Transformer is generic block with the responsibility to take an input of type `T`
-    and transform it to an output of type `S`.
+    A Transformer is the generic block with the responsibility to take an input of type
+    `T` and transform it to an output of type `S`.
 
+    See Also:
+        Read more about this feature in the page :ref:`creating-a-transformer`.
 
-    Typical usage example:
+    Example:
+        Typical usage example::
 
-    class Stringifier(Transformer[dict, str]):
-        ...
+            class Stringifier(Transformer[dict, str]):
+                ...
 
     """
 

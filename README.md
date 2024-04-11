@@ -1,7 +1,7 @@
 ***
 
 <div align="center">
-  <img src="docs/source/_static/assets/gloe-logo.png"><br>
+  <img src="https://github.com/ideos/gloe/raw/main/docs/source/_static/assets/gloe-logo.png"><br>
 </div>
 
 Let Gloe help you
@@ -11,7 +11,7 @@ Gloe (pronounced /ɡloʊ/, like "glow") is a general purpose library made to hel
 
 ## Documentation
 
-The official documentation is hosted on [gloe.ideos.com.br](gloe.ideos.com.br).
+The official documentation is hosted on [gloe.ideos.com.br](https://gloe.ideos.com.br).
 
 ## Motivation
 
@@ -33,4 +33,4 @@ pip install gloe
 
 ## License
 
-[Apache License Version 2.0](./LICENSE)
+[Apache License Version 2.0](https://github.com/ideos/gloe/blob/main/LICENSE)

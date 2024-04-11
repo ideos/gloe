@@ -28,10 +28,12 @@ jobs:
       run: |
         cd docs
         make html
-    - uses: shallwefootball/s3-upload-action@master
+    - name: Upload docs to S3
+      uses: shallwefootball/s3-upload-action@v1.3.3
       with:
         aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws_bucket: ${{ secrets.AWS_S3_BUCKET_NAME }}
-        source_dir: 'docs/build/html'
+        source_dir: "docs/build/html"
+        destination_dir: /
         

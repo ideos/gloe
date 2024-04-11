@@ -1,6 +1,4 @@
 import math
-import numpy as np
-from numpy import ndarray
 
 from tests.lib.exceptions import LnOfNegativeNumber
 from gloe import transformer, partial_transformer
@@ -22,19 +20,6 @@ def plus1(num: float) -> float:
 @transformer
 def square(num: float) -> float:
     return num * num
-
-
-@transformer
-def random_matrix(size: int) -> ndarray:
-    return np.zeros(shape=(size, size))
-
-
-@transformer
-def multiply_by_random(matrix: ndarray) -> ndarray:
-    size = matrix.shape[0]
-    rnd_matrix = np.zeros(shape=(size, size))
-    result = matrix @ rnd_matrix
-    return result
 
 
 @transformer

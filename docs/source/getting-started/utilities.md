@@ -29,10 +29,21 @@ We have to explicitly define the incoming type of the forward transformer when i
 
 ## forward_incoming
 
+Suppose you need to extract some statistics of a Pandas DataFrame. However, you still need the use the original data in the next transformers. In that case, you can use `forward_incoming`, which receives a transformer as an argument. The output of the `forward_incoming` is a tuple with the output of the encapsulated transformer and its input.
+
+```python
+get_data: Transformer[str, pd.DataFrame]
+extract_statistics: Transformer[pd.DataFrame, Statistics]
+process_statistics: Transformer[tuple[pd.DataFrame, Statistics], Result]
+
+process_data = get_data >> forward_incoming(extract_statistics) >> process_statistics 
+```
+
+In the above example, both output of `get_data` and `extract_statistics` are passed as the input to `process_statistics`.
 
 ## forget
 
-It converts any input data to `None`.
+Converts any input data to `None`. Quite useful in addition with {ref}`conditional-flows`.
 
 ## debug
 
@@ -41,8 +52,11 @@ It is quite useful when you want to see the flowing data at some points, for exa
 ```python
 from gloe.utils import debug
 
-send_emails = 
+send_emails = get_users >> filter_subscribed_users >> debug >> send_subscribed_email
 ```
+
+In this case, when calling `send_emails` in debugger mode, the processing will pause into the `debug` transformer. Then, we are able to see the output of the previous transformer (`filter_subscribed_users`) in the debug console.
+
 ```{danger}
 You must not deploy a pipeline containing this transformer to a production environment.
 ```

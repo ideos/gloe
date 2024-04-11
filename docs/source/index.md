@@ -1,17 +1,11 @@
-***
+% Gloe documentation master file, created by
+% sphinx-quickstart on Tue Dec 12 06:33:16 2023.
+% You can adapt this file completely to your liking, but it should at least
+% contain the root `toctree` directive.
 
-<div align="center">
-  <img src="docs/source/_static/assets/gloe-logo.png"><br>
-</div>
-
-Let Gloe help you
-===
+# Let Gloe help you
 
 Gloe (pronounced /ɡloʊ/, like "glow") is a general purpose library made to help developers to create, maintain, document and test operational and data flows. It can be used in data science and machine learning pipelines as well in servers, scripts or wherever else one identifies a lack between the code and the understanding of logical business. Gloe was not thought to be used in the entire application even less replacing any existing library, it was built to be integrated with other tools and to be implemented where the code complexity can be bigger than the desired.
-
-## Documentation
-
-The official documentation is hosted on [gloe.ideos.com.br](gloe.ideos.com.br).
 
 ## Motivation
 
@@ -31,6 +25,21 @@ Currently, unlike platforms like [Air Flow](https://airflow.apache.org/) that in
 pip install gloe
 ```
 
-## License
+```{toctree}
+:caption: 'Contents'
+:maxdepth: 3
+:hidden:
 
-[Apache License Version 2.0](./LICENSE)
+Introduction <self>
+theory
+getting-started/index
+limitations
+```
+
+```{toctree}
+:caption: 'Development'
+:maxdepth: 3
+:hidden:
+
+api-reference/index
+```

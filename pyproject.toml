@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gloe"
-version = "0.1.0"
+version = "0.4.3"
 authors = [
   { name="Samir Braga", email="samirchavess@gmail.com" },
 ]
@@ -16,7 +16,23 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    'typing_extensions~=4.7.1',
+    'schemdraw~=0.16',
+    'setuptools~=61.2.0',
+    'mypy~=1.7.0',
+    'networkx~=3.1'
+]
 
 [project.urls]
-"Homepage" = "https://gitlab.com/ideos_dev/gloe"
-"Bug Tracker" = "https://gitlab.com/ideos_dev/gloe/-/issues"
+Homepage = "https://gloe.ideos.com.br"
+Documentation = "https://gloe.ideos.com.br"
+Issues = "https://github.com/ideos/gloe/issues"
+Repository = "https://github.com/ideos/gloe"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "gloe"
+]
+
+

@@ -140,7 +140,8 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
             # copy_next_previous = 'none' if copy_previous == 'first_previous' else copy_previous
             if type(self.previous) == tuple:
                 new_previous: list[BaseTransformer] = [
-                    previous_transformer.copy() for previous_transformer in self.previous
+                    previous_transformer.copy()
+                    for previous_transformer in self.previous
                 ]
                 copied._previous = cast(PreviousTransformer, tuple(new_previous))
             elif isinstance(self.previous, BaseTransformer):
@@ -295,9 +296,9 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
             net.add_nodes_from(child_net.nodes.data())
             net.add_edges_from(child_net.edges.data())
 
-            child_root_node = [n for n in child_net.nodes if child_net.in_degree(n) == 0][
-                0
-            ]
+            child_root_node = [
+                n for n in child_net.nodes if child_net.in_degree(n) == 0
+            ][0]
             child_final_node = [
                 n for n in child_net.nodes if child_net.out_degree(n) == 0
             ][0]
@@ -386,6 +387,19 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
 
     # pragma: not covered
     def export(self, path: str, with_edge_labels: bool = True):
+        """Export Transformer object in dot format"""
+
+        try:
+            import pygraphviz
+
+        except ImportError as err:
+            raise ImportError(
+                """Please, the module pygraphviz is required for this method, install with """
+                + """"conda install --channel conda-forge pygraphviz" or """
+                + """"pip install pygraphviz". More information is available in """
+                + """https://pygraphviz.github.io/documentation/stable/install.html"""
+            ) from err
+
         net = self.graph()
         boxed_nodes = [
             node
@@ -397,7 +411,9 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
                 net.edges[u, v]["label"] = ""
 
         agraph = nx.nx_agraph.to_agraph(net)
-        subgraphs: Iterable[tuple] = groupby(boxed_nodes, key=lambda x: x[1]["parent_id"])
+        subgraphs: Iterable[tuple] = groupby(
+            boxed_nodes, key=lambda x: x[1]["parent_id"]
+        )
         for parent_id, nodes in subgraphs:
             nodes = list(nodes)
             node_ids = [node[0] for node in nodes]
@@ -406,7 +422,9 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
                 agraph.add_subgraph(
                     node_ids, label=label, name=f"cluster_{parent_id}", style="dotted"
                 )
-        agraph.write(path)
+
+        path_with_extension = path + ".dot" if not path.endswith(".dot") else path
+        agraph.write(path_with_extension)
 
     def __len__(self):
         return 1

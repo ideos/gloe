@@ -192,9 +192,7 @@ def _merge_diverging(
                 r.return_annotation for r in receiving_signatures
             ]
             new_signature = incident_signature.replace(
-                return_annotation=GenericAlias(
-                    tuple, tuple(receiving_signature_returns)
-                )
+                return_annotation=GenericAlias(tuple, tuple(receiving_signature_returns))
             )
             return new_signature
 
@@ -208,16 +206,13 @@ def _merge_diverging(
         else:
             intermediate_result = incident_transformer(data)
 
-        awaitables = [
-            receiving_transformer
-            if asyncio.iscoroutinefunction(receiving_transformer.__call__)
-            else awaitify(receiving_transformer)
-            for receiving_transformer in receiving_transformers
-        ]
-
-        outputs = await asyncio.gather(
-            *[awaitable(intermediate_result) for awaitable in awaitables]
-        )
+        outputs = []
+        for receiving_transformer in receiving_transformers:
+            if asyncio.iscoroutinefunction(receiving_transformer.__call__):
+                output = await receiving_transformer(intermediate_result)
+            else:
+                output = receiving_transformer(intermediate_result)
+            outputs.append(output)
 
         return tuple(outputs)
 
@@ -232,9 +227,7 @@ def _merge_diverging(
 
     else:
 
-        class NewTransformer2(
-            BaseNewTransformer, AsyncTransformer[_In, tuple[Any, ...]]
-        ):
+        class NewTransformer2(BaseNewTransformer, AsyncTransformer[_In, tuple[Any, ...]]):
             async def transform_async(self, data: _In) -> tuple[Any, ...]:
                 return await split_result(data)
 

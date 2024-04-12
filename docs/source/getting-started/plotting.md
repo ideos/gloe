@@ -53,6 +53,9 @@ We can call the method `export` of the `send_promotion` transformer instance:
 ```python
 send_promotion.export('send_promotion_graph.dot', with_edge_labels=True)
 ```
+```{attention}
+This feature requires the library [pygraphviz](https://pygraphviz.github.io).
+```
 
 Then, we can use any dot visualizer tool to plot the graph. For example, we can use [edotor.net](https://edotor.net/). We need just to copy the content of `send_promotion_graph.dot` file and paste it on edotor.net editor.
 

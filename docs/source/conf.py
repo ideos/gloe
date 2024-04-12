@@ -36,7 +36,11 @@ napoleon_google_docstring = True
 autosectionlabel_prefix_document = True
 napoleon_use_rtype = False
 # intersphinx_mapping = {"httpx": ("https://www.python-httpx.org/", None)}
-ogp_social_cards = {"enable": True, "line_color": "#00afac"}
+ogp_social_cards = {
+    "enable": True,
+    "line_color": "#00afac",
+    "image": "_static/assets/gloe-logo.png",
+}
 ogp_site_url = "https://gloe.ideos.com.br/"
 # ogp_image = "https://gloe.ideos.com.br/_static/assets/gloe-logo.png"
 

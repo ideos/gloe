@@ -170,10 +170,6 @@ def transformer(func: Callable[[A], S]) -> Transformer[A, S]:
     """
     Convert a callable to an instance of the Transformer class.
 
-    See Also:
-        The most common usage is as a decorator. This example demonstrates how to use the
-        `@transformer` decorator to filter a list of users::
-
     Example:
         The most common use is as a decorator::
 

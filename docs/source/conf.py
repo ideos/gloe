@@ -22,7 +22,7 @@ extensions = [
     "sphinx_toolbox.more_autodoc.variables",
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.autodoc",
-    "sphinx.ext.autosummary",
+    # "sphinx.ext.autosummary",
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
@@ -35,7 +35,7 @@ overloads_location = "bottom"
 napoleon_google_docstring = True
 autosectionlabel_prefix_document = True
 napoleon_use_rtype = False
-intersphinx_mapping = {"httpx": ("https://www.python-httpx.org/", None)}
+# intersphinx_mapping = {"httpx": ("https://www.python-httpx.org/", None)}
 ogp_site_url = "https://gloe.ideos.com.br/"
 ogp_image = "https://gloe.ideos.com.br/_static/assets/gloe-logo.png"
 
@@ -74,6 +74,13 @@ html_theme_options = {
         "font-stack--monospace": "Courier, monospace",
         "font-size--normal": "Courier, monospace",
     },
+    "light_css_variables": {
+        "color-brand-primary": "#00afac",
+        "color-brand-content": "#00afac",
+        "font-stack": "Roboto, sans-serif",
+        "font-stack--monospace": "Courier, monospace",
+        "font-size--normal": "Courier, monospace",
+    },
     "footer_icons": [
         {
             "name": "GitHub",
@@ -89,4 +96,5 @@ html_theme_options = {
 }
 
 # pygments_style = "styles.GloeStyle"
-pygments_dark_style = "styles.GloeStyle"
+pygments_dark_style = "styles.GloeDarkStyle"
+pygments_light_style = "styles.GloeLightStyle"

@@ -30,4 +30,13 @@ jobs:
     - name: Test with unittest
       run: |
         python -m unittest
+    - name: Run tests and collect coverage
+      run: |
+        coverage run -m unittest
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v4.0.1
+      if: ${{ matrix.python-version == '3.10' }}
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        slug: ideos/gloe
         

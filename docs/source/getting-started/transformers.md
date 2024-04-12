@@ -23,7 +23,7 @@ Transformers work like functions, so you can create a function and then apply th
 
 - We **strongly recommend** you to type the transformers. Because of Python, it is not mandatory, but Gloe was designed to be used with typed code. Take a look at the [Python typing
 library](https://docs.python.org/3/library/typing.html) to learn more about the Python type notation.
-- Transformers must have only one parameter. Any complex data you need to use in its code must be passed in a complex structure like a [tuple](https://docs.python.org/3/tutorial/datastructures.html#tuples-and-sequences), a [dict](https://docs.python.org/3/tutorial/datastructures.html#dictionaries), a [TypedDict](https://docs.python.org/3/library/typing.html#typing.TypedDict), a [dataclass](https://docs.python.org/3/library/dataclasses.html), a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple) or any other. We will see later {ref}`why it is necessary <partial-transformers>`.
+- Transformers must have only one parameter. Any complex data you need to use in its code must be passed in a complex structure like a [tuple](https://docs.python.org/3/tutorial/datastructures.html#tuples-and-sequences), a [dict](https://docs.python.org/3/tutorial/datastructures.html#dictionaries), a [TypedDict](https://docs.python.org/3/library/typing.html#typing.TypedDict), a [dataclass](https://docs.python.org/3/library/dataclasses.html), a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple) or any other. We will see later [why it is necessary](#partial-transformers).
 - Documentations with pydoc will be preserved in transformers.
 - After applying the `@transformer` decorator to a function, it becomes an instance of the `Transformer` class.
 ```
@@ -36,7 +36,7 @@ Every transformer (instance of the Transformer class) can be called just like a 
 filter_even([1, 2, 3, 4, 5, 6]) # returns [2, 4, 6]
 ```
 
-Another way to create a transformer is extending from the Transformer class. This is how implement the above example using a class instead of a function:
+Another way to create a transformer is extending from the Transformer class. This is how to implement the above example using a class instead of a function:
 
 ```python
 from gloe import Transformer
@@ -48,7 +48,7 @@ class FilterEven(Transformer[list[int], list[int]]):
         return [num for num in numbers if num % 2 == 0]
 ```
 
-However, in this case, we need first to instantiate the `FilterEven` class and then use the instance as a transformer:
+However, in this case, we first need to instantiate the `FilterEven` class and then use the instance as a transformer:
 
 ```python
 filter_even = FilterEven()
@@ -60,7 +60,7 @@ This doesn't seem useful when comparing to the first example, but maybe you woul
 
 ## Building a Pipeline
 
-The existence motivation of the transformers is composing many of them into an execution graph or pipeline. You can do that using the [right shift operator (>>)](https://docs.python.org/3/library/operator.html#operator.__rshift__). For example, consider the `filter_even` created above, we can create another transformer called `square`:
+You can create a pipeline by combining many transformers into an execution graph. You can do that by using the [right shift operator (>>)](https://docs.python.org/3/library/operator.html#operator.__rshift__). For example, consider the `filter_even` created above, we can create another transformer called `square`:
 
 ```python
 @transformer
@@ -78,7 +78,7 @@ pipeline = filter_even >> square
 We call this **serial connection**
 ```
 
-By doing this, the `pipeline` variable becomes a transformer that executes the processing of the composed transformers sequentially. Of course, we can call it as well:
+By doing this, the `pipeline` variable becomes a transformer that executes the processing of the composed transformers sequentially. We can also call it as well:
 
 ```python
 pipeline([1, 2, 3, 4, 5, 6]) # returns [4, 16, 36]
@@ -118,13 +118,13 @@ send_promotion = get_users >> (
 )
 ```
 
-This example makes clear how easy it is to understand and refactor the code when using Gloe to express the processing as a graph, with each node (transformer) having an atomic and well-defined responsibility.
+This example makes it clear how easy it is to understand and refactor the code when using Gloe to express the process as a graph, with each node (transformer) having an atomic and well-defined responsibility.
 
 ```{important}
-You can't assume any **order of execution** between the branches.
+You should not assume any **order of execution** between branches.
 ```
 
-The right shift operator can receive a transformer or a tuple of transformers as an argument. In the second case, the transformer returned will be as described bellow (pay attention at the types).
+The right shift operator can receive a transformer or a tuple of transformers as an argument. In the second case, the transformer returned will be as described bellow (pay attention to the types).
 
 Consider the following transformers:
 
@@ -148,7 +148,7 @@ graph: Transformer[In, tuple[Out1, Out2, ..., OutN]] = begin >> (
 
 The return of each branch will compose a tuple following the respective order of branches.
 
-Of course, we can append a new transformer to the above graph, the only requirement is the incoming type of this new transformer must be `tuple[Out1, Out2, ..., OutN]`.
+Of course, we can append a new transformer to the above graph, the only requirement is for the incoming type of this new transformer to be `tuple[Out1, Out2, ..., OutN]`.
 
 ```python
 end: Transformer[tuple[Out1, Out2, ..., OutN], FinalOut]

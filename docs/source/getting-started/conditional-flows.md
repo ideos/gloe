@@ -48,7 +48,7 @@ send_email_to_user = get_user_by_id >> send_email
 
 ## Chaining Many Conditions
 
-Suppose now we have to send another type of email to users with a "manager" role, we can adapt that flow to send this specific email to that users using the `.ElseIf` method:
+Suppose now we have to send another type of email to users with a "manager" role, we can adapt that flow to send this specific email to those users using the `.ElseIf` method:
 
 ```python
 from gloe.conditional import If
@@ -69,7 +69,7 @@ You can chain as many `ElseIf`'s as you want.
 
 ## Understanding the Types
 
-Assume the below transformers and conditions:
+Take the following transformers and conditions:
 
 ```python
 condition1: Callable[[In], bool]
@@ -82,7 +82,7 @@ then_transformerN: Transformer[In, OutN]
 else_transformer: Transformer[In, ElseOut]
 ```
 
-Lets chain the conditions:
+Now, let us chain the conditions:
 ```python
 chained_conditions = (
     If(condition1).Then(then_transformer1)
@@ -98,7 +98,7 @@ The type of `chained_conditions` is:
 Transformer[In, Out1 | Out2 | ... | OutN | ElseOut]
 ```
 
-It means, the transformer after the `chained_conditions` must be able to deal with all possible output types of the cases.
+The transformer after the `chained_conditions` must be able to deal with all possible output types of the cases.
 
 ```{hint}
 If you are not familiar with the type annotation syntax used above, we strongly recommend you to read the [Mypy types documentation](https://mypy.readthedocs.io/en/stable/builtin_types.html).

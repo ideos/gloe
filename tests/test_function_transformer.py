@@ -1,3 +1,4 @@
+import asyncio
 import unittest
 from typing import cast
 
@@ -260,6 +261,14 @@ class TestFunctionTransformer(unittest.TestCase):
         graph = logarithm(base=2)
         self.assertEqual(graph(2), 1)
         self.assertEqual(graph.label, "logarithm")
+
+    def test_transformers_on_a_running_event_loop(self):
+        async def run_main():
+            graph = square >> square_root
+            graph(9)
+
+        loop = asyncio.new_event_loop()
+        loop.run_until_complete(run_main())
 
 
 if __name__ == "__main__":

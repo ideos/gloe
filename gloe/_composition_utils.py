@@ -200,36 +200,46 @@ def _merge_diverging(
             lengths = [len(t) for t in receiving_transformers]
             return sum(lengths) + len(incident_transformer)
 
-    async def split_result(data: _In) -> tuple[Any, ...]:
-        if asyncio.iscoroutinefunction(incident_transformer.__call__):
-            intermediate_result = await incident_transformer(data)
-        else:
-            intermediate_result = incident_transformer(data)
-
-        outputs = []
-        for receiving_transformer in receiving_transformers:
-            if asyncio.iscoroutinefunction(receiving_transformer.__call__):
-                output = await receiving_transformer(intermediate_result)
-            else:
-                output = receiving_transformer(intermediate_result)
-            outputs.append(output)
-
-        return tuple(outputs)
-
     new_transformer = None
     if is_transformer(incident_transformer) and is_transformer(receiving_transformers):
 
+        def split_result(data: _In) -> tuple[Any, ...]:
+            intermediate_result = incident_transformer(data)
+
+            outputs = []
+            for receiving_transformer in receiving_transformers:
+                output = receiving_transformer(intermediate_result)
+                outputs.append(output)
+
+            return tuple(outputs)
+
         class NewTransformer1(BaseNewTransformer, Transformer[_In, tuple[Any, ...]]):
             def transform(self, data: _In) -> tuple[Any, ...]:
-                return asyncio.run(split_result(data))
+                return split_result(data)
 
         new_transformer = NewTransformer1()
 
     else:
 
+        async def split_result_async(data: _In) -> tuple[Any, ...]:
+            if asyncio.iscoroutinefunction(incident_transformer.__call__):
+                intermediate_result = await incident_transformer(data)
+            else:
+                intermediate_result = incident_transformer(data)
+
+            outputs = []
+            for receiving_transformer in receiving_transformers:
+                if asyncio.iscoroutinefunction(receiving_transformer.__call__):
+                    output = await receiving_transformer(intermediate_result)
+                else:
+                    output = receiving_transformer(intermediate_result)
+                outputs.append(output)
+
+            return tuple(outputs)
+
         class NewTransformer2(BaseNewTransformer, AsyncTransformer[_In, tuple[Any, ...]]):
             async def transform_async(self, data: _In) -> tuple[Any, ...]:
-                return await split_result(data)
+                return await split_result_async(data)
 
         new_transformer = NewTransformer2()
 

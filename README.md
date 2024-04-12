@@ -9,7 +9,7 @@
 | --- |-|
 | Testing | [![CI - Test](https://github.com/ideos/gloe/actions/workflows/test.yml/badge.svg)](https://github.com/ideos/gloe/actions/workflows/test.yml)|
 | Package | [![PyPI Latest Release](https://img.shields.io/pypi/v/gloe.svg?color=%2334D058)](https://pypi.org/project/gloe)|
-| Meta | [![License - Apache 2.0](https://img.shields.io/pypi/l/gloe.svg)](https://github.com/ideos/gloe/blob/main/LICENSE) | 
+| Meta | [![License - Apache 2.0](https://img.shields.io/pypi/l/gloe.svg?color=%2304b367)](https://github.com/ideos/gloe/blob/main/LICENSE) | 
 
 
 

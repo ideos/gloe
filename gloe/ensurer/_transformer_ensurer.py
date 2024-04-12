@@ -22,16 +22,6 @@ class TransformerEnsurer(Generic[_T, _S], ABC):
     def validate_output(self, data: _T, output: _S):
         """Perform a validation on outcome data after execute the transformer code"""
 
-    def __call__(self, transformer: Transformer[_T, _S]) -> Transformer[_T, _S]:
-        def transform(this: Transformer, data: _T) -> _S:
-            self.validate_input(data)
-            output = transformer.transform(data)
-            self.validate_output(data, output)
-            return output
-
-        transformer_cp = transformer.copy(transform)
-        return transformer_cp
-
 
 def input_ensurer(func: Callable[[_T], Any]) -> TransformerEnsurer[_T, Any]:
     class LambdaEnsurer(TransformerEnsurer[_T, _S]):

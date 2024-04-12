@@ -384,8 +384,7 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
         self._dag(net)
         return net
 
-    # pragma: not covered
-    def export(self, path: str, with_edge_labels: bool = True):
+    def export(self, path: str, with_edge_labels: bool = True):  # pragma: no cover
         net = self.graph()
         boxed_nodes = [
             node

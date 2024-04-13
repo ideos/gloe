@@ -1,3 +1,4 @@
+import sys
 from typing import Any, Tuple, TypeVar, Generic
 
 from gloe.functional import transformer
@@ -17,7 +18,12 @@ def forget(data: Any) -> None:
 
 @transformer
 def debug(incoming: _In) -> _In:
-    breakpoint()
+    """
+    Drops the user into the debugger when the pipeline execution reaches this transformer.
+    In the debug console, the user will see the output of the previous transformer.
+    """
+    if sys.gettrace():
+        breakpoint()
     return incoming
 
 

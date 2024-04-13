@@ -17,9 +17,6 @@ class TestTransformerUtils(unittest.TestCase):
         self.assertEqual("int -> (forward) -> int", repr(test_forward))
 
     def test_debug(self):
-        debugger = Bdb()
-        debugger.set_trace()
-
         test_debug = forward[int]() >> debug()
 
         result = test_debug(5)

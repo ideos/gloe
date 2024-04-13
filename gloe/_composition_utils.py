@@ -7,7 +7,7 @@ from typing import TypeVar, Any, cast
 from gloe.async_transformer import AsyncTransformer
 from gloe.base_transformer import BaseTransformer
 from gloe.transformers import Transformer
-from gloe._utils import _match_types, _specify_types
+from gloe._typing_utils import _match_types, _specify_types
 from gloe.exceptions import UnsupportedTransformerArgException
 
 _In = TypeVar("_In")
@@ -23,10 +23,6 @@ def is_transformer(node):
 
 def is_async_transformer(node):
     return isinstance(node, AsyncTransformer)
-
-
-def has_any_async_transformer(node: list):
-    return any(is_async_transformer(n) for n in node)
 
 
 def _resolve_new_merge_transformers(
@@ -136,7 +132,7 @@ def _nerge_serial(transformer1, _transformer2):
         new_transformer = NewTransformer4()
 
     else:
-        raise UnsupportedTransformerArgException(transformer2)
+        raise UnsupportedTransformerArgException(transformer2)  # pragma: no cover
 
     return _resolve_new_merge_transformers(new_transformer, transformer2)
 
@@ -277,4 +273,4 @@ def _compose_nodes(
         else:
             raise UnsupportedTransformerArgException(next_node)
     else:
-        raise UnsupportedTransformerArgException(next_node)
+        raise UnsupportedTransformerArgException(next_node)  # pragma: no cover

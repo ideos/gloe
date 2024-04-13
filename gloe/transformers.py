@@ -151,7 +151,7 @@ class Transformer(BaseTransformer[I, O, "Transformer"], ABC):
         if type(transformed) is not None:
             return cast(O, transformed)
 
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @overload
     def __rshift__(

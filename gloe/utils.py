@@ -21,17 +21,15 @@ class debug(Generic[_In], Transformer[_In, _In]):
     def __init__(self, custom_debugger: str | None = None):
         super().__init__()
         self._invisible = True
-        self._possible_debuggers = ["pdb", "pydevd"]
+        self._possible_debuggers = ["pdb", "pydevd", "pydevd_runpy"]
         if custom_debugger is not None:
             self._possible_debuggers.append(custom_debugger)
 
     def _is_under_debug(self):
         if hasattr(sys, "gettrace") and sys.gettrace() is not None:
-            frames = inspect.stack()
-            for frame in frames:
-                for debugger in self._possible_debuggers:
-                    if frame[1].endswith(f"{debugger}.py"):
-                        return True
+            trace = sys.gettrace()
+            if hasattr(trace, "_args"):
+                return True
         return False
 
     def transform(self, data: _In) -> _In:

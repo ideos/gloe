@@ -6,6 +6,7 @@ from abc import abstractmethod, ABC
 from inspect import Signature
 from typing import TypeVar, overload, cast, Any, Callable, Awaitable
 
+from gloe._transformer_utils import catch_transformer_exception
 from gloe.base_transformer import (
     TransformerException,
     BaseTransformer,
@@ -47,10 +48,9 @@ class AsyncTransformer(BaseTransformer[_In, _Out, "AsyncTransformer"], ABC):
         Return:
             The outcome data, it means, the resulf of the transformation.
         """
-        pass
 
     def signature(self) -> Signature:
-        return self._signature(AsyncTransformer)
+        return self._signature(AsyncTransformer, "transform_async")
 
     def __repr__(self):
         return f"{self.input_annotation} -> ({type(self).__name__}) -> {self.output_annotation}"
@@ -62,36 +62,7 @@ class AsyncTransformer(BaseTransformer[_In, _Out, "AsyncTransformer"], ABC):
         try:
             transformed = await self.transform_async(data)
         except Exception as exception:
-            if type(exception.__cause__) == TransformerException:
-                transform_exception = exception.__cause__
-            else:
-                tb = traceback.extract_tb(exception.__traceback__)
-
-                # TODO: Make this filter condition stronger
-                transformer_frames = [
-                    frame
-                    for frame in tb
-                    if frame.name == self.__class__.__name__ or frame.name == "transform"
-                ]
-
-                if len(transformer_frames) == 1:
-                    transformer_frame = transformer_frames[0]
-                    exception_message = (
-                        f"\n  "
-                        f'File "{transformer_frame.filename}", line {transformer_frame.lineno}, '
-                        f'in transformer "{self.__class__.__name__}"\n  '
-                        f"  >> {transformer_frame.line}"
-                    )
-                else:
-                    exception_message = (
-                        f'An error occurred in transformer "{self.__class__.__name__}"'
-                    )
-
-                transform_exception = TransformerException(
-                    internal_exception=exception,
-                    raiser_transformer=self,
-                    message=exception_message,
-                )
+            transform_exception = catch_transformer_exception(exception, self)
 
         if transform_exception is not None:
             raise transform_exception.internal_exception
@@ -213,5 +184,5 @@ class AsyncTransformer(BaseTransformer[_In, _Out, "AsyncTransformer"], ABC):
     ):
         pass
 
-    def __rshift__(self, next_node):
-        pass  # pragma: no cover
+    def __rshift__(self, next_node):  # pragma: no cover
+        pass

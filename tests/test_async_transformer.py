@@ -6,7 +6,9 @@ from gloe import (
     ensure,
     UnsupportedTransformerArgException,
     transformer,
+    AsyncTransformer,
 )
+from gloe.async_transformer import _Out
 from gloe.functional import partial_async_transformer
 from gloe.utils import forward
 
@@ -19,6 +21,12 @@ _DATA = {"foo": "bar"}
 async def request_data(url: str) -> dict[str, str]:
     await asyncio.sleep(0.1)
     return _DATA
+
+
+class RequestData(AsyncTransformer[str, dict[str, str]]):
+    async def transform_async(self, url: str) -> dict[str, str]:
+        await asyncio.sleep(0.1)
+        return _DATA
 
 
 class HasNotBarKey(Exception):
@@ -153,6 +161,16 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
         result = await pipeline3(_URL)
         self.assertDictEqual(result, {})
 
+        @ensure(outcome=[has_foo_key])
+        @async_transformer
+        async def ensured_request4(url: str) -> dict[str, str]:
+            await asyncio.sleep(0.1)
+            return _DATA
+
+        pipeline4 = ensured_request4 >> forward()
+
+        self.assertDictEqual(await pipeline4(_URL), _DATA)
+
     async def test_ensure_partial_async_transformer(self):
         @ensure(incoming=[is_str], outcome=[has_bar_key])
         @partial_async_transformer
@@ -222,3 +240,16 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
             async def many_args(arg1: str, arg2: int):
                 await asyncio.sleep(1)
                 return arg1, arg2
+
+    def test_async_transformer_signature_representation(self):
+        signature = request_data.signature()
+
+        self.assertEqual(str(signature), "(url: str) -> dict[str, str]")
+
+    def test_async_transformer_representation(self):
+        self.assertEqual(repr(request_data), "str -> (request_data) -> dict[str, str]")
+
+        class_request_data = RequestData()
+        self.assertEqual(
+            repr(class_request_data), "str -> (RequestData) -> dict[str, str]"
+        )

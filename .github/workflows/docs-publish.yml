@@ -6,8 +6,17 @@ name: Docs publishing
 on:
   push:
     branches: [ "develop" ]
+    paths:
+      - docs/**
+      - gloe/**
+      - .github/workflows/docs-publish.yml
   pull_request:
     branches: [ "develop" ]
+    types: [opened, reopened]
+    paths:
+      - docs/**
+      - gloe/**
+      - .github/workflows/docs-publish.yml
 
 jobs:
   build:

@@ -26,12 +26,6 @@ class forward(Generic[_In], Transformer[_In, _In]):
         super().__init__()
         self._invisible = True
 
-    def __repr__(self):
-        if self.previous is not None:
-            return str(self.previous)
-
-        return super().__repr__()
-
     def transform(self, data: _In) -> _In:
         return data
 

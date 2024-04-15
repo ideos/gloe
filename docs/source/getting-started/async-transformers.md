@@ -1,6 +1,13 @@
 (async-transformers)=
 # Async Transformers
 
+```{admonition} API Reference
+:class: seealso
+- {func}`gloe.async_transformer`
+- {func}`gloe.partial_async_transformer`
+- {class}`gloe.AsyncTransformer`
+```
+
 Transformers can be also created from [coroutines](https://docs.python.org/3/library/asyncio-task.html#coroutines), but, in this case, you need to use the `@async_transformer` decorator. For example, consider the transformer below that fetches data from an external http server:
 
 ```python

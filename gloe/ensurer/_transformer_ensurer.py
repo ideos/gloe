@@ -3,8 +3,8 @@ from abc import abstractmethod, ABC
 from types import FunctionType
 from typing import Any, Callable, Generic, ParamSpec, Sequence, TypeVar, cast, overload
 
+from gloe.exceptions import UnsupportedTransformerArgException
 from gloe.async_transformer import AsyncTransformer
-from gloe.functional import _PartialTransformer, _PartialAsyncTransformer
 from gloe.transformers import Transformer
 
 _T = TypeVar("_T")
@@ -70,19 +70,19 @@ class _ensure_base:
         pass
 
     @overload
-    def __call__(
-        self, transformer_init: _PartialTransformer[_T, _P1, _U]
-    ) -> _PartialTransformer[_T, _P1, _U]:
-        pass
-
-    @overload
     def __call__(self, transformer: AsyncTransformer[_U, _S]) -> AsyncTransformer[_U, _S]:
         pass
 
     @overload
     def __call__(
-        self, transformer_init: _PartialAsyncTransformer[_T, _P1, _U]
-    ) -> _PartialAsyncTransformer[_T, _P1, _U]:
+        self, partial_transformer: Callable[_P1, Transformer[_T, _U]]
+    ) -> Callable[_P1, Transformer[_T, _U]]:
+        pass
+
+    @overload
+    def __call__(
+        self, partial_transformer: Callable[_P1, AsyncTransformer[_T, _U]]
+    ) -> Callable[_P1, AsyncTransformer[_T, _U]]:
         pass
 
     def __call__(self, arg):
@@ -90,22 +90,21 @@ class _ensure_base:
             return self._generate_new_transformer(arg)
         if isinstance(arg, AsyncTransformer):
             return self._generate_new_async_transformer(arg)
-        if isinstance(arg, _PartialTransformer):
+        if callable(arg):
             transformer_init = arg
 
             def ensured_transformer_init(*args, **kwargs):
                 transformer = transformer_init(*args, **kwargs)
-                return self._generate_new_transformer(transformer)
+                if isinstance(transformer, Transformer):
+                    return self._generate_new_transformer(transformer)
+                if isinstance(transformer, AsyncTransformer):
+                    return self._generate_new_async_transformer(transformer)
+
+                raise UnsupportedTransformerArgException(transformer)
 
             return ensured_transformer_init
-        if isinstance(arg, _PartialAsyncTransformer):
-            async_transformer_init = arg
 
-            def ensured_async_transformer_init(*args, **kwargs):
-                async_transformer = async_transformer_init(*args, **kwargs)
-                return self._generate_new_async_transformer(async_transformer)
-
-            return ensured_async_transformer_init
+        raise UnsupportedTransformerArgException(arg)
 
     @abstractmethod
     def _generate_new_transformer(self, transformer: Transformer) -> Transformer:

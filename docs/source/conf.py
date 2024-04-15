@@ -4,6 +4,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 import os
 import sys
+import pkg_resources
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -13,7 +14,7 @@ sys.path.insert(0, os.path.abspath("pygments"))
 project = "Gloe"
 copyright = "2023, Samir Braga"
 author = "Samir Braga"
-release = "0.4.3"
+version = pkg_resources.get_distribution("gloe").version
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

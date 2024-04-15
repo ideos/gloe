@@ -1,6 +1,6 @@
 # Getting Started
 
-Now we have already learned the Gloe theory, so it's time to jump into code:   
+Now that we have learned Gloe's theory, it's time to jump into coding:   
 
 ```{toctree}
 transformers

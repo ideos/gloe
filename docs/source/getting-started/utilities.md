@@ -52,11 +52,15 @@ It is quite useful when you want to see the flowing data at some points, for exa
 ```python
 from gloe.utils import debug
 
-send_emails = get_users >> filter_subscribed_users >> debug >> send_subscribed_email
+send_emails = get_users >> filter_subscribed_users >> debug() >> send_subscribed_email
 ```
 
 In this case, when calling `send_emails` in debugger mode, the processing will pause into the `debug` transformer. Then, we are able to see the output of the previous transformer (`filter_subscribed_users`) in the debug console.
 
-```{danger}
-You must not deploy a pipeline containing this transformer to a production environment.
+```{Important}
+This transformer is just a helper, you can keep adding breakpoints to any part of the transformers code as you are already used to.
+```
+
+```{Attention}
+The execution will stop only if a debugger is active. In general, this verification is valid only under a debug mode in IDE.
 ```

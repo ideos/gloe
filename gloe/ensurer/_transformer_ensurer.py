@@ -22,16 +22,6 @@ class TransformerEnsurer(Generic[_T, _S], ABC):
     def validate_output(self, data: _T, output: _S):
         """Perform a validation on outcome data after execute the transformer code"""
 
-    def __call__(self, transformer: Transformer[_T, _S]) -> Transformer[_T, _S]:
-        def transform(this: Transformer, data: _T) -> _S:
-            self.validate_input(data)
-            output = transformer.transform(data)
-            self.validate_output(data, output)
-            return output
-
-        transformer_cp = transformer.copy(transform)
-        return transformer_cp
-
 
 def input_ensurer(func: Callable[[_T], Any]) -> TransformerEnsurer[_T, Any]:
     class LambdaEnsurer(TransformerEnsurer[_T, _S]):
@@ -41,7 +31,7 @@ def input_ensurer(func: Callable[[_T], Any]) -> TransformerEnsurer[_T, Any]:
         def validate_input(self, data: _T):
             func(data)
 
-        def validate_output(self, data: _T, output: _S):
+        def validate_output(self, data: _T, output: _S):  # pragma: no cover
             pass
 
     return LambdaEnsurer()
@@ -62,7 +52,7 @@ def output_ensurer(func: Callable):
         __doc__ = func.__doc__
         __annotations__ = cast(FunctionType, func).__annotations__
 
-        def validate_input(self, data):
+        def validate_input(self, data):  # pragma: no cover
             pass
 
         def validate_output(self, data, output):
@@ -119,13 +109,13 @@ class _ensure_base:
 
     @abstractmethod
     def _generate_new_transformer(self, transformer: Transformer) -> Transformer:
-        pass
+        """Internally generates a new sync transformer"""
 
     @abstractmethod
     def _generate_new_async_transformer(
         self, transformer: AsyncTransformer
     ) -> AsyncTransformer:
-        pass
+        """Internally generates a new async transformer"""
 
 
 class _ensure_incoming(Generic[_T], _ensure_base):

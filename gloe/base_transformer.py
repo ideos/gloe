@@ -23,7 +23,7 @@ from typing import (
 from uuid import UUID
 from itertools import groupby
 
-from gloe._utils import _format_return_annotation
+from gloe._typing_utils import _format_return_annotation
 
 __all__ = ["BaseTransformer", "TransformerException", "PreviousTransformer"]
 
@@ -180,7 +180,7 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
     def signature(self) -> Signature:
         return self._signature(type(self))
 
-    def _signature(self, klass: Type) -> Signature:
+    def _signature(self, klass: Type, transform_method: str = "transform") -> Signature:
         orig_bases = getattr(self, "__orig_bases__", [])
         transformer_args = [
             get_args(base) for base in orig_bases if get_origin(base) == klass
@@ -205,7 +205,7 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
                 if generic in transformer_arg
             }
 
-        signature = inspect.signature(self.transform)
+        signature = inspect.signature(getattr(self, transform_method))
         new_return_annotation = specific_args.get(
             signature.return_annotation, signature.return_annotation
         )
@@ -384,8 +384,7 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
         self._dag(net)
         return net
 
-    # pragma: not covered
-    def export(self, path: str, with_edge_labels: bool = True):
+    def export(self, path: str, with_edge_labels: bool = True):  # pragma: no cover
         net = self.graph()
         boxed_nodes = [
             node

@@ -4,10 +4,10 @@
 % contain the root `toctree` directive.
 
 ```{eval-rst} 
-:og:description: Gloe (pronounced /ɡloʊ/, like "glow") is a general purpose library made to help developers to create, maintain, document and test operational and data flows.
+:og:description: Gloe (pronounced like "glow") is a general-purpose library made to help developers create, maintain, document, and test both operational and flow-oriented code.
 
 .. meta::
-  :description: Gloe (pronounced /ɡloʊ/, like "glow") is a general purpose library made to help developers to create, maintain, document and test operational and data flows.
+  :description: Gloe (pronounced like "glow") is a general-purpose library made to help developers create, maintain, document, and test both operational and flow-oriented code.
 ```
 
 # Write a Better Python Code
@@ -23,7 +23,7 @@ When developers write a code, they are telling a story to the next person who wi
 
 ### How Gloe Can Help Me?
 
-Gloe comes to turn this story coherent, logically organized and easy to follow. This is achieved by dividing the code into concise steps with an unambiguous responsibility and explicit interface. Then, Gloe allows you to connect these steps, clarifying their collaboration and identifying necessary changes during refactoring. Thus, you can quickly understand the entire story being told and enhance it. Inspired by things like [natural transformation](https://ncatlab.org/nlab/show/natural+transformation) and Free Monad (present in [Scala](https://typelevel.org/cats/datatypes/freemonad.html) and [Haskell](https://serokell.io/blog/introduction-to-free-monads)), Gloe implemented this approach using functional programming and strong typing concepts.
+Gloe comes to turn this story coherent, logically organized and easy to follow. This is achieved by dividing the code into [concise steps](https://gloe.ideos.com.br/theory.html) with an unambiguous responsibility and explicit interface. Then, Gloe allows you to connect these steps, clarifying their collaboration and identifying necessary changes during refactoring. Thus, you can quickly understand the entire story being told and enhance it. Inspired by things like [natural transformation](https://ncatlab.org/nlab/show/natural+transformation) and Free Monad (present in [Scala](https://typelevel.org/cats/datatypes/freemonad.html) and [Haskell](https://serokell.io/blog/introduction-to-free-monads)), Gloe implemented this approach using functional programming and strong typing concepts.
 
 ### Gloe is not a workflow orchestrator
 

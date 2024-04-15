@@ -10,7 +10,7 @@
 
 ## forward
 
-The `forward` utility is quite useful when your flow starts with a divergent connection. For example:
+The `forward` utility is used when your flow starts with a divergent connection. For example:
 
 ```python
 from gloe.utils import forward
@@ -22,14 +22,14 @@ send_emails = forward[list[User]]() >> (
 )
 ```
 
-In this case, we have nothing to do before split the groups of users. So, when starting the pipeline with `forward` transformer, we are able to forward the incoming data to the next transformer directly.
+In this case, we have nothing to do before splitting the groups of users. So, when starting the pipeline with a `forward` transformer, we are able to forward the incoming data to the next transformer directly.
 ```{important}
 We have to explicitly define the incoming type of the forward transformer when it is used as the first step, because it is not known at the time of the definition.
 ```
 
 ## forward_incoming
 
-Suppose you need to extract some statistics of a Pandas DataFrame. However, you still need the use the original data in the next transformers. In that case, you can use `forward_incoming`, which receives a transformer as an argument. The output of the `forward_incoming` is a tuple with the output of the encapsulated transformer and its input.
+Suppose you need to extract some statistics from a Pandas DataFrame. However, you still need the use the original data in the next transformers. In that case, you can use `forward_incoming`, which receives a transformer as an argument. The output of the `forward_incoming` is a tuple with the output of the encapsulated transformer and its input.
 
 ```python
 get_data: Transformer[str, pd.DataFrame]
@@ -39,7 +39,7 @@ process_statistics: Transformer[tuple[pd.DataFrame, Statistics], Result]
 process_data = get_data >> forward_incoming(extract_statistics) >> process_statistics 
 ```
 
-In the above example, both output of `get_data` and `extract_statistics` are passed as the input to `process_statistics`.
+In the example above, both `get_data` and `extract_statistics` outputs are passed on as the input to `process_statistics`.
 
 ## forget
 
@@ -52,11 +52,15 @@ It is quite useful when you want to see the flowing data at some points, for exa
 ```python
 from gloe.utils import debug
 
-send_emails = get_users >> filter_subscribed_users >> debug >> send_subscribed_email
+send_emails = get_users >> filter_subscribed_users >> debug() >> send_subscribed_email
 ```
 
 In this case, when calling `send_emails` in debugger mode, the processing will pause into the `debug` transformer. Then, we are able to see the output of the previous transformer (`filter_subscribed_users`) in the debug console.
 
-```{danger}
-You must not deploy a pipeline containing this transformer to a production environment.
+```{Important}
+This transformer is just a helper, you can keep adding breakpoints to any part of the transformers code as you are already used to.
+```
+
+```{Attention}
+The execution will stop only if a debugger is active. In general, this verification is valid only under a debug mode in IDE.
 ```

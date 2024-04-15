@@ -4,6 +4,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 import os
 import sys
+import pkg_resources
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -13,7 +14,7 @@ sys.path.insert(0, os.path.abspath("pygments"))
 project = "Gloe"
 copyright = "2023, Samir Braga"
 author = "Samir Braga"
-release = "0.4.3"
+version = pkg_resources.get_distribution("gloe").version
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -30,6 +31,7 @@ extensions = [
     # "sphinx_autodoc_typehints",
     "myst_parser",
     "sphinx_copybutton",
+    "sphinx_sitemap",
 ]
 overloads_location = "bottom"
 napoleon_google_docstring = True
@@ -43,6 +45,11 @@ ogp_social_cards = {
 }
 ogp_site_url = "https://gloe.ideos.com.br/"
 # ogp_image = "https://gloe.ideos.com.br/_static/assets/gloe-logo.png"
+html_baseurl = "https://gloe.ideos.com.br/"
+sitemap_locales = [None]
+sitemap_url_scheme = "{link}"
+html_extra_path = ["_static/robots.txt"]
+ogp_description_length = 160
 
 templates_path = ["_templates"]
 exclude_patterns = ["Thumbs.db", ".DS_Store"]
@@ -53,7 +60,7 @@ autodoc_type_aliases = {
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_title = "Gloe"
+html_title = "Gloe - Write a Better Python Code"
 # html_logo = "assets/gloe-logo-small.png"
 html_theme = "furo"
 html_last_updated_fmt = ""

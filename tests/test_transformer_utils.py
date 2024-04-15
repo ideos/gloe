@@ -1,6 +1,7 @@
 import unittest
+from bdb import Bdb
 
-from gloe.utils import forward, forward_incoming
+from gloe.utils import forward, forward_incoming, debug
 from tests.lib.transformers import sum_tuple2
 
 
@@ -14,3 +15,9 @@ class TestTransformerUtils(unittest.TestCase):
         test_forward = forward[int]()
 
         self.assertEqual("int -> (forward) -> int", repr(test_forward))
+
+    def test_debug(self):
+        test_debug = forward[int]() >> debug()
+
+        result = test_debug(5)
+        self.assertEqual(result, 5)

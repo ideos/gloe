@@ -10,3 +10,6 @@ src/*
 **/*.dot
 .coverage
 htmlcov
+gloe.egg-info
+# python virtual environments
+.venv

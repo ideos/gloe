@@ -1,0 +1,33 @@
+{% extends "!page.html" %}
+
+{% block extrahead %}
+
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "WebSite",
+  "url": "http://gloe.ideos.com.br/",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://gloe.ideos.com.br/search.html?q={search_term_string}&check_keywords=yes&area=default",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+
+
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "SoftwareSourceCode",
+  "name": "Gloe",
+  "version": "{{ version }}",
+  "description": "Gloe (pronounced /ɡloʊ/, like \"glow\") is a general purpose library made to help developers to create, maintain, document and test operational and data flows",
+  "programmingLanguage": "Python",
+  "license": "https://github.com/ideos/gloe/blob/main/LICENSE",
+  "downloadUrl": "https://pypi.org/project/gloe/",
+  "codeRepository": "https://github.com/ideos/gloe"
+}
+</script>
+
+{% endblock %}

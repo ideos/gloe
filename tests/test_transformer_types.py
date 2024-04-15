@@ -1,10 +1,8 @@
 import asyncio
 import os
 import unittest
-from collections.abc import Sequence
 from pathlib import Path
-from typing import Iterable, TypeVar, Any
-
+from typing import TypeVar
 from typing_extensions import assert_type
 
 from tests.lib.conditioners import if_not_zero, if_is_even

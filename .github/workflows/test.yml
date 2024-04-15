@@ -6,8 +6,19 @@ name: Tests
 on:
   push:
     branches: [ "develop", "main" ]
+    paths:
+      - tests/**
+      - gloe/**
+      - .coveragerc
+      - '.github/workflows/test.yml'
   pull_request:
     branches: [ "develop", "main" ]
+    types: [opened, reopened]
+    paths:
+      - tests/**
+      - gloe/**
+      - .coveragerc
+      - .github/workflows/test.yml
 
 jobs:
   test:

@@ -18,7 +18,7 @@ class MapOver(Generic[_T, _U], Transformer[_T, list[_U]]):
         super().__init__()
         self.iterable = iterable
         self.mapping_transformer = mapping_transformer
-        self._invisible = True
+        self.plotting_settings.invisible = True
         self._children = [mapping_transformer]
 
     def transform(self, data: _T) -> list[_U]:

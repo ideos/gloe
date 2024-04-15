@@ -1,5 +1,6 @@
 from typing import Generic, TypeVar
 
+from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe.transformers import Transformer
 
 _T = TypeVar("_T")
@@ -46,14 +47,13 @@ class Map(Generic[_T, _U], Transformer[list[_T], list[_U]]):
     def __init__(self, mapping_transformer: Transformer[_T, _U]):
         super().__init__()
         self.mapping_transformer = mapping_transformer
-        self._invisible = True
+        self.plotting_settings.invisible = True
         self._children = [mapping_transformer]
 
-        mapping_transformer._graph_node_props = mapping_transformer.graph_node_props | {
-            "parent_id": self.instance_id,
-            "bounding_box": True,
-            "box_label": "mapping",
-        }
+        self._plotting_settings: PlottingSettings = PlottingSettings(
+            has_children=True,
+            node_type=NodeType.Transformer,
+        )
 
     def transform(self, data: list[_T]) -> list[_U]:
         """

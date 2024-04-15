@@ -4,6 +4,7 @@ from inspect import Signature
 from types import GenericAlias
 from typing import TypeVar, Any, cast
 
+from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe.async_transformer import AsyncTransformer
 from gloe.base_transformer import BaseTransformer
 from gloe.transformers import Transformer
@@ -23,18 +24,6 @@ def is_transformer(node):
 
 def is_async_transformer(node):
     return isinstance(node, AsyncTransformer)
-
-
-def _resolve_new_merge_transformers(
-    new_transformer: BaseTransformer, transformer2: BaseTransformer
-):
-    new_transformer.__class__.__name__ = transformer2.__class__.__name__
-    new_transformer._label = transformer2.label
-    new_transformer._children = transformer2.children
-    new_transformer._invisible = transformer2.invisible
-    new_transformer._graph_node_props = transformer2.graph_node_props
-    new_transformer._set_previous(transformer2.previous)
-    return new_transformer
 
 
 def _resolve_serial_connection_signatures(
@@ -134,7 +123,12 @@ def _nerge_serial(transformer1, _transformer2):
     else:
         raise UnsupportedTransformerArgException(transformer2)  # pragma: no cover
 
-    return _resolve_new_merge_transformers(new_transformer, transformer2)
+    new_transformer.__class__.__name__ = transformer2.__class__.__name__
+    new_transformer._label = transformer2.label
+    new_transformer._children = transformer2.children
+    new_transformer._plotting_settings = transformer2._plotting_settings
+    new_transformer._set_previous(transformer2.previous)
+    return new_transformer
 
 
 def _merge_diverging(
@@ -242,11 +236,7 @@ def _merge_diverging(
     new_transformer._previous = cast(Transformer, receiving_transformers)
     new_transformer.__class__.__name__ = "Converge"
     new_transformer._label = ""
-    new_transformer._graph_node_props = {
-        "shape": "diamond",
-        "width": 0.5,
-        "height": 0.5,
-    }
+    new_transformer._plotting_settings = PlottingSettings(node_type=NodeType.Convergent)
 
     return new_transformer
 

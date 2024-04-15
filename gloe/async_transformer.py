@@ -6,6 +6,7 @@ from abc import abstractmethod, ABC
 from inspect import Signature
 from typing import TypeVar, overload, cast, Any, Callable, Awaitable
 
+from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe._transformer_utils import catch_transformer_exception
 from gloe.base_transformer import (
     TransformerException,
@@ -31,10 +32,9 @@ class AsyncTransformer(BaseTransformer[_In, _Out, "AsyncTransformer"], ABC):
     def __init__(self):
         super().__init__()
 
-        self._graph_node_props: dict[str, Any] = {
-            **self._graph_node_props,
-            "isAsync": True,
-        }
+        self._plotting_settings = PlottingSettings(
+            node_type=NodeType.Transformer, is_async=True
+        )
         self.__class__.__annotations__ = self.transform_async.__annotations__
 
     @abstractmethod

@@ -1,6 +1,12 @@
 (partial-transformers)=
 # Partial Transformers
 
+
+```{admonition} API Reference
+:class: seealso
+- {func}`gloe.partial_transformer`
+```
+
 The single parameter of a transformer represents the input data during the execution and this input will be the return of the previous transformer in the pipeline. That being said, it doesn't make sense to allow transformers to have multiple parameters, because functions can't return multiple things (only a tuple of multiple things). However, sometimes we need some accessory data to perform the desired transformation.
 
 For example, suppose we have a [Pandas](https://pandas.pydata.org/) dataframe of people with a numeric column "age". We want to filter people older than a specific age:

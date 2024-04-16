@@ -9,7 +9,6 @@ from typing import TypeVar, overload, cast, Any, Callable, Awaitable
 from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe._transformer_utils import catch_transformer_exception
 from gloe.base_transformer import (
-    TransformerException,
     BaseTransformer,
     PreviousTransformer,
 )
@@ -17,7 +16,7 @@ from gloe.base_transformer import (
 __all__ = ["AsyncTransformer"]
 
 _In = TypeVar("_In")
-_Out = TypeVar("_Out")
+_Out = TypeVar("_Out", covariant=True)
 _NextOut = TypeVar("_NextOut")
 
 _Out2 = TypeVar("_Out2")
@@ -28,7 +27,7 @@ _Out6 = TypeVar("_Out6")
 _Out7 = TypeVar("_Out7")
 
 
-class AsyncTransformer(BaseTransformer[_In, _Out, "AsyncTransformer"], ABC):
+class AsyncTransformer(BaseTransformer[_In, _Out], ABC):
     def __init__(self):
         super().__init__()
 
@@ -104,16 +103,14 @@ class AsyncTransformer(BaseTransformer[_In, _Out, "AsyncTransformer"], ABC):
 
     @overload
     def __rshift__(
-        self, next_node: BaseTransformer[_Out, _NextOut, Any]
+        self, next_node: BaseTransformer[_Out, _NextOut]
     ) -> "AsyncTransformer[_In, _NextOut]":
         pass
 
     @overload
     def __rshift__(
         self,
-        next_node: tuple[
-            BaseTransformer[_Out, _NextOut, Any], BaseTransformer[_Out, _Out2, Any]
-        ],
+        next_node: tuple[BaseTransformer[_Out, _NextOut], BaseTransformer[_Out, _Out2]],
     ) -> "AsyncTransformer[_In, tuple[_NextOut, _Out2]]":
         pass
 
@@ -121,9 +118,9 @@ class AsyncTransformer(BaseTransformer[_In, _Out, "AsyncTransformer"], ABC):
     def __rshift__(
         self,
         next_node: tuple[
-            BaseTransformer[_Out, _NextOut, Any],
-            BaseTransformer[_Out, _Out2, Any],
-            BaseTransformer[_Out, _Out3, Any],
+            BaseTransformer[_Out, _NextOut],
+            BaseTransformer[_Out, _Out2],
+            BaseTransformer[_Out, _Out3],
         ],
     ) -> "AsyncTransformer[_In, tuple[_NextOut, _Out2, _Out3]]":
         pass
@@ -132,10 +129,10 @@ class AsyncTransformer(BaseTransformer[_In, _Out, "AsyncTransformer"], ABC):
     def __rshift__(
         self,
         next_node: tuple[
-            BaseTransformer[_Out, _NextOut, Any],
-            BaseTransformer[_Out, _Out2, Any],
-            BaseTransformer[_Out, _Out3, Any],
-            BaseTransformer[_Out, _Out4, Any],
+            BaseTransformer[_Out, _NextOut],
+            BaseTransformer[_Out, _Out2],
+            BaseTransformer[_Out, _Out3],
+            BaseTransformer[_Out, _Out4],
         ],
     ) -> "AsyncTransformer[_In, tuple[_NextOut, _Out2, _Out3, _Out4]]":
         pass
@@ -144,11 +141,11 @@ class AsyncTransformer(BaseTransformer[_In, _Out, "AsyncTransformer"], ABC):
     def __rshift__(
         self,
         next_node: tuple[
-            BaseTransformer[_Out, _NextOut, Any],
-            BaseTransformer[_Out, _Out2, Any],
-            BaseTransformer[_Out, _Out3, Any],
-            BaseTransformer[_Out, _Out4, Any],
-            BaseTransformer[_Out, _Out5, Any],
+            BaseTransformer[_Out, _NextOut],
+            BaseTransformer[_Out, _Out2],
+            BaseTransformer[_Out, _Out3],
+            BaseTransformer[_Out, _Out4],
+            BaseTransformer[_Out, _Out5],
         ],
     ) -> "AsyncTransformer[_In, tuple[_NextOut, _Out2, _Out3, _Out4, _Out5]]":
         pass
@@ -157,12 +154,12 @@ class AsyncTransformer(BaseTransformer[_In, _Out, "AsyncTransformer"], ABC):
     def __rshift__(
         self,
         next_node: tuple[
-            BaseTransformer[_Out, _NextOut, Any],
-            BaseTransformer[_Out, _Out2, Any],
-            BaseTransformer[_Out, _Out3, Any],
-            BaseTransformer[_Out, _Out4, Any],
-            BaseTransformer[_Out, _Out5, Any],
-            BaseTransformer[_Out, _Out6, Any],
+            BaseTransformer[_Out, _NextOut],
+            BaseTransformer[_Out, _Out2],
+            BaseTransformer[_Out, _Out3],
+            BaseTransformer[_Out, _Out4],
+            BaseTransformer[_Out, _Out5],
+            BaseTransformer[_Out, _Out6],
         ],
     ) -> "AsyncTransformer[_In, tuple[_NextOut, _Out2, _Out3, _Out4, _Out5, _Out6]]":
         pass
@@ -171,13 +168,13 @@ class AsyncTransformer(BaseTransformer[_In, _Out, "AsyncTransformer"], ABC):
     def __rshift__(
         self,
         next_node: tuple[
-            BaseTransformer[_Out, _NextOut, Any],
-            BaseTransformer[_Out, _Out2, Any],
-            BaseTransformer[_Out, _Out3, Any],
-            BaseTransformer[_Out, _Out4, Any],
-            BaseTransformer[_Out, _Out5, Any],
-            BaseTransformer[_Out, _Out6, Any],
-            BaseTransformer[_Out, _Out7, Any],
+            BaseTransformer[_Out, _NextOut],
+            BaseTransformer[_Out, _Out2],
+            BaseTransformer[_Out, _Out3],
+            BaseTransformer[_Out, _Out4],
+            BaseTransformer[_Out, _Out5],
+            BaseTransformer[_Out, _Out6],
+            BaseTransformer[_Out, _Out7],
         ],
     ) -> (
         "AsyncTransformer[_In, tuple[_NextOut, _Out2, _Out3, _Out4, _Out5, _Out6, _Out7]]"
@@ -185,4 +182,7 @@ class AsyncTransformer(BaseTransformer[_In, _Out, "AsyncTransformer"], ABC):
         pass
 
     def __rshift__(self, next_node):  # pragma: no cover
+        pass
+
+    def __compose__(self, prev: _In) -> "AsyncTransformer[_In, _Out]":
         pass

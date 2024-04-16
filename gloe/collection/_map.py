@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, Iterable
 
 from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe.transformers import Transformer
@@ -8,25 +8,10 @@ _S = TypeVar("_S")
 _U = TypeVar("_U")
 
 
-class Map(Generic[_T, _U], Transformer[list[_T], list[_U]]):
+class Map(Generic[_T, _U], Transformer[Iterable[_T], Iterable[_U]]):
     """
-    Transformer used to map values in a list using other transformers instead of
+    Transformer used to map values in an iterable using other transformers instead of
     functions.
-
-    Unfortunately, we must use :code:`list` instead of a more general type like
-    :code:`Iterable`, because neither Python nor Mypy recognizes :code:`list[T]` as a
-    subclass of :code:`Iterable[T]`. A consequence of this limitation is::
-
-        get_user_posts: Transformer[User, list[Post]]
-        filter_archived_posts: Transformer[Iterable[Post], Iterable[Post]]
-
-        get_user_posts >> filter_archived_posts
-        # ERROR: Unsupported operand types for >> ("Transformer[User, list[Post]]" and "Transformer[Iterable[Post], Iterable[Post]]")
-
-    To solve this problem, we need to use `Higher Kinded Types
-    <https://sobolevn.me/2020/10/higher-kinded-types-in-python>`_, but this is only currently possible using
-    `Mypy Plugins <https://mypy.readthedocs.io/en/stable/extending_mypy.html>`_.
-    Gloe aims to avoid the need for such solutions.
 
     Example:
         In this example, we fetch a list of users that belongs to a group.
@@ -36,12 +21,12 @@ class Map(Generic[_T, _U], Transformer[list[_T], list[_U]]):
             @transformer
             def get_user_posts(user: User) -> list[Post]: ...
 
-            get_posts_by_group: Transformer[Group, list[Post]] = (
+            get_posts_by_group: Transformer[Group, Iterable[Post]] = (
                 get_users_by_group >> Map(get_user_posts) >> flatten
             )
     Args:
         mapping_transformer: transformer applied to each item of the
-            input list the yield the mapped item of the output list.
+            input iterable the yield the mapped item of the output iterable.
     """
 
     def __init__(self, mapping_transformer: Transformer[_T, _U]):
@@ -55,14 +40,14 @@ class Map(Generic[_T, _U], Transformer[list[_T], list[_U]]):
             node_type=NodeType.Transformer,
         )
 
-    def transform(self, data: list[_T]) -> list[_U]:
+    def transform(self, data: Iterable[_T]) -> Iterable[_U]:
         """
         Args:
-            data: incoming list to be mapped. The items of this list must be of
+            data: incoming iterable to be mapped. The items of this iterable must be of
                 type :code:`_T`.
 
         Returns:
-            The mapped list. The items of this new list are of type :code:`_U`.
+            The mapped iterable. The items of this new iterable are of type :code:`_U`.
         """
         mapping_result = []
         for item in data:

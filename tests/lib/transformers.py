@@ -92,3 +92,8 @@ def repeat(content: str, n_times: int, linebreak: bool) -> str:
     if linebreak:
         repeated += "\n"
     return repeated
+
+
+@transformer
+def identity(num: float) -> float:
+    return num

@@ -28,7 +28,7 @@ from gloe._typing_utils import _format_return_annotation
 __all__ = ["BaseTransformer", "TransformerException", "PreviousTransformer"]
 
 _In = TypeVar("_In")
-_Out = TypeVar("_Out")
+_Out = TypeVar("_Out", covariant=True)
 _NextOut = TypeVar("_NextOut")
 _Self = TypeVar("_Self", bound="BaseTransformer")
 
@@ -70,7 +70,7 @@ class TransformerException(Exception):
         return self._internal_exception.with_traceback(self._traceback)
 
 
-class BaseTransformer(Generic[_In, _Out, _Self]):
+class BaseTransformer(Generic[_In, _Out]):
     def __init__(self):
         self._previous: PreviousTransformer["BaseTransformer"] = None
         self._children: list["BaseTransformer"] = []

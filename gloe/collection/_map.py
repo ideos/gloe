@@ -4,7 +4,6 @@ from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe.transformers import Transformer
 
 _T = TypeVar("_T")
-_S = TypeVar("_S")
 _U = TypeVar("_U")
 
 

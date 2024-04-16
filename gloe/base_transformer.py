@@ -19,7 +19,6 @@ from typing import (
     get_origin,
     TypeAlias,
     Type,
-    OrderedDict,
 )
 from uuid import UUID
 from itertools import groupby
@@ -29,8 +28,6 @@ from gloe._typing_utils import _format_return_annotation
 
 __all__ = ["BaseTransformer", "TransformerException", "PreviousTransformer"]
 
-_In = TypeVar("_In")
-_Out = TypeVar("_Out", covariant=True)
 _NextOut = TypeVar("_NextOut")
 _Self = TypeVar("_Self", bound="BaseTransformer")
 
@@ -53,9 +50,7 @@ PreviousTransformer: TypeAlias = Union[
     tuple[_Self, _Self, _Self, _Self, _Self, _Self, _Self],
 ]
 
-TransformerChildren: TypeAlias = Union[
-    OrderedDict[str, "BaseTransformer"], list["BaseTransformer"]
-]
+TransformerChildren: TypeAlias = list["BaseTransformer"]
 
 
 class TransformerException(Exception):
@@ -74,6 +69,10 @@ class TransformerException(Exception):
     @property
     def internal_exception(self):
         return self._internal_exception.with_traceback(self._traceback)
+
+
+_In = TypeVar("_In", contravariant=True)
+_Out = TypeVar("_Out", covariant=True)
 
 
 class BaseTransformer(Generic[_In, _Out]):

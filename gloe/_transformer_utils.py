@@ -1,5 +1,7 @@
 import traceback
+from typing import Any
 
+from gloe._plotting_utils import NodeType
 from gloe.base_transformer import BaseTransformer, TransformerException
 
 

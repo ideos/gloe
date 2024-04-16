@@ -23,12 +23,11 @@ from typing import (
 from uuid import UUID
 from itertools import groupby
 
+from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe._typing_utils import _format_return_annotation
 
 __all__ = ["BaseTransformer", "TransformerException", "PreviousTransformer"]
 
-_In = TypeVar("_In")
-_Out = TypeVar("_Out")
 _NextOut = TypeVar("_NextOut")
 _Self = TypeVar("_Self", bound="BaseTransformer")
 
@@ -51,6 +50,8 @@ PreviousTransformer: TypeAlias = Union[
     tuple[_Self, _Self, _Self, _Self, _Self, _Self, _Self],
 ]
 
+TransformerChildren: TypeAlias = list["BaseTransformer"]
+
 
 class TransformerException(Exception):
     def __init__(
@@ -70,15 +71,21 @@ class TransformerException(Exception):
         return self._internal_exception.with_traceback(self._traceback)
 
 
-class BaseTransformer(Generic[_In, _Out, _Self]):
+_In = TypeVar("_In", contravariant=True)
+_Out = TypeVar("_Out", covariant=True)
+
+
+class BaseTransformer(Generic[_In, _Out]):
     def __init__(self):
         self._previous: PreviousTransformer["BaseTransformer"] = None
-        self._children: list["BaseTransformer"] = []
-        self._invisible = False
+        self._children: TransformerChildren = []
         self.id = uuid.uuid4()
         self.instance_id = uuid.uuid4()
         self._label = self.__class__.__name__
-        self._graph_node_props: dict[str, Any] = {"shape": "box"}
+        self._plotting_settings: PlottingSettings = PlottingSettings(
+            invisible=False,
+            node_type=NodeType.Transformer,
+        )
         self.events = []
 
     @property
@@ -95,24 +102,27 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
         return self._label
 
     @property
-    def graph_node_props(self) -> dict[str, Any]:
-        return self._graph_node_props
-
-    @property
-    def children(self) -> list["BaseTransformer"]:
+    def children(self) -> TransformerChildren:
+        """
+        Used when a transformer encapsulates other transformer. The encapsulated
+        transformers are called children transformers.
+        """
         return self._children
 
     @property
     def previous(self) -> PreviousTransformer["BaseTransformer"]:
         """
-        Previous transformers. It can be None, a single transformer, or a tuple of many
-        transformers.
+        Previous transformers. It can be None (when the transformer is the first of its
+        pipeline), a single transformer, or a tuple of many transformers.
         """
         return self._previous
 
     @property
-    def invisible(self) -> bool:
-        return self._invisible
+    def plotting_settings(self) -> PlottingSettings:
+        """
+        Defines how the transformer will be plotted.
+        """
+        return self._plotting_settings
 
     def __hash__(self) -> int:
         return hash(self.id)
@@ -245,9 +255,33 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
     def input_annotation(self) -> str:
         return self.input_type.__name__
 
+    def export_dot_props(self) -> dict[str, Any]:
+        settings = self.plotting_settings
+        node_props: dict[str, Any] = {"shape": "box"}
+
+        match settings.node_type:
+            case NodeType.Condition:
+                node_props = {"shape": "diamond", "style": "filled", "port": "n"}
+            case NodeType.Convergent:
+                node_props = {
+                    "shape": "diamond",
+                    "width": 0.5,
+                    "height": 0.5,
+                }
+
+        if settings.has_children:
+            node_props = node_props | {
+                "parent_id": self.instance_id,
+                "bounding_box": True,
+                "box_label": "mapping",
+            }
+
+        return node_props
+
     def _add_net_node(self, net: Graph, custom_data: dict[str, Any] = {}):
         node_id = self.node_id
-        props = {**self.graph_node_props, **custom_data, "label": self.label}
+        graph_node_props = self.export_dot_props()
+        props = {**graph_node_props, **custom_data, "label": self.label}
         if node_id not in net.nodes:
             net.add_node(node_id, **props)
         else:
@@ -272,7 +306,7 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
         previous = self.previous
 
         if isinstance(previous, BaseTransformer):
-            if previous.invisible:
+            if previous.plotting_settings.invisible:
                 if previous.previous is None:
                     return previous
 
@@ -302,7 +336,7 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
                 n for n in child_net.nodes if child_net.out_degree(n) == 0
             ][0]
 
-            if self.invisible:
+            if self.plotting_settings.invisible:
                 if type(visible_previous) == tuple:
                     for prev in visible_previous:
                         net.add_edge(
@@ -334,7 +368,7 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
         previous = self.previous
         if previous is not None:
             if type(previous) == tuple:
-                if self.invisible and next_node is not None:
+                if self.plotting_settings.invisible and next_node is not None:
                     next_node_id = next_node._add_net_node(net)
                     _next_node = next_node
                 else:
@@ -345,7 +379,7 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
                     previous_node_id = prev.node_id
 
                     # TODO: check the impact of the below line to the Mapper transformer
-                    if not prev.invisible and len(prev.children) == 0:
+                    if not prev.plotting_settings.invisible and len(prev.children) == 0:
                         net.add_edge(
                             previous_node_id, next_node_id, label=prev.output_annotation
                         )
@@ -353,7 +387,7 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
                     if previous_node_id not in in_nodes:
                         prev._dag(net, _next_node, custom_data)
             elif isinstance(previous, BaseTransformer):
-                if self.invisible and next_node is not None:
+                if self.plotting_settings.invisible and next_node is not None:
                     next_node_id = next_node._add_net_node(net)
                     _next_node = next_node
                 else:
@@ -363,7 +397,7 @@ class BaseTransformer(Generic[_In, _Out, _Self]):
                 previous_node_id = previous.node_id
 
                 if len(previous.children) == 0 and (
-                    not previous.invisible or previous.previous is None
+                    not previous.plotting_settings.invisible or previous.previous is None
                 ):
                     previous_node_id = previous._add_net_node(net)
                     net.add_edge(

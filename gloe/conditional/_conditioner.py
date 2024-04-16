@@ -3,6 +3,7 @@ from inspect import Signature
 from types import GenericAlias, UnionType
 from typing import Callable, Generic, Optional, TypeVar, Union
 
+from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe.transformers import Transformer
 from gloe.utils import forget
 
@@ -31,7 +32,7 @@ class ConditionerTransformer(
         super().__init__()
         self.implications = implications
         self.else_transformer = else_transformer
-        self._graph_node_props = {"shape": "diamond", "style": "filled", "port": "n"}
+        self._plotting_settings = PlottingSettings(node_type=NodeType.Condition)
         self._children = [
             *[impl.then_transformer for impl in implications],
             else_transformer,

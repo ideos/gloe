@@ -18,12 +18,9 @@ def forget(data: Any) -> None:
 
 
 class debug(Generic[_In], Transformer[_In, _In]):
-    def __init__(self, custom_debugger: str | None = None):
+    def __init__(self):
         super().__init__()
-        self._invisible = True
-        self._possible_debuggers = ["pdb", "pydevd", "pydevd_runpy"]
-        if custom_debugger is not None:
-            self._possible_debuggers.append(custom_debugger)
+        self.plotting_settings.invisible = True
 
     def _is_under_debug(self):
         if hasattr(sys, "gettrace") and sys.gettrace() is not None:
@@ -50,7 +47,7 @@ class debug(Generic[_In], Transformer[_In, _In]):
 class forward(Generic[_In], Transformer[_In, _In]):
     def __init__(self):
         super().__init__()
-        self._invisible = True
+        self.plotting_settings.invisible = True
 
     def transform(self, data: _In) -> _In:
         return data

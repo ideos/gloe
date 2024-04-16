@@ -3,8 +3,8 @@ from typing import Generic, TypeVar, Iterable
 from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe.transformers import Transformer
 
-_T = TypeVar("_T")
-_U = TypeVar("_U")
+_T = TypeVar("_T", contravariant=True)
+_U = TypeVar("_U", covariant=True)
 
 
 class Map(Generic[_T, _U], Transformer[Iterable[_T], Iterable[_U]]):

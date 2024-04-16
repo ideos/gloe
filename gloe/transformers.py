@@ -18,9 +18,7 @@ from gloe._generic_types import (
 
 __all__ = ["Transformer"]
 
-from gloe._supports_composition import SupportsComposition
-
-I = TypeVar("I")
+I = TypeVar("I", contravariant=True)
 O = TypeVar("O", covariant=True)
 
 Tr: TypeAlias = "Transformer"
@@ -84,52 +82,34 @@ class Transformer(BaseTransformer[I, O], ABC):
         raise NotImplementedError()  # pragma: no cover
 
     @overload
-    def __rshift__(self, next_node: SupportsComposition[O, To]) -> To:
+    def __rshift__(self, next_node: "Transformer[O, O1]") -> "Transformer[I, O1]":
         pass
 
     @overload
     def __rshift__(
         self,
-        next_node: tuple[
-            SupportsComposition[O, "Tr[O, O1]"],
-            SupportsComposition[O, "Tr[O, O2]"],
-        ],
+        next_node: tuple["Tr[O, O1]", "Tr[O, O2]"],
     ) -> "Transformer[I, tuple[O1, O2]]":
         pass
 
     @overload
     def __rshift__(
         self,
-        next_node: tuple[
-            SupportsComposition[O, "Tr[O, O1]"],
-            SupportsComposition[O, "Tr[O, O2]"],
-            SupportsComposition[O, "Tr[O, O3]"],
-        ],
+        next_node: tuple["Tr[O, O1]", "Tr[O, O2]", "Tr[O, O3]"],
     ) -> "Transformer[I, tuple[O1, O2, O3]]":
         pass
 
     @overload
     def __rshift__(
         self,
-        next_node: tuple[
-            SupportsComposition[O, "Tr[O, O1]"],
-            SupportsComposition[O, "Tr[O, O2]"],
-            SupportsComposition[O, "Tr[O, O3]"],
-            SupportsComposition[O, "Tr[O, O4]"],
-        ],
+        next_node: tuple["Tr[O, O1]", "Tr[O, O2]", "Tr[O, O3]", "Tr[O, O4]"],
     ) -> "Transformer[I, tuple[O1, O2, O3, O4]]":
         pass
 
     @overload
     def __rshift__(
         self,
-        next_node: tuple[
-            SupportsComposition[O, "Tr[O, O1]"],
-            SupportsComposition[O, "Tr[O, O2]"],
-            SupportsComposition[O, "Tr[O, O3]"],
-            SupportsComposition[O, "Tr[O, O4]"],
-            SupportsComposition[O, "Tr[O, O5]"],
-        ],
+        next_node: tuple["Tr[O, O1]", "Tr[O, O2]", "Tr[O, O3]", "Tr[O, O4]", "Tr[O, O5]"],
     ) -> "Transformer[I, tuple[O1, O2, O3, O4, O5]]":
         pass
 
@@ -137,12 +117,7 @@ class Transformer(BaseTransformer[I, O], ABC):
     def __rshift__(
         self,
         next_node: tuple[
-            SupportsComposition[O, "Tr[O, O1]"],
-            SupportsComposition[O, "Tr[O, O2]"],
-            SupportsComposition[O, "Tr[O, O3]"],
-            SupportsComposition[O, "Tr[O, O4]"],
-            SupportsComposition[O, "Tr[O, O5]"],
-            SupportsComposition[O, "Tr[O, O6]"],
+            "Tr[O, O1]", "Tr[O, O2]", "Tr[O, O3]", "Tr[O, O4]", "Tr[O, O5]", "Tr[O, O6]"
         ],
     ) -> "Transformer[I, tuple[O1, O2, O3, O4, O5, O6]]":
         pass
@@ -151,15 +126,19 @@ class Transformer(BaseTransformer[I, O], ABC):
     def __rshift__(
         self,
         next_node: tuple[
-            SupportsComposition[O, "Tr[O, O1]"],
-            SupportsComposition[O, "Tr[O, O2]"],
-            SupportsComposition[O, "Tr[O, O3]"],
-            SupportsComposition[O, "Tr[O, O4]"],
-            SupportsComposition[O, "Tr[O, O5]"],
-            SupportsComposition[O, "Tr[O, O6]"],
-            SupportsComposition[O, "Tr[O, O7]"],
+            "Tr[O, O1]",
+            "Tr[O, O2]",
+            "Tr[O, O3]",
+            "Tr[O, O4]",
+            "Tr[O, O5]",
+            "Tr[O, O6]",
+            "Tr[O, O7]",
         ],
     ) -> "Transformer[I, tuple[O1, O2, O3, O4, O5, O6, O7]]":
+        pass
+
+    @overload
+    def __rshift__(self, next_node: AsyncTransformer[O, O1]) -> AsyncTransformer[I, O1]:
         pass
 
     @overload
@@ -200,6 +179,3 @@ class Transformer(BaseTransformer[I, O], ABC):
 
     def __rshift__(self, next_node):  # pragma: no cover
         pass
-
-    def __compose__(self, prev: I) -> "Transformer[I, O]":
-        raise NotImplementedError()

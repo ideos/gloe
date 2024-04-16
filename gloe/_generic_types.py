@@ -10,8 +10,6 @@ O = TypeVar("O", covariant=True)
 SC: TypeAlias = SupportsComposition
 AT: TypeAlias = AsyncTransformer
 BT: TypeAlias = BaseTransformer[I, O]
-ASC = SupportsComposition[I, AT[I, O]]
-BSC = SupportsComposition[I, BT[I, O]]
 
 O1 = TypeVar("O1")
 O2 = TypeVar("O2")
@@ -23,60 +21,46 @@ O7 = TypeVar("O7")
 
 
 AsyncNext2 = Union[
-    tuple[ASC[O, O1], BSC[O, O2]],
-    tuple[BSC[O, O1], ASC[O, O2]],
+    tuple[AT[O, O1], BT[O, O2]],
+    tuple[BT[O, O1], AT[O, O2]],
 ]
 
 AsyncNext3 = Union[
-    tuple[ASC[O, O1], BSC[O, O2], BSC[O, O3]],
-    tuple[BSC[O, O1], ASC[O, O2], BSC[O, O3]],
-    tuple[BSC[O, O1], BSC[O, O2], ASC[O, O3]],
+    tuple[AT[O, O1], BT[O, O2], BT[O, O3]],
+    tuple[BT[O, O1], AT[O, O2], BT[O, O3]],
+    tuple[BT[O, O1], BT[O, O2], AT[O, O3]],
 ]
 
 AsyncNext4 = Union[
-    tuple[ASC[O, O1], BSC[O, O2], BSC[O, O3], BSC[O, O4]],
-    tuple[BSC[O, O1], ASC[O, O2], BSC[O, O3], BSC[O, O4]],
-    tuple[BSC[O, O1], BSC[O, O2], ASC[O, O3], BSC[O, O4]],
-    tuple[BSC[O, O1], BSC[O, O2], BSC[O, O3], ASC[O, O4]],
+    tuple[AT[O, O1], BT[O, O2], BT[O, O3], BT[O, O4]],
+    tuple[BT[O, O1], AT[O, O2], BT[O, O3], BT[O, O4]],
+    tuple[BT[O, O1], BT[O, O2], AT[O, O3], BT[O, O4]],
+    tuple[BT[O, O1], BT[O, O2], BT[O, O3], AT[O, O4]],
 ]
 
 AsyncNext5 = Union[
-    tuple[ASC[O, O1], BSC[O, O2], BSC[O, O3], BSC[O, O4], BSC[O, O5]],
-    tuple[BSC[O, O1], ASC[O, O2], BSC[O, O3], BSC[O, O4], BSC[O, O5]],
-    tuple[BSC[O, O1], BSC[O, O2], ASC[O, O3], BSC[O, O4], BSC[O, O5]],
-    tuple[BSC[O, O1], BSC[O, O2], BSC[O, O3], ASC[O, O4], BSC[O, O5]],
-    tuple[BSC[O, O1], BSC[O, O2], BSC[O, O3], BSC[O, O4], ASC[O, O5]],
+    tuple[AT[O, O1], BT[O, O2], BT[O, O3], BT[O, O4], BT[O, O5]],
+    tuple[BT[O, O1], AT[O, O2], BT[O, O3], BT[O, O4], BT[O, O5]],
+    tuple[BT[O, O1], BT[O, O2], AT[O, O3], BT[O, O4], BT[O, O5]],
+    tuple[BT[O, O1], BT[O, O2], BT[O, O3], AT[O, O4], BT[O, O5]],
+    tuple[BT[O, O1], BT[O, O2], BT[O, O3], BT[O, O4], AT[O, O5]],
 ]
 
 AsyncNext6 = Union[
-    tuple[ASC[O, O1], BSC[O, O2], BSC[O, O3], BSC[O, O4], BSC[O, O5], BSC[O, O6]],
-    tuple[BSC[O, O1], ASC[O, O2], BSC[O, O3], BSC[O, O4], BSC[O, O5], BSC[O, O6]],
-    tuple[BSC[O, O1], BSC[O, O2], ASC[O, O3], BSC[O, O4], BSC[O, O5], BSC[O, O6]],
-    tuple[BSC[O, O1], BSC[O, O2], BSC[O, O3], ASC[O, O4], BSC[O, O5], BSC[O, O6]],
-    tuple[BSC[O, O1], BSC[O, O2], BSC[O, O3], BSC[O, O4], ASC[O, O5], BSC[O, O6]],
-    tuple[BSC[O, O1], BSC[O, O2], BSC[O, O3], BSC[O, O4], BSC[O, O5], ASC[O, O6]],
+    tuple[AT[O, O1], BT[O, O2], BT[O, O3], BT[O, O4], BT[O, O5], BT[O, O6]],
+    tuple[BT[O, O1], AT[O, O2], BT[O, O3], BT[O, O4], BT[O, O5], BT[O, O6]],
+    tuple[BT[O, O1], BT[O, O2], AT[O, O3], BT[O, O4], BT[O, O5], BT[O, O6]],
+    tuple[BT[O, O1], BT[O, O2], BT[O, O3], AT[O, O4], BT[O, O5], BT[O, O6]],
+    tuple[BT[O, O1], BT[O, O2], BT[O, O3], BT[O, O4], AT[O, O5], BT[O, O6]],
+    tuple[BT[O, O1], BT[O, O2], BT[O, O3], BT[O, O4], BT[O, O5], AT[O, O6]],
 ]
 
 AsyncNext7 = Union[
-    tuple[
-        ASC[O, O1], BSC[O, O2], BSC[O, O3], BSC[O, O4], BSC[O, O5], BSC[O, O6], BSC[O, O7]
-    ],
-    tuple[
-        BSC[O, O1], ASC[O, O2], BSC[O, O3], BSC[O, O4], BSC[O, O5], BSC[O, O6], BSC[O, O7]
-    ],
-    tuple[
-        BSC[O, O1], BSC[O, O2], ASC[O, O3], BSC[O, O4], BSC[O, O5], BSC[O, O6], BSC[O, O7]
-    ],
-    tuple[
-        BSC[O, O1], BSC[O, O2], BSC[O, O3], ASC[O, O4], BSC[O, O5], BSC[O, O6], BSC[O, O7]
-    ],
-    tuple[
-        BSC[O, O1], BSC[O, O2], BSC[O, O3], BSC[O, O4], ASC[O, O5], BSC[O, O6], BSC[O, O7]
-    ],
-    tuple[
-        BSC[O, O1], BSC[O, O2], BSC[O, O3], BSC[O, O4], BSC[O, O5], ASC[O, O6], BSC[O, O7]
-    ],
-    tuple[
-        BSC[O, O1], BSC[O, O2], BSC[O, O3], BSC[O, O4], BSC[O, O5], BSC[O, O6], ASC[O, O7]
-    ],
+    tuple[AT[O, O1], BT[O, O2], BT[O, O3], BT[O, O4], BT[O, O5], BT[O, O6], BT[O, O7]],
+    tuple[BT[O, O1], AT[O, O2], BT[O, O3], BT[O, O4], BT[O, O5], BT[O, O6], BT[O, O7]],
+    tuple[BT[O, O1], BT[O, O2], AT[O, O3], BT[O, O4], BT[O, O5], BT[O, O6], BT[O, O7]],
+    tuple[BT[O, O1], BT[O, O2], BT[O, O3], AT[O, O4], BT[O, O5], BT[O, O6], BT[O, O7]],
+    tuple[BT[O, O1], BT[O, O2], BT[O, O3], BT[O, O4], AT[O, O5], BT[O, O6], BT[O, O7]],
+    tuple[BT[O, O1], BT[O, O2], BT[O, O3], BT[O, O4], BT[O, O5], AT[O, O6], BT[O, O7]],
+    tuple[BT[O, O1], BT[O, O2], BT[O, O3], BT[O, O4], BT[O, O5], BT[O, O6], AT[O, O7]],
 ]

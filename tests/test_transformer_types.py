@@ -154,7 +154,7 @@ class TestTransformerTypes(unittest.TestCase):
             format_currency(thousands_separator=",")
         )
 
-        assert_type(mapped_logarithm, Transformer[Iterable[float], Iterable[str]])
+        assert_type(mapped_logarithm, Transformer[list[float], Iterable[str]])
 
     def _test_transformer_ensurer(self):
         @ensure(incoming=[is_even])

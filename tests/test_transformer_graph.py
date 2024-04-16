@@ -270,7 +270,7 @@ class TestTransformerGraph(unittest.TestCase):
         self._assert_nodes_count(9, graph)
         self._assert_edges_count(10, graph)
 
-    def test_transformer_init_case(self):
+    def test_partial_transformer_case(self):
         init_graph = logarithm(2) >> square
 
         graph: DiGraph = init_graph.graph()

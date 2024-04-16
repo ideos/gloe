@@ -1,11 +1,11 @@
 import copy
-import traceback
 import types
 import uuid
 from abc import abstractmethod, ABC
 from inspect import Signature
-from typing import TypeVar, overload, cast, Any, Callable, Awaitable
+from typing import TypeVar, overload, cast, Callable, Awaitable
 
+from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe._transformer_utils import catch_transformer_exception
 from gloe.base_transformer import (
     BaseTransformer,
@@ -14,7 +14,7 @@ from gloe.base_transformer import (
 
 __all__ = ["AsyncTransformer"]
 
-_In = TypeVar("_In")
+_In = TypeVar("_In", contravariant=True)
 _Out = TypeVar("_Out", covariant=True)
 _NextOut = TypeVar("_NextOut")
 
@@ -30,10 +30,9 @@ class AsyncTransformer(BaseTransformer[_In, _Out], ABC):
     def __init__(self):
         super().__init__()
 
-        self._graph_node_props: dict[str, Any] = {
-            **self._graph_node_props,
-            "isAsync": True,
-        }
+        self._plotting_settings = PlottingSettings(
+            node_type=NodeType.Transformer, is_async=True
+        )
         self.__class__.__annotations__ = self.transform_async.__annotations__
 
     @abstractmethod
@@ -182,7 +181,4 @@ class AsyncTransformer(BaseTransformer[_In, _Out], ABC):
         pass
 
     def __rshift__(self, next_node):  # pragma: no cover
-        pass
-
-    def __compose__(self, prev: _In) -> "AsyncTransformer[_In, _Out]":
         pass

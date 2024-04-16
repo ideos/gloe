@@ -17,7 +17,7 @@ class EmptyBridgeOnDrop(Exception):
 class _pick(Generic[T], Transformer[T, T]):
     def __init__(self, variable: ContextVar[T]):
         super().__init__()
-        self._invisible = True
+        self.plotting_settings.invisible = True
         self.variable = variable
 
     def transform(self, data: T) -> T:
@@ -28,7 +28,7 @@ class _pick(Generic[T], Transformer[T, T]):
 class _drop(Generic[B, T], Transformer[B, tuple[B, T]]):
     def __init__(self, variable: ContextVar[T]):
         super().__init__()
-        self._invisible = True
+        self.plotting_settings.invisible = True
         self._variable = variable
 
     def transform(self, data: B) -> tuple[B, T]:

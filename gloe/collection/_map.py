@@ -20,7 +20,7 @@ class Map(Generic[_T, _U], Transformer[Iterable[_T], Iterable[_U]]):
             @transformer
             def get_user_posts(user: User) -> list[Post]: ...
 
-            get_posts_by_group: Transformer[Group, list[Post]] = (
+            get_posts_by_group: Transformer[Group, Iterable[Post]] = (
                 get_users_by_group >> Map(get_user_posts) >> flatten
             )
     Args:

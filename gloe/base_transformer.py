@@ -2,7 +2,7 @@ import copy
 import types
 import uuid
 import inspect
-from abc import ABC
+from abc import ABC, abstractmethod
 from functools import cached_property
 from inspect import Signature
 
@@ -135,16 +135,17 @@ class BaseTransformer(Generic[_In, _Out], ABC):
             return self.id == other.id
         return NotImplemented
 
-    def copy(
+    def _copy(
         self: Self,
         transform: Callable[[Self, _In], _Out] | None = None,
         regenerate_instance_id: bool = False,
+        transform_method: str = "transform",
     ) -> Self:
         copied: Self = copy.copy(self)
 
         func_type = types.MethodType
         if transform is not None:
-            setattr(copied, "transform", func_type(transform, copied))
+            setattr(copied, transform_method, func_type(transform, copied))
 
         if regenerate_instance_id:
             copied.instance_id = uuid.uuid4()
@@ -163,6 +164,13 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         ]
 
         return copied
+
+    def copy(
+        self: Self,
+        transform: Callable[[Self, _In], _Out] | None = None,
+        regenerate_instance_id: bool = False,
+    ) -> Self:
+        return self._copy(transform, regenerate_instance_id)
 
     @property
     def graph_nodes(self) -> dict[UUID, "BaseTransformer"]:
@@ -189,8 +197,9 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         elif isinstance(self.previous, BaseTransformer):
             self.previous._set_previous(previous)
 
+    @abstractmethod
     def signature(self) -> Signature:
-        return self._signature(type(self))
+        """Transformer function-like signature"""
 
     def _signature(self, klass: Type, transform_method: str = "transform") -> Signature:
         orig_bases = getattr(self, "__orig_bases__", [])
@@ -227,12 +236,12 @@ class BaseTransformer(Generic[_In, _Out], ABC):
             parameter = parameter.replace(
                 annotation=specific_args.get(parameter.annotation, parameter.annotation)
             )
-            return signature.replace(
-                return_annotation=new_return_annotation,
-                parameters=[parameter],
-            )
+            parameters = [parameter]
 
-        return signature.replace(return_annotation=new_return_annotation)
+        return signature.replace(
+            return_annotation=new_return_annotation,
+            parameters=parameters,
+        )
 
     @property
     def output_type(self) -> Any:

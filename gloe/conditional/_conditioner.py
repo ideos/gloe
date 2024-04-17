@@ -93,9 +93,9 @@ class _IfThen(Generic[In, ThenOut, PrevThenOut]):
         self._implication = implication
         self._prev_implications = prev_implications
         self._name = name
-        self._implications: list[
-            _Implication[In, Union[ThenOut, PrevThenOut]]
-        ] = self._prev_implications + [self._implication]
+        self._implications: list[_Implication[In, Union[ThenOut, PrevThenOut]]] = (
+            self._prev_implications + [self._implication]
+        )
 
     def Else(
         self, else_transformer: Transformer[In, ElseOut]
@@ -121,9 +121,9 @@ class _IfThen(Generic[In, ThenOut, PrevThenOut]):
     def ElseNone(
         self,
     ) -> Transformer[In, Optional[Union[ThenOut, PrevThenOut]]]:
-        new_transformer: ConditionerTransformer[
-            In, Union[ThenOut, PrevThenOut], None
-        ] = ConditionerTransformer(self._implications, forget)
+        new_transformer: ConditionerTransformer[In, Union[ThenOut, PrevThenOut], None] = (
+            ConditionerTransformer(self._implications, forget)
+        )
         new_transformer.__class__.__name__ = self.__class__.__name__
         return new_transformer
 

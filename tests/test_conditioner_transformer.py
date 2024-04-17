@@ -3,6 +3,15 @@ import unittest
 from tests.lib.conditioners import if_is_even, if_not_zero
 from tests.lib.transformers import square, square_root, plus1, minus1, to_string
 
+conditioned_graph = square >> (
+    if_is_even.Then(plus1 >> minus1)
+    .ElseIf(lambda x: x == 1.0)
+    .Then(plus1 >> plus1)
+    .ElseIf(lambda x: x == 25.0)
+    .Then(minus1 >> minus1)
+    .Else(square_root)
+)
+
 
 class TestConditionerTransformer(unittest.TestCase):
     def test_conditioner_transformer_name(self):
@@ -52,15 +61,6 @@ class TestConditionerTransformer(unittest.TestCase):
         Test the case of a flow with chained conditions
         """
 
-        conditioned_graph = square >> (
-            if_is_even.Then(plus1 >> minus1)
-            .ElseIf(lambda x: x == 1.0)
-            .Then(plus1 >> plus1)
-            .ElseIf(lambda x: x == 25.0)
-            .Then(minus1 >> minus1)
-            .Else(square_root)
-        )
-
         self.assertEqual(3.0, conditioned_graph(1.0))
         self.assertEqual(3.0, conditioned_graph(3.0))
         self.assertEqual(16.0, conditioned_graph(4.0))
@@ -70,15 +70,6 @@ class TestConditionerTransformer(unittest.TestCase):
         """
         Test length property of conditioner transformers
         """
-
-        conditioned_graph = square >> (
-            if_is_even.Then(plus1 >> minus1)
-            .ElseIf(lambda x: x == 1.0)
-            .Then(plus1 >> plus1)
-            .ElseIf(lambda x: x == 25.0)
-            .Then(minus1 >> minus1)
-            .Else(square_root)
-        )
 
         self.assertEqual(8.0, len(conditioned_graph))
 

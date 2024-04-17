@@ -2,7 +2,7 @@ import asyncio
 import types
 from inspect import Signature
 from types import GenericAlias
-from typing import TypeVar, Any, cast
+from typing import TypeVar, Any, cast, Optional
 
 from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe.async_transformer import AsyncTransformer
@@ -190,7 +190,7 @@ def _merge_diverging(
             lengths = [len(t) for t in receiving_transformers]
             return sum(lengths) + len(incident_transformer)
 
-    new_transformer = None
+    new_transformer: Optional[BaseTransformer] = None
     if is_transformer(incident_transformer) and is_transformer(receiving_transformers):
 
         def split_result(data: _In) -> tuple[Any, ...]:

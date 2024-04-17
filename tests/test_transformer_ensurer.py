@@ -141,7 +141,7 @@ class TestTransformerEnsurer(unittest.TestCase):
         # changes
         same_value_int_ensurer = ensure(changes=[same_value_int])
 
-        def build_plus_1_pipeline() -> Transformer[int, int]:
+        def build_plus_1_pipeline() -> Transformer[float, float]:
             return plus1
 
         ensured_same_value_int_pipeline = same_value_int_ensurer(build_plus_1_pipeline)
@@ -277,5 +277,6 @@ class TestTransformerEnsurer(unittest.TestCase):
 
         self.assertRaises(UnsupportedTransformerArgException, lambda: ensured_pipeline(1))
         self.assertRaises(
-            UnsupportedTransformerArgException, lambda: odd_ensurer("generic_string")
+            UnsupportedTransformerArgException,
+            lambda: odd_ensurer("generic_string"),  # type: ignore
         )

@@ -2,6 +2,7 @@ import copy
 import types
 import uuid
 import inspect
+from abc import ABC
 from functools import cached_property
 from inspect import Signature
 
@@ -23,7 +24,9 @@ from typing import (
 from uuid import UUID
 from itertools import groupby
 
-from gloe._plotting_utils import PlottingSettings, NodeType
+from typing_extensions import Self
+
+from gloe._plotting_utils import PlottingSettings, NodeType, export_dot_props
 from gloe._typing_utils import _format_return_annotation
 
 __all__ = ["BaseTransformer", "TransformerException", "PreviousTransformer"]
@@ -75,7 +78,7 @@ _In = TypeVar("_In", contravariant=True)
 _Out = TypeVar("_Out", covariant=True)
 
 
-class BaseTransformer(Generic[_In, _Out]):
+class BaseTransformer(Generic[_In, _Out], ABC):
     def __init__(self):
         self._previous: PreviousTransformer["BaseTransformer"] = None
         self._children: TransformerChildren = []
@@ -133,11 +136,11 @@ class BaseTransformer(Generic[_In, _Out]):
         return NotImplemented
 
     def copy(
-        self,
-        transform: Callable[[_Self, _In], _Out] | None = None,
+        self: Self,
+        transform: Callable[[Self, _In], _Out] | None = None,
         regenerate_instance_id: bool = False,
-    ) -> _Self:
-        copied = copy.copy(self)
+    ) -> Self:
+        copied: Self = copy.copy(self)
 
         func_type = types.MethodType
         if transform is not None:
@@ -254,32 +257,9 @@ class BaseTransformer(Generic[_In, _Out]):
     def input_annotation(self) -> str:
         return self.input_type.__name__
 
-    def export_dot_props(self) -> dict[str, Any]:
-        settings = self.plotting_settings
-        node_props: dict[str, Any] = {"shape": "box"}
-
-        match settings.node_type:
-            case NodeType.Condition:
-                node_props = {"shape": "diamond", "style": "filled", "port": "n"}
-            case NodeType.Convergent:
-                node_props = {
-                    "shape": "diamond",
-                    "width": 0.5,
-                    "height": 0.5,
-                }
-
-        if settings.has_children:
-            node_props = node_props | {
-                "parent_id": self.instance_id,
-                "bounding_box": True,
-                "box_label": "mapping",
-            }
-
-        return node_props
-
     def _add_net_node(self, net: Graph, custom_data: dict[str, Any] = {}):
         node_id = self.node_id
-        graph_node_props = self.export_dot_props()
+        graph_node_props = export_dot_props(self.plotting_settings, self.instance_id)
         props = {**graph_node_props, **custom_data, "label": self.label}
         if node_id not in net.nodes:
             net.add_node(node_id, **props)

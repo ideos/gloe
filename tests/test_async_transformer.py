@@ -19,13 +19,13 @@ _DATA = {"foo": "bar"}
 
 @async_transformer
 async def request_data(url: str) -> dict[str, str]:
-    await asyncio.sleep(0.1)
+    await asyncio.sleep(0.01)
     return _DATA
 
 
 class RequestData(AsyncTransformer[str, dict[str, str]]):
     async def transform_async(self, url: str) -> dict[str, str]:
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.01)
         return _DATA
 
 
@@ -114,7 +114,7 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
             await asyncio.sleep(delay)
             return data
 
-        pipeline = sleep_and_forward(0.1) >> forward()
+        pipeline = sleep_and_forward(0.01) >> forward()
 
         result = await pipeline(_DATA)
 
@@ -124,7 +124,7 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
         @ensure(outcome=[has_bar_key])
         @async_transformer
         async def ensured_request(url: str) -> dict[str, str]:
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.01)
             return _DATA
 
         pipeline = ensured_request >> forward()
@@ -135,7 +135,7 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
         @ensure(incoming=[is_int])
         @async_transformer
         async def ensured_request2(url: str) -> dict[str, str]:
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.01)
             return _DATA
 
         pipeline2 = ensured_request2 >> forward()
@@ -145,26 +145,25 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
 
         @async_transformer
         async def ensured_request3(url: str) -> dict[str, str]:
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.01)
             return _DATA
 
         @ensure(changes=[foo_key_removed])
         @async_transformer
         async def remove_foo_key(data: dict[str, str]) -> dict[str, str]:
             new_data = {**data}
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.01)
             del new_data["foo"]
             return new_data
 
         pipeline3 = ensured_request3 >> remove_foo_key
-
         result = await pipeline3(_URL)
         self.assertDictEqual(result, {})
 
         @ensure(outcome=[has_foo_key])
         @async_transformer
         async def ensured_request4(url: str) -> dict[str, str]:
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.01)
             return _DATA
 
         pipeline4 = ensured_request4 >> forward()
@@ -178,7 +177,7 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
             await asyncio.sleep(delay)
             return _DATA
 
-        pipeline = ensured_delayed_request(0.1) >> forward()
+        pipeline = ensured_delayed_request(0.01) >> forward()
 
         with self.assertRaises(HasNotBarKey):
             await pipeline(_URL)
@@ -189,7 +188,7 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
             await asyncio.sleep(delay)
             return _DATA
 
-        pipeline2 = ensured_delayed_request2(0.1) >> forward()
+        pipeline2 = ensured_delayed_request2(0.01) >> forward()
 
         with self.assertRaises(IsNotInt):
             await pipeline2(_URL)
@@ -200,7 +199,7 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
             await asyncio.sleep(delay)
             return _DATA
 
-        pipeline3 = ensured_delayed_request3(0.1) >> forward()
+        pipeline3 = ensured_delayed_request3(0.01) >> forward()
 
         self.assertDictEqual(await pipeline3(_URL), _DATA)
 
@@ -215,7 +214,7 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
             return _DATA
 
         with self.assertRaises(UnsupportedTransformerArgException):
-            ensured_delayed_request(0.1) >> next_transformer
+            ensured_delayed_request(0.01) >> next_transformer  # type: ignore
 
     async def test_async_transformer_copy(self):
         @transformer

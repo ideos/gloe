@@ -3,13 +3,15 @@ from inspect import Signature
 from types import GenericAlias, UnionType
 from typing import Callable, Generic, Optional, TypeVar, Union
 
+from typing_extensions import Self
+
 from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe.transformers import Transformer
 from gloe.utils import forget
 
 
 In = TypeVar("In")
-ThenOut = TypeVar("ThenOut")
+ThenOut = TypeVar("ThenOut", covariant=True)
 ElseOut = TypeVar("ElseOut")
 ElseIfOut = TypeVar("ElseIfOut")
 PrevThenOut = TypeVar("PrevThenOut")
@@ -58,12 +60,10 @@ class ConditionerTransformer(
 
     def copy(
         self,
-        transform: Callable[["Transformer", In], Union[ThenOut, ElseOut]] | None = None,
+        transform: Callable[[Self, In], Union[ThenOut, ElseOut]] | None = None,
         regenerate_instance_id: bool = False,
-    ) -> "ConditionerTransformer[In, ThenOut, ElseOut]":
-        copied: ConditionerTransformer[In, ThenOut, ElseOut] = super().copy(
-            transform, regenerate_instance_id
-        )
+    ) -> Self:
+        copied: Self = super().copy(transform, regenerate_instance_id)
         copied.implications = [
             _Implication(
                 impl.condition, impl.then_transformer.copy(regenerate_instance_id=True)

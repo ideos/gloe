@@ -17,6 +17,8 @@ from gloe import (
     TransformerException,
     UnsupportedTransformerArgException,
     transformer,
+    PreviousTransformer,
+    BaseTransformer,
 )
 
 
@@ -74,9 +76,15 @@ class TestFunctionTransformer(unittest.TestCase):
             >> (square >> (square_root, square_root), square >> square_root >> square)
         )
 
-        self.assertIsNone(
-            divergent_graph.previous[0].previous[0].previous.previous.previous.previous
-        )
+        previous: PreviousTransformer[BaseTransformer] = divergent_graph
+        for _ in range(8):
+            if previous is not None:
+                if type(previous) is tuple:
+                    previous = previous[0]
+                elif isinstance(previous, BaseTransformer):
+                    previous = previous.previous
+
+        self.assertIsNone(previous)
 
     def test_divergence_flow(self):
         """

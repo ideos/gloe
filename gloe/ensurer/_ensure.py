@@ -12,43 +12,44 @@ _S = TypeVar("_S")
 
 
 @overload
-def ensure(incoming: Sequence[Callable[[_T], Any]]) -> _ensure_incoming[_T]:
+def ensure(*, incoming: Sequence[Callable[[_T], Any]]) -> _ensure_incoming[_T]:
     pass
 
 
 @overload
-def ensure(outcome: Sequence[Callable[[_S], Any]]) -> _ensure_outcome[_S]:
+def ensure(*, outcome: Sequence[Callable[[_S], Any]]) -> _ensure_outcome[_S]:
     pass
 
 
 @overload
-def ensure(changes: Sequence[Callable[[_T, _S], Any]]) -> _ensure_changes[_T, _S]:
+def ensure(*, changes: Sequence[Callable[[_T, _S], Any]]) -> _ensure_changes[_T, _S]:
     pass
 
 
 @overload
 def ensure(
-    incoming: Sequence[Callable[[_T], Any]], outcome: Sequence[Callable[[_S], Any]]
+    *, incoming: Sequence[Callable[[_T], Any]], outcome: Sequence[Callable[[_S], Any]]
 ) -> _ensure_both[_T, _S]:
     pass
 
 
 @overload
 def ensure(
-    incoming: Sequence[Callable[[_T], Any]], changes: Sequence[Callable[[_T, _S], Any]]
+    *, incoming: Sequence[Callable[[_T], Any]], changes: Sequence[Callable[[_T, _S], Any]]
 ) -> _ensure_both[_T, _S]:
     pass
 
 
 @overload
 def ensure(
-    outcome: Sequence[Callable[[_T], Any]], changes: Sequence[Callable[[_T, _S], Any]]
+    *, outcome: Sequence[Callable[[_T], Any]], changes: Sequence[Callable[[_T, _S], Any]]
 ) -> _ensure_both[_T, _S]:
     pass
 
 
 @overload
 def ensure(
+    *,
     incoming: Sequence[Callable[[_T], Any]],
     outcome: Sequence[Callable[[_S], Any]],
     changes: Sequence[Callable[[_T, _S], Any]],

@@ -38,4 +38,7 @@ pythonpath = [
   "gloe"
 ]
 
+[tool.black]
+line-length = 90
+
 

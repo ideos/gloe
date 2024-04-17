@@ -1,7 +1,9 @@
-from tests.lib.exceptions import NumberIsEven, \
-    NumberIsOdd, \
-    NumberLessThanOrEquals10, \
-    NumbersNotEqual
+from tests.lib.exceptions import (
+    NumberIsEven,
+    NumberIsOdd,
+    NumberLessThanOrEquals10,
+    NumbersNotEqual,
+)
 
 
 def is_even(num: int):
@@ -27,4 +29,3 @@ def same_value(data: float, output: float):
 def same_value_int(incoming: int, outcome: int):
     if incoming != outcome:
         raise NumbersNotEqual()
-

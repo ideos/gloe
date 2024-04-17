@@ -8,7 +8,7 @@ from gloe import (
     transformer,
     AsyncTransformer,
 )
-from gloe.async_transformer import _Out
+
 from gloe.functional import partial_async_transformer
 from gloe.utils import forward
 
@@ -215,7 +215,7 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
             return _DATA
 
         with self.assertRaises(UnsupportedTransformerArgException):
-            pipeline = ensured_delayed_request(0.1) >> next_transformer
+            ensured_delayed_request(0.1) >> next_transformer
 
     async def test_async_transformer_copy(self):
         @transformer

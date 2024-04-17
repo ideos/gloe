@@ -1,5 +1,4 @@
 import unittest
-from bdb import Bdb
 
 from gloe.utils import forward, forward_incoming, debug
 from tests.lib.transformers import sum_tuple2

@@ -3,7 +3,7 @@ from typing import Any
 
 from networkx import DiGraph
 
-from gloe import Transformer
+from gloe import Transformer, transformer
 from gloe.utils import forward
 
 from tests.lib.conditioners import if_is_even
@@ -162,13 +162,18 @@ class TestTransformerGraph(unittest.TestCase):
         self._assert_graph_has_edges(divergent, graph, expected_edges)
 
     def test_nested_divergent_case(self):
+        @transformer
+        def aux_last(data: tuple[tuple[float, float], float]) -> float:
+            ((n1, n2), n3) = data
+            return n1 + n2 + n3
+
         divergent = (
             square
             >> (
                 square_root >> plus1 >> (minus1, natural_logarithm),
                 times2 >> divide_by_2,
             )
-            >> sum_tuple2
+            >> aux_last
         )
 
         graph: DiGraph = divergent.graph()

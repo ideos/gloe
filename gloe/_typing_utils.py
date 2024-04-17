@@ -1,9 +1,5 @@
 from types import GenericAlias
-from typing import (
-    TypeVar,
-    get_origin,
-    _GenericAlias,
-)  # type: ignore
+from typing import TypeVar, get_origin
 
 
 def _format_tuple(tuple_annotation: tuple, generic_input_param, input_annotation) -> str:
@@ -51,10 +47,7 @@ def _format_return_annotation(
         return _format_union(
             return_annotation.__args__, generic_input_param, input_annotation
         )
-    if (
-        type(return_annotation) is GenericAlias
-        or type(return_annotation) is _GenericAlias
-    ):
+    if type(return_annotation) is GenericAlias:  # _GenericAlias must be investigated too
         return _format_generic_alias(
             return_annotation, generic_input_param, input_annotation
         )

@@ -2,6 +2,7 @@ from typing import Generic, Iterable, TypeVar
 
 from networkx import DiGraph
 
+from gloe import BaseTransformer
 from gloe.transformers import Transformer
 
 _T = TypeVar("_T")
@@ -29,10 +30,10 @@ class MapOver(Generic[_T, _U], Transformer[_T, Iterable[_U]]):
 
     def _add_child_node(
         self,
-        child: "Transformer",
+        child: "BaseTransformer",
         child_net: DiGraph,
         parent_id: str,
-        next_node: "Transformer",
+        next_node: "BaseTransformer",
     ):
         child._dag(
             child_net,

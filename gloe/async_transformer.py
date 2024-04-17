@@ -1,9 +1,11 @@
 import copy
 import types
 import uuid
-from abc import abstractmethod, ABC
+from abc import abstractmethod
 from inspect import Signature
-from typing import TypeVar, overload, cast, Callable, Awaitable
+from typing import TypeVar, overload, cast, Callable, Awaitable, Generic
+
+from typing_extensions import Self
 
 from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe._transformer_utils import catch_transformer_exception
@@ -26,7 +28,7 @@ _Out6 = TypeVar("_Out6")
 _Out7 = TypeVar("_Out7")
 
 
-class AsyncTransformer(BaseTransformer[_In, _Out], ABC):
+class AsyncTransformer(Generic[_In, _Out], BaseTransformer[_In, _Out]):
     def __init__(self):
         super().__init__()
 
@@ -77,9 +79,9 @@ class AsyncTransformer(BaseTransformer[_In, _Out], ABC):
 
     def copy(
         self,
-        transform: Callable[[BaseTransformer, _In], Awaitable[_Out]] | None = None,
+        transform: Callable[[Self, _In], _Out] | None = None,
         regenerate_instance_id: bool = False,
-    ) -> "AsyncTransformer[_In, _Out]":
+    ) -> Self:
         copied = copy.copy(self)
 
         func_type = types.MethodType

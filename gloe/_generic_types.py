@@ -1,13 +1,11 @@
 from typing import TypeVar, TypeAlias, Union
 
-from gloe._supports_composition import SupportsComposition
 from gloe.base_transformer import BaseTransformer
 from gloe.async_transformer import AsyncTransformer
 
 _I = TypeVar("_I")
 _O = TypeVar("_O", covariant=True)
 
-SC: TypeAlias = SupportsComposition
 AT: TypeAlias = AsyncTransformer
 BT: TypeAlias = BaseTransformer[_I, _O]
 

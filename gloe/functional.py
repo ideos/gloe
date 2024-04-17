@@ -9,7 +9,6 @@ from typing import (
     TypeVar,
     cast,
     Awaitable,
-    Generic,
 )
 
 from gloe.async_transformer import AsyncTransformer
@@ -27,7 +26,6 @@ S = TypeVar("S")
 S2 = TypeVar("S2")
 P1 = ParamSpec("P1")
 P2 = ParamSpec("P2")
-O = TypeVar("O")
 
 
 def partial_transformer(

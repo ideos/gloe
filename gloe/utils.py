@@ -1,4 +1,3 @@
-import inspect
 import sys
 from typing import Any, Tuple, TypeVar, Generic
 

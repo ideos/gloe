@@ -1,4 +1,3 @@
-import traceback
 from types import GenericAlias
 from typing import (
     TypeVar,
@@ -40,9 +39,9 @@ def _format_generic_alias(
 def _format_return_annotation(
     return_annotation, generic_input_param, input_annotation
 ) -> str:
-    if type(return_annotation) == str:
+    if type(return_annotation) is str:
         return return_annotation
-    if type(return_annotation) == tuple:
+    if type(return_annotation) is tuple:
         return _format_tuple(return_annotation, generic_input_param, input_annotation)
     if return_annotation.__name__ in {"tuple", "Tuple"}:
         return _format_tuple(
@@ -53,8 +52,8 @@ def _format_return_annotation(
             return_annotation.__args__, generic_input_param, input_annotation
         )
     if (
-        type(return_annotation) == GenericAlias
-        or type(return_annotation) == _GenericAlias
+        type(return_annotation) is GenericAlias
+        or type(return_annotation) is _GenericAlias
     ):
         return _format_generic_alias(
             return_annotation, generic_input_param, input_annotation
@@ -67,7 +66,7 @@ def _format_return_annotation(
 
 
 def _match_types(generic, specific, ignore_mismatches=True):
-    if type(generic) == TypeVar:
+    if type(generic) is TypeVar:
         return {generic: specific}
 
     specific_origin = get_origin(specific)
@@ -115,7 +114,7 @@ def _match_types(generic, specific, ignore_mismatches=True):
 
 
 def _specify_types(generic, spec):
-    if type(generic) == TypeVar:
+    if type(generic) is TypeVar:
         tp = spec.get(generic)
         if tp is None:
             return generic

@@ -96,8 +96,8 @@ class BaseTransformer(Generic[_In, _Out]):
         When the transformer is created by the `@transformer` decorator, it is the
         name of the function.
 
-        When creating a transformer by extending the `Transformer` class, it is the name of
-        the class.
+        When creating a transformer by extending the `Transformer` class, it is the name
+        of the class.
         """
         return self._label
 
@@ -147,8 +147,7 @@ class BaseTransformer(Generic[_In, _Out]):
             copied.instance_id = uuid.uuid4()
 
         if self.previous is not None:
-            # copy_next_previous = 'none' if copy_previous == 'first_previous' else copy_previous
-            if type(self.previous) == tuple:
+            if type(self.previous) is tuple:
                 new_previous: list[BaseTransformer] = [
                     previous_transformer.copy() for previous_transformer in self.previous
                 ]
@@ -167,7 +166,7 @@ class BaseTransformer(Generic[_In, _Out]):
         nodes = {self.instance_id: self}
 
         if self.previous is not None:
-            if type(self.previous) == tuple:
+            if type(self.previous) is tuple:
                 for prev in self.previous:
                     nodes = {**nodes, **prev.graph_nodes}
             elif isinstance(self.previous, BaseTransformer):
@@ -181,7 +180,7 @@ class BaseTransformer(Generic[_In, _Out]):
     def _set_previous(self, previous: PreviousTransformer):
         if self.previous is None:
             self._previous = previous
-        elif type(self.previous) == tuple:
+        elif type(self.previous) is tuple:
             for previous_transformer in self.previous:
                 previous_transformer._set_previous(previous)
         elif isinstance(self.previous, BaseTransformer):
@@ -310,7 +309,7 @@ class BaseTransformer(Generic[_In, _Out]):
                 if previous.previous is None:
                     return previous
 
-                if type(previous.previous) == tuple:
+                if type(previous.previous) is tuple:
                     return previous.previous
 
                 return previous.visible_previous
@@ -337,7 +336,7 @@ class BaseTransformer(Generic[_In, _Out]):
             ][0]
 
             if self.plotting_settings.invisible:
-                if type(visible_previous) == tuple:
+                if type(visible_previous) is tuple:
                     for prev in visible_previous:
                         net.add_edge(
                             prev.node_id, child_root_node, label=prev.output_annotation
@@ -367,7 +366,7 @@ class BaseTransformer(Generic[_In, _Out]):
 
         previous = self.previous
         if previous is not None:
-            if type(previous) == tuple:
+            if type(previous) is tuple:
                 if self.plotting_settings.invisible and next_node is not None:
                     next_node_id = next_node._add_net_node(net)
                     _next_node = next_node

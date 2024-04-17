@@ -193,16 +193,14 @@ class TestFunctionTransformer(unittest.TestCase):
     def test_transformer_pydoc_keeping(self):
         @transformer
         def to_string(num: int) -> str:
-            """
-            This transformer receives a number as input and return its representation as a
-            string
-            """
+            """This transformer receives a number as input and return its representation
+            as a string"""
             return str(num)
 
         self.assertEqual(
             to_string.__doc__,
-            "This transformer receives a number as input and return its representation"
-            "as a string",
+            """This transformer receives a number as input and return its representation
+            as a string""",
         )
 
     def test_transformer_signature_representation(self):

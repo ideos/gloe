@@ -49,6 +49,13 @@ class TestTransformerEnsurer(unittest.TestCase):
 
         self.assertRaises(NumbersNotEqual, lambda: _plus1(4))
 
+        @ensure(changes=[same_value_int])
+        @transformer
+        def _times1(num: int) -> int:
+            return num * 1
+
+        self.assertEqual(_times1(8), 8)
+
         @ensure(outcome=[is_greater_than_10], changes=[same_value])
         @transformer
         def identity(num: float) -> float:
@@ -74,7 +81,7 @@ class TestTransformerEnsurer(unittest.TestCase):
         self.assertRaises(NumberIsOdd, lambda: multiply_by_2(7))
         self.assertEqual(multiply_by_2(6), 12)
 
-    def test_ensurer_init_incoming(self):
+    def test_ensurer_incoming_partial_transformer(self):
         @ensure(incoming=[is_even])
         @partial_transformer
         def multiply_by_even(n1: int, n2: int) -> int:
@@ -83,7 +90,7 @@ class TestTransformerEnsurer(unittest.TestCase):
         self.assertRaises(NumberIsOdd, lambda: multiply_by_even(2)(3))
         self.assertEqual(multiply_by_even(2)(4), 8)
 
-    def test_ensurer_init_outcome(self):
+    def test_ensurer_outcome_partial_transformer(self):
         @ensure(incoming=[is_even])
         @partial_transformer
         def multiply_by_equals_even(n1: int, n2: int) -> int:
@@ -92,7 +99,7 @@ class TestTransformerEnsurer(unittest.TestCase):
         self.assertRaises(NumberIsOdd, lambda: multiply_by_equals_even(3)(3))
         self.assertEqual(multiply_by_equals_even(3)(2), 6)
 
-    def test_ensurer_init_incoming_outcome(self):
+    def test_ensurer_incoming_outcome_partial_transformer(self):
         @ensure(incoming=[is_even], outcome=[is_even])
         @partial_transformer
         def multiply_by_even_equals_even(n1: int, n2: int) -> int:
@@ -198,7 +205,7 @@ class TestTransformerEnsurer(unittest.TestCase):
         self.assertRaises(NumberIsOdd, lambda: ensured_multiply_by_2(7))
         self.assertEqual(ensured_multiply_by_2(6), 12)
 
-    def test_function_ensurer_init_incoming(self):
+    def test_function_ensurer_incoming(self):
         even_ensurer = ensure(incoming=[is_even])
 
         def build_multiply_by_even_pipeline(n: int) -> Transformer[int, int]:
@@ -213,7 +220,7 @@ class TestTransformerEnsurer(unittest.TestCase):
         self.assertRaises(NumberIsOdd, lambda: ensured_multiply_by_even_pipeline(2)(3))
         self.assertEqual(ensured_multiply_by_even_pipeline(2)(4), 8)
 
-    def test_function_ensurer_init_outcome(self):
+    def test_function_ensurer_outcome(self):
         even_ensurer = ensure(incoming=[is_even])
 
         def build_multiply_by_equals_even_pipeline(n: int) -> Transformer[int, int]:
@@ -232,7 +239,7 @@ class TestTransformerEnsurer(unittest.TestCase):
         )
         self.assertEqual(ensured_multiply_by_equals_even_pipeline(3)(2), 6)
 
-    def test_function_ensurer_init_incoming_outcome(self):
+    def test_function_ensurer_incoming_outcome(self):
         incoming_outcome_even_ensurer = ensure(incoming=[is_even], outcome=[is_even])
 
         def build_multiply_by_even_equals_even_pipeline(

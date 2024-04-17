@@ -10,7 +10,7 @@
 | Testing | [![CI - Test](https://github.com/ideos/gloe/actions/workflows/test.yml/badge.svg)](https://github.com/ideos/gloe/actions/workflows/test.yml) [![Coverage](https://codecov.io/github/ideos/gloe/coverage.svg?branch=main)](https://codecov.io/gh/ideos/gloe) |
 | Package | [![PyPI Latest Release](https://img.shields.io/pypi/v/gloe.svg?color=%2334D058)](https://pypi.org/project/gloe) [![Supported Python versions](https://img.shields.io/pypi/pyversions/gloe.svg?color=%2334D058)](https://pypi.org/project/gloe) |
 | Meta | [![License - Apache 2.0](https://img.shields.io/pypi/l/gloe.svg?color=%2304b367)](https://github.com/ideos/gloe/blob/main/LICENSE) |
-| Code | [![Style](https://img.shields.io/badge/style-black-000000.svg)](https://github.com/psf/black) [![Flake8](https://img.shields.io/github/actions/workflow/status/ideos/gloe/code-quality.yml?label=flake8)](https://github.com/ideos/gloe/actions/workflows/code-quality.yml) [![mypy](https://img.shields.io/github/actions/workflow/status/ideos/gloe/code-quality.yml?label=mypy&color=%232A6DB2)](https://github.com/ideos/gloe/actions/workflows/typing.yml)|
+| Code | [![Code quality](https://github.com/ideos/gloe/actions/workflows/code-quality.yml/badge.svg)](https://github.com/ideos/gloe/actions/workflows/code-quality.yml) [![Style](https://img.shields.io/badge/style-black-000000.svg)](https://github.com/psf/black) [![Flake8](https://img.shields.io/badge/flake8-checked-7854cc)](https://flake8.pycqa.org/) [![Mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://www.mypy-lang.org/)|
 
 ***
 

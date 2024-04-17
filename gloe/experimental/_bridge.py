@@ -10,7 +10,8 @@ B = TypeVar("B")
 class EmptyBridgeOnDrop(Exception):
     def __init__(self, bridge_name: str):
         super().__init__(
-            f"The bridge {bridge_name} has tried to be dropped but its value was not initialized"
+            f"The bridge {bridge_name} has tried to be dropped but its value was not"
+            "initialized"
         )
 
 

@@ -210,17 +210,17 @@ class _ensure_both(Generic[_T, _S], _ensure_base):
         outcome: Sequence[Callable[[_S], Any]],
         changes: Sequence[Callable[[_T, _S], Any]],
     ):
-        incoming_seq = incoming if type(incoming) == list else [incoming]
+        incoming_seq = incoming if type(incoming) is list else [incoming]
         self.input_ensurers_instances = [
             input_ensurer(ensurer) for ensurer in incoming_seq
         ]
 
-        outcome_seq = outcome if type(outcome) == list else [outcome]
+        outcome_seq = outcome if type(outcome) is list else [outcome]
         self.output_ensurers_instances = [
             output_ensurer(ensurer) for ensurer in outcome_seq
         ]
 
-        changes_seq = changes if type(changes) == list else [changes]
+        changes_seq = changes if type(changes) is list else [changes]
         self.output_ensurers_instances = self.output_ensurers_instances + [
             output_ensurer(ensurer) for ensurer in changes_seq
         ]
@@ -311,11 +311,12 @@ def ensure(*args, **kwargs):
     a new transformer with the exact same attributes, but it includes an additional
     validation layer.
 
-    The motivation of the many overloads is just to allow the user to define different types
-    of validators interchangeably.
+    The motivation of the many overloads is just to allow the user to define different
+    types of validators interchangeably.
 
     See also:
-        For more detailed information about this feature, refer to the :ref:`ensurers` page.
+        For more detailed information about this feature, refer to the :ref:`ensurers`
+        page.
 
     Args:
         incoming (Sequence[Callable[[_T], Any]]): sequence of validators that will be

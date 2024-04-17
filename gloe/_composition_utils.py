@@ -17,7 +17,7 @@ _NextOut = TypeVar("_NextOut")
 
 
 def is_transformer(node):
-    if type(node) == list or type(node) == tuple:
+    if type(node) is list or type(node) is tuple:
         return all(is_transformer(n) for n in node)
     return isinstance(node, Transformer)
 
@@ -248,7 +248,7 @@ def _compose_nodes(
     if issubclass(type(current), BaseTransformer):
         if issubclass(type(next_node), BaseTransformer):
             return _nerge_serial(current, next_node)  # type: ignore
-        elif type(next_node) == tuple:
+        elif type(next_node) is tuple:
             is_all_base_transformers = all(
                 issubclass(type(next_transformer), BaseTransformer)
                 for next_transformer in next_node

@@ -1,7 +1,4 @@
 import traceback
-from typing import Any
-
-from gloe._plotting_utils import NodeType
 from gloe.base_transformer import BaseTransformer, TransformerException
 
 
@@ -9,7 +6,7 @@ def catch_transformer_exception(
     exception: Exception, raiser_transformer: BaseTransformer
 ) -> TransformerException:
     transformer_name = raiser_transformer.__class__.__name__
-    if type(exception.__cause__) == TransformerException:
+    if type(exception.__cause__) is TransformerException:
         transform_exception = exception.__cause__
     else:
         tb = traceback.extract_tb(exception.__traceback__)

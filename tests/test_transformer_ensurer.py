@@ -208,9 +208,7 @@ class TestTransformerEnsurer(unittest.TestCase):
 
             return multiply_by_even(n)
 
-        ensured_multiply_by_even_pipeline = even_ensurer(
-            build_multiply_by_even_pipeline
-        )
+        ensured_multiply_by_even_pipeline = even_ensurer(build_multiply_by_even_pipeline)
 
         self.assertRaises(NumberIsOdd, lambda: ensured_multiply_by_even_pipeline(2)(3))
         self.assertEqual(ensured_multiply_by_even_pipeline(2)(4), 8)
@@ -263,14 +261,10 @@ class TestTransformerEnsurer(unittest.TestCase):
             build_multiply_by_odd_equals_even_pipeline
         )
 
-        self.assertRaises(
-            NumberIsOdd, lambda: ensured_multiply_by_even_equals_even(4)(3)
-        )
+        self.assertRaises(NumberIsOdd, lambda: ensured_multiply_by_even_equals_even(4)(3))
         self.assertEqual(ensured_multiply_by_even_equals_even(4)(6), 24)
 
-        self.assertRaises(
-            NumberIsEven, lambda: ensured_multiply_by_odd_equals_even(3)(4)
-        )
+        self.assertRaises(NumberIsEven, lambda: ensured_multiply_by_odd_equals_even(3)(4))
         self.assertEqual(ensured_multiply_by_odd_equals_even(4)(3), 12)
 
     def test_function_ensurer_exception(self):
@@ -281,9 +275,7 @@ class TestTransformerEnsurer(unittest.TestCase):
 
         ensured_pipeline = odd_ensurer(generic_identity)
 
-        self.assertRaises(
-            UnsupportedTransformerArgException, lambda: ensured_pipeline(1)
-        )
+        self.assertRaises(UnsupportedTransformerArgException, lambda: ensured_pipeline(1))
         self.assertRaises(
             UnsupportedTransformerArgException, lambda: odd_ensurer("generic_string")
         )

@@ -41,7 +41,8 @@ class AsyncTransformer(BaseTransformer[_In, _Out], ABC):
         Method to perform the transformation asynchronously.
 
         Args:
-            data: the incoming data passed to the transformer during the pipeline execution.
+            data: the incoming data passed to the transformer during the pipeline
+                execution.
 
         Return:
             The outcome data, it means, the resulf of the transformation.
@@ -51,7 +52,11 @@ class AsyncTransformer(BaseTransformer[_In, _Out], ABC):
         return self._signature(AsyncTransformer, "transform_async")
 
     def __repr__(self):
-        return f"{self.input_annotation} -> ({type(self).__name__}) -> {self.output_annotation}"
+        return (
+            f"{self.input_annotation}"
+            f" -> ({type(self).__name__})"
+            f" -> {self.output_annotation}"
+        )
 
     async def __call__(self, data: _In) -> _Out:
         transform_exception = None
@@ -85,8 +90,7 @@ class AsyncTransformer(BaseTransformer[_In, _Out], ABC):
             copied.instance_id = uuid.uuid4()
 
         if self.previous is not None:
-            # copy_next_previous = 'none' if copy_previous == 'first_previous' else copy_previous
-            if type(self.previous) == tuple:
+            if type(self.previous) is tuple:
                 new_previous: list[BaseTransformer] = [
                     previous_transformer.copy() for previous_transformer in self.previous
                 ]

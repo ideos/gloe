@@ -3,7 +3,7 @@ import types
 import uuid
 from abc import abstractmethod
 from inspect import Signature
-from typing import TypeVar, overload, cast, Callable, Awaitable, Generic
+from typing import TypeVar, overload, cast, Callable, Generic
 
 from typing_extensions import Self
 

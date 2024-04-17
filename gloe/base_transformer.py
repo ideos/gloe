@@ -2,7 +2,7 @@ import copy
 import types
 import uuid
 import inspect
-from abc import abstractmethod, ABC
+from abc import ABC
 from functools import cached_property
 from inspect import Signature
 

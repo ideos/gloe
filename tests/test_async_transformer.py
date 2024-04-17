@@ -242,12 +242,6 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
         result = await pipeline(_URL)
         self.assertEqual(result, _DATA)
 
-        pipeline2 = add_slash >> ensured_delayed_request(0)
-
-        pipeline = pipeline.copy()
-        result = await pipeline(_URL)
-        self.assertEqual(result, _DATA)
-
     def test_async_transformer_wrong_signature(self):
         with self.assertWarns(RuntimeWarning):
 

@@ -1,6 +1,3 @@
-import copy
-import types
-import uuid
 from abc import abstractmethod
 from inspect import Signature
 from typing import TypeVar, overload, cast, Callable, Generic
@@ -9,10 +6,7 @@ from typing_extensions import Self
 
 from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe._transformer_utils import catch_transformer_exception
-from gloe.base_transformer import (
-    BaseTransformer,
-    PreviousTransformer,
-)
+from gloe.base_transformer import BaseTransformer
 
 __all__ = ["AsyncTransformer"]
 

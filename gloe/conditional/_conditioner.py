@@ -34,7 +34,9 @@ class ConditionerTransformer(
         super().__init__()
         self.implications = implications
         self.else_transformer = else_transformer
-        self._plotting_settings = PlottingSettings(node_type=NodeType.Condition)
+        self._plotting_settings = PlottingSettings(
+            node_type=NodeType.Condition, has_children=True
+        )
         self._children = [
             *[impl.then_transformer for impl in implications],
             else_transformer,

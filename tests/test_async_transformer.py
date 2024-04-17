@@ -203,6 +203,16 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
 
         self.assertDictEqual(await pipeline3(_URL), _DATA)
 
+        @ensure(incoming=[is_str], outcome=[has_foo_key])
+        @partial_async_transformer
+        async def ensured_delayed_request4(url: str, delay: float) -> dict[str, str]:
+            await asyncio.sleep(delay)
+            return _DATA
+
+        pipeline4 = ensured_delayed_request4(0.01) >> forward()
+
+        self.assertDictEqual(await pipeline4(_URL), _DATA)
+
     async def test_async_transformer_wrong_arg(self):
         def next_transformer():
             pass

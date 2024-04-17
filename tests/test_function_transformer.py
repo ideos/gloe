@@ -2,6 +2,7 @@ import asyncio
 import unittest
 from typing import cast
 
+from gloe.utils import forward
 from tests.lib.transformers import (
     square,
     square_root,
@@ -85,6 +86,28 @@ class TestFunctionTransformer(unittest.TestCase):
                     previous = previous.previous
 
         self.assertIsNone(previous)
+
+    def test_visible_previous_property(self):
+        """
+        Test the previous property
+        """
+
+        linear_graph = square >> forward() >> square_root
+
+        self.assertEqual(linear_graph.visible_previous, square)
+
+        begin = forward[float]()
+        linear_graph2 = begin >> square_root
+
+        self.assertEqual(linear_graph2.visible_previous, begin)
+
+        graph3 = square >> (begin, square) >> forward()
+
+        self.assertEqual(graph3.visible_previous, graph3.previous)
+
+        graph4 = square
+
+        self.assertIsNone(graph4.visible_previous)
 
     def test_divergence_flow(self):
         """

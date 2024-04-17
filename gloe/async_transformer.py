@@ -1,6 +1,3 @@
-import copy
-import types
-import uuid
 from abc import abstractmethod
 from inspect import Signature
 from typing import TypeVar, overload, cast, Callable, Generic
@@ -9,10 +6,7 @@ from typing_extensions import Self
 
 from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe._transformer_utils import catch_transformer_exception
-from gloe.base_transformer import (
-    BaseTransformer,
-    PreviousTransformer,
-)
+from gloe.base_transformer import BaseTransformer
 
 __all__ = ["AsyncTransformer"]
 
@@ -82,29 +76,7 @@ class AsyncTransformer(Generic[_In, _Out], BaseTransformer[_In, _Out]):
         transform: Callable[[Self, _In], _Out] | None = None,
         regenerate_instance_id: bool = False,
     ) -> Self:
-        copied = copy.copy(self)
-
-        func_type = types.MethodType
-        if transform is not None:
-            setattr(copied, "transform_async", func_type(transform, copied))
-
-        if regenerate_instance_id:
-            copied.instance_id = uuid.uuid4()
-
-        if self.previous is not None:
-            if type(self.previous) is tuple:
-                new_previous: list[BaseTransformer] = [
-                    previous_transformer.copy() for previous_transformer in self.previous
-                ]
-                copied._previous = cast(PreviousTransformer, tuple(new_previous))
-            elif isinstance(self.previous, BaseTransformer):
-                copied._previous = self.previous.copy()
-
-        copied._children = [
-            child.copy(regenerate_instance_id=True) for child in self.children
-        ]
-
-        return copied
+        return self._copy(transform, regenerate_instance_id, "transform_async")
 
     @overload
     def __rshift__(

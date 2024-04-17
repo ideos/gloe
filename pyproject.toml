@@ -10,7 +10,7 @@ authors = [
 ]
 description = "Gloe (pronounced /ɡloʊ/, like \"glow\") is a general-purpose library made to help developers create, maintain, document, and test both operational and flow-oriented code."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.10",

@@ -77,8 +77,8 @@ html_static_path = ["_static"]
 html_favicon = "_static/assets/favicon.ico"
 html_theme_options = {
     # "main_nav_links": {"Docs": "/index", "About": "/about"},
-    "light_logo": "assets/gloe-logo-small.png",
-    "dark_logo": "assets/gloe-logo-small.png",
+    "light_logo": "assets/gloe-logo-small.webp",
+    "dark_logo": "assets/gloe-logo-small.webp",
     "dark_css_variables": {
         "color-brand-primary": "#00e6bf",
         "color-brand-content": "#00e6bf",

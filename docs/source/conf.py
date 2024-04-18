@@ -73,7 +73,7 @@ html_sidebars: dict[str, list[str]] = {
 # autodoc_default_options = {"ignore-module-all": True}
 
 html_static_path = ["_static"]
-html_css_files = ["theme_customs.css"]
+# html_css_files = ["theme_customs.css"]
 html_favicon = "_static/assets/favicon.ico"
 html_theme_options = {
     # "main_nav_links": {"Docs": "/index", "About": "/about"},

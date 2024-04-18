@@ -252,14 +252,14 @@ def _compose_nodes(
 ):
     if issubclass(type(current), BaseTransformer):
         if issubclass(type(next_node), BaseTransformer):
-            return _nerge_serial(current, next_node)  # type: ignore
+            return _nerge_serial(current, next_node)
         elif type(next_node) is tuple:
             is_all_base_transformers = all(
                 issubclass(type(next_transformer), BaseTransformer)
                 for next_transformer in next_node
             )
             if is_all_base_transformers:
-                return _merge_diverging(current, *next_node)  # type: ignore
+                return _merge_diverging(current, *next_node)
 
             unsupported_elem = [
                 elem for elem in next_node if not isinstance(elem, BaseTransformer)

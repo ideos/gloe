@@ -110,3 +110,12 @@ html_theme_options = {
 # pygments_style = "styles.GloeStyle"
 pygments_dark_style = "styles.GloeDarkStyle"
 pygments_light_style = "styles.GloeLightStyle"
+
+
+def source_read_handler(app, pagename, templatename, context, doctree):
+    if context["pageurl"] == f"{html_baseurl}index.html":
+        context["pageurl"] = html_baseurl.rstrip("/")
+
+
+def setup(app):
+    app.connect("html-page-context", source_read_handler)

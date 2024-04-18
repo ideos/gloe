@@ -34,8 +34,8 @@ def partial_transformer(
     """
     This decorator let us create partial transformers, which are transformers that
     allow for partial application of their arguments. This capability is particularly
-    useful for creating configurable transformer instances where some arguments are preset
-    enhancing modularity and reusability in data processing pipelines.
+    useful for creating configurable transformer instances where some arguments are
+    preset enhancing modularity and reusability in data processing pipelines.
 
     See Also:
         For further details on partial transformers and their applications, see
@@ -94,14 +94,14 @@ def partial_async_transformer(
 ) -> Callable[P1, AsyncTransformer[A, S]]:
     """
     This decorator enables the creation of partial asynchronous transformers, which are
-    transformers capable of partial argument application. Such functionality is invaluable
-    for crafting reusable asynchronous transformer instances where certain arguments are
-    predetermined, enhancing both modularity and reusability within asynchronous data
-    processing flows.
+    transformers capable of partial argument application. Such functionality is
+    invaluable for crafting reusable asynchronous transformer instances where certain
+    arguments are predetermined, enhancing both modularity and reusability within
+    asynchronous data processing flows.
 
     See Also:
-        For additional insights into partial asynchronous transformers and their practical
-        applications, consult :ref:`partial-async-transformers`.
+        For additional insights into partial asynchronous transformers and their
+        practical applications, consult :ref:`partial-async-transformers`.
 
     Example:
         Utilize the `@partial_async_transformer` decorator to build a transformer with
@@ -177,8 +177,8 @@ def transformer(func: Callable[[A], S]) -> Transformer[A, S]:
     if len(func_signature.parameters) > 1:
         warnings.warn(
             "Only one parameter is allowed on Transformers. "
-            f"Function '{func.__name__}' has the following signature: {func_signature}. "
-            "To pass a complex data, use a complex type like named tuples, "
+            f"Function '{func.__name__}' has the following signature: {func_signature}."
+            " To pass a complex data, use a complex type like named tuples, "
             "typed dicts, dataclasses or anything else.",
             category=RuntimeWarning,
         )
@@ -226,8 +226,8 @@ def async_transformer(func: Callable[[A], Awaitable[S]]) -> AsyncTransformer[A, 
     if len(func_signature.parameters) > 1:
         warnings.warn(
             "Only one parameter is allowed on Transformers. "
-            f"Function '{func.__name__}' has the following signature: {func_signature}. "
-            "To pass a complex data, use a complex type like named tuples, "
+            f"Function '{func.__name__}' has the following signature: {func_signature}."
+            " To pass a complex data, use a complex type like named tuples, "
             "typed dicts, dataclasses or anything else.",
             category=RuntimeWarning,
         )

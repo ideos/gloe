@@ -22,8 +22,8 @@ def catch_transformer_exception(
             transformer_frame = transformer_frames[0]
             exception_message = (
                 f"\n  "
-                f'File "{transformer_frame.filename}", line {transformer_frame.lineno}, '
-                f'in transformer "{transformer_name}"\n  '
+                f'File "{transformer_frame.filename}", line {transformer_frame.lineno},'
+                f' in transformer "{transformer_name}"\n  '
                 f"  >> {transformer_frame.line}"
             )
         else:

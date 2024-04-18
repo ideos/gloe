@@ -37,8 +37,3 @@ Repository = "https://github.com/ideos/gloe"
 pythonpath = [
   "gloe"
 ]
-
-[tool.black]
-line-length = 90
-
-

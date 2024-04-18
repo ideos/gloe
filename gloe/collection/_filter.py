@@ -39,8 +39,8 @@ class Filter(Generic[_T], Transformer[Iterable[_T], Iterable[_T]]):
     def transform(self, data: Iterable[_T]) -> Iterable[_T]:
         """
         Args:
-            data: incoming iterable to be filtered. The items of this iterable must be of
-                type :code:`_T`.
+            data: incoming iterable to be filtered. The items of this iterable must be
+                of type :code:`_T`.
 
         Returns:
             The filterd iterable.

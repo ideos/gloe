@@ -26,7 +26,9 @@ class TestConditionerTransformer(unittest.TestCase):
         Test the most simple conditioned case
         """
 
-        conditioned_graph = square >> square_root >> if_not_zero.Then(plus1).Else(minus1)
+        conditioned_graph = (
+            square >> square_root >> if_not_zero.Then(plus1).Else(minus1)
+        )
 
         self.assertEqual(conditioned_graph(1), 2)
         self.assertEqual(conditioned_graph(0), -1)

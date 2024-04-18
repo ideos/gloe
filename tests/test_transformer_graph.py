@@ -61,7 +61,9 @@ class TestTransformerGraph(unittest.TestCase):
             (ids_by_name[edge[0]], ids_by_name[edge[1]]): props
             for edge, props in expected_edges_props.items()
         }
-        current_edge_props = {(u, v): graph.get_edge_data(u, v) for u, v in edges_with_id}
+        current_edge_props = {
+            (u, v): graph.get_edge_data(u, v) for u, v in edges_with_id
+        }
 
         for edge, current_props in current_edge_props.items():
             expected_props = edges_with_id[edge]
@@ -140,7 +142,9 @@ class TestTransformerGraph(unittest.TestCase):
 
         graph: DiGraph = divergent.graph()
 
-        self._assert_nodes_count(11, graph)  # Each divergent connection has a hidden node
+        self._assert_nodes_count(
+            11, graph
+        )  # Each divergent connection has a hidden node
         self._assert_edges_count(13, graph)
 
         expected_edges = [
@@ -178,7 +182,8 @@ class TestTransformerGraph(unittest.TestCase):
 
         graph: DiGraph = divergent.graph()
 
-        self._assert_nodes_count(10, graph)  # Each divergent connection has a hidden node
+        # Each divergent connection has a hidden node
+        self._assert_nodes_count(10, graph)
         self._assert_edges_count(11, graph)
 
         expected_edges = [
@@ -212,7 +217,9 @@ class TestTransformerGraph(unittest.TestCase):
 
     def test_complex_conditional_case(self):
         then_graph = plus1 >> square >> (times2, divide_by_2) >> sum_tuple2
-        conditional = square_root >> if_is_even.Then(then_graph).Else(forward()) >> minus1
+        conditional = (
+            square_root >> if_is_even.Then(then_graph).Else(forward()) >> minus1
+        )
 
         graph: DiGraph = conditional.graph()
 
@@ -291,7 +298,9 @@ class TestTransformerGraph(unittest.TestCase):
 
     def test_nodes_properties_case(self):
         then_graph = plus1 >> square >> (times2, divide_by_2) >> sum_tuple2
-        conditional = square_root >> if_is_even.Then(then_graph).Else(forward()) >> minus1
+        conditional = (
+            square_root >> if_is_even.Then(then_graph).Else(forward()) >> minus1
+        )
 
         graph = conditional.graph()
 
@@ -323,7 +332,9 @@ class TestTransformerGraph(unittest.TestCase):
 
         self._assert_edge_properties(single_edge, graph, expected_edge_props)
 
-        divergent_edges = plus1 >> (square >> to_string, square_root) >> tuple_concatenate
+        divergent_edges = (
+            plus1 >> (square >> to_string, square_root) >> tuple_concatenate
+        )
         graph = divergent_edges.graph()
 
         expected_edge_props = {

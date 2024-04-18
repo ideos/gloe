@@ -35,14 +35,18 @@ def ensure(
 
 @overload
 def ensure(
-    *, incoming: Sequence[Callable[[_T], Any]], changes: Sequence[Callable[[_T, _S], Any]]
+    *,
+    incoming: Sequence[Callable[[_T], Any]],
+    changes: Sequence[Callable[[_T, _S], Any]],
 ) -> _ensure_both[_T, _S]:
     pass
 
 
 @overload
 def ensure(
-    *, outcome: Sequence[Callable[[_T], Any]], changes: Sequence[Callable[[_T, _S], Any]]
+    *,
+    outcome: Sequence[Callable[[_T], Any]],
+    changes: Sequence[Callable[[_T, _S], Any]],
 ) -> _ensure_both[_T, _S]:
     pass
 
@@ -59,8 +63,8 @@ def ensure(
 
 def ensure(*args, **kwargs):
     """
-    This decorator is used in transformers to ensure some validation based on its incoming
-    data, outcome data, or both.
+    This decorator is used in transformers to ensure some validation based on its
+    incoming data, outcome data, or both.
 
     These validations are performed by validators. Validators are simple callable
     functions that validate certain aspects of the input, output, or the differences
@@ -80,8 +84,8 @@ def ensure(*args, **kwargs):
 
     Args:
         incoming (Sequence[Callable[[_T], Any]]): sequence of validators that will be
-            applied to the incoming data. The type :code:`_T` refers to the incoming type.
-            Defaut value: :code:`[]`.
+            applied to the incoming data. The type :code:`_T` refers to the incoming
+            type. Defaut value: :code:`[]`.
         outcome (Sequence[Callable[[_S], Any]]): sequence of validators that will be
             applied to the outcome data. The type :code:`_S` refers to the outcome type.
             Defaut value: :code:`[]`.

@@ -110,7 +110,9 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
 
     async def test_partial_async_transformer(self):
         @partial_async_transformer
-        async def sleep_and_forward(data: dict[str, str], delay: float) -> dict[str, str]:
+        async def sleep_and_forward(
+            data: dict[str, str], delay: float
+        ) -> dict[str, str]:
             await asyncio.sleep(delay)
             return data
 

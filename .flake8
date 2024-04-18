@@ -1,2 +1,3 @@
 [flake8]
-max-line-length = 90
+# Black
+max-line-length = 88

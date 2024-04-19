@@ -1,4 +1,4 @@
-from typing import Iterable, Optional, TypeVar
+from typing import Generic, Iterable, Optional, TypeVar
 from multiprocessing.pool import ThreadPool as Pool
 
 from gloe import Transformer
@@ -10,7 +10,7 @@ _S = TypeVar("_S")
 _U = TypeVar("_U")
 
 
-class ParallelMap(Map):
+class ParallelMap(Generic[_T, _U], Map[_T, _U]):
 
     def __init__(
         self, mapping_transformer: Transformer[_T, _U], pool_size: Optional[int] = None
@@ -18,14 +18,14 @@ class ParallelMap(Map):
         super().__init__(mapping_transformer)
         self.pool_size = pool_size
 
-    def transform(self, data: Iterable[_T]) -> Iterable[_U]:
+    def transform(self, data: list[_T]) -> list[_U]:
 
         with Pool(self.pool_size) as p:
             mapping_result = p.map(self.mapping_transformer, data)
         return mapping_result
 
 
-class ParallelMapOver(MapOver):
+class ParallelMapOver(Generic[_T, _U], MapOver[_T, list[_U]]):
 
     def __init__(
         self,

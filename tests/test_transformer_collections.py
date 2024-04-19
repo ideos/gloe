@@ -1,6 +1,7 @@
 import unittest
 
-from gloe.collection import Map, MapOver
+from gloe.functional import transformer
+from gloe.collection import Map, MapOver, Filter
 from tests.lib.transformers import square, plus1, sum_tuple2
 
 
@@ -20,6 +21,23 @@ class TestTransformerCollections(unittest.TestCase):
         expected = [101.0, 82.0, 10.0, 5.0, 2.0]
         self.assertListEqual(expected, result1)
         self.assertListEqual(expected, result2)
+
+    def test_transformer_filter(self):
+        """
+        Test the filter transformer
+        """
+
+        @transformer
+        def is_even(num: int) -> bool:
+            return num % 2 == 0
+
+        _filter = Filter(is_even)
+
+        seq = [10, 9, 3, 2, 1]
+        result = _filter(seq)
+
+        expected = [10, 2]
+        self.assertListEqual(expected, list(result))
 
     def test_transformer_map_over(self):
         """

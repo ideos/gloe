@@ -1,22 +1,8 @@
-from functools import wraps
 from types import GenericAlias
-from typing import (
-    TypeVar,
-    get_origin,
-    TypeAlias,
-    TypedDict,
-    Generic,
-    Union,
-    _GenericAlias,
-    ParamSpec,
-    Callable,
-    Awaitable,
-)  # type: ignore
+from typing import TypeVar, get_origin
 
 
-def _format_tuple(
-    tuple_annotation: tuple, generic_input_param, input_annotation
-) -> str:
+def _format_tuple(tuple_annotation: tuple, generic_input_param, input_annotation) -> str:
     formatted: list[str] = []
     for annotation in tuple_annotation:
         formatted.append(
@@ -25,9 +11,7 @@ def _format_tuple(
     return f"({', '.join(formatted)})"
 
 
-def _format_union(
-    tuple_annotation: tuple, generic_input_param, input_annotation
-) -> str:
+def _format_union(tuple_annotation: tuple, generic_input_param, input_annotation) -> str:
     formatted: list[str] = []
     for annotation in tuple_annotation:
         formatted.append(
@@ -51,9 +35,9 @@ def _format_generic_alias(
 def _format_return_annotation(
     return_annotation, generic_input_param, input_annotation
 ) -> str:
-    if type(return_annotation) == str:
+    if type(return_annotation) is str:
         return return_annotation
-    if type(return_annotation) == tuple:
+    if type(return_annotation) is tuple:
         return _format_tuple(return_annotation, generic_input_param, input_annotation)
     if return_annotation.__name__ in {"tuple", "Tuple"}:
         return _format_tuple(
@@ -63,10 +47,7 @@ def _format_return_annotation(
         return _format_union(
             return_annotation.__args__, generic_input_param, input_annotation
         )
-    if (
-        type(return_annotation) == GenericAlias
-        or type(return_annotation) == _GenericAlias
-    ):
+    if type(return_annotation) is GenericAlias:  # _GenericAlias must be investigated too
         return _format_generic_alias(
             return_annotation, generic_input_param, input_annotation
         )
@@ -78,7 +59,7 @@ def _format_return_annotation(
 
 
 def _match_types(generic, specific, ignore_mismatches=True):
-    if type(generic) == TypeVar:
+    if type(generic) is TypeVar:
         return {generic: specific}
 
     specific_origin = get_origin(specific)
@@ -126,7 +107,7 @@ def _match_types(generic, specific, ignore_mismatches=True):
 
 
 def _specify_types(generic, spec):
-    if type(generic) == TypeVar:
+    if type(generic) is TypeVar:
         tp = spec.get(generic)
         if tp is None:
             return generic
@@ -142,14 +123,3 @@ def _specify_types(generic, spec):
     args = tuple(_specify_types(arg, spec) for arg in generic_args)
 
     return GenericAlias(origin, args)
-
-
-_Args = ParamSpec("_Args")
-_R = TypeVar("_R")
-
-
-def awaitify(sync_func: Callable[_Args, _R]) -> Callable[_Args, Awaitable[_R]]:
-    async def async_func(*args, **kwargs):
-        return sync_func(*args, **kwargs)
-
-    return async_func

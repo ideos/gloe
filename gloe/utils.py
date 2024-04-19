@@ -1,3 +1,4 @@
+import sys
 from typing import Any, Tuple, TypeVar, Generic
 
 from gloe.functional import transformer
@@ -15,22 +16,37 @@ def forget(data: Any) -> None:
     return None
 
 
-@transformer
-def debug(incoming: _In) -> _In:
-    breakpoint()
-    return incoming
+class debug(Generic[_In], Transformer[_In, _In]):
+    def __init__(self):
+        super().__init__()
+        self.plotting_settings.invisible = True
+
+    def _is_under_debug(self):
+        if hasattr(sys, "gettrace") and sys.gettrace() is not None:
+            trace = sys.gettrace()
+            if hasattr(trace, "_args"):
+                return True
+        return False
+
+    def transform(self, data: _In) -> _In:
+        """
+        Drops the user into the debugger when the pipeline execution reaches this
+        transformer.
+
+        In the debug console, the user will see the output of the previous transformer.
+        """
+        if self._is_under_debug():
+            self._debugging(data)
+        return data
+
+    def _debugging(self, current_data: _In):
+        breakpoint()
 
 
 class forward(Generic[_In], Transformer[_In, _In]):
     def __init__(self):
         super().__init__()
-        self._invisible = True
-
-    def __repr__(self):
-        if self.previous is not None:
-            return str(self.previous)
-
-        return super().__repr__()
+        self.plotting_settings.invisible = True
 
     def transform(self, data: _In) -> _In:
         return data

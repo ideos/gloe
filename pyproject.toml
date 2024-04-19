@@ -4,16 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gloe"
-version = "0.4.3"
+version = "0.5.6"
 authors = [
   { name="Samir Braga", email="samirchavess@gmail.com" },
 ]
-description = "Gloe is a general purpose library made to help developers to create, maintain, document and test operational and data flows."
+description = "Gloe (pronounced /ɡloʊ/, like \"glow\") is a general-purpose library made to help developers create, maintain, document, and test both operational and flow-oriented code."
 readme = "README.md"
 requires-python = ">=3.10"
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
 ]
 dependencies = [
@@ -34,5 +37,8 @@ Repository = "https://github.com/ideos/gloe"
 pythonpath = [
   "gloe"
 ]
+
+[tool.black]
+line-length = 90
 
 

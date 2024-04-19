@@ -3,12 +3,15 @@ from inspect import Signature
 from types import GenericAlias, UnionType
 from typing import Callable, Generic, Optional, TypeVar, Union
 
+from typing_extensions import Self
+
+from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe.transformers import Transformer
 from gloe.utils import forget
 
 
 In = TypeVar("In")
-ThenOut = TypeVar("ThenOut")
+ThenOut = TypeVar("ThenOut", covariant=True)
 ElseOut = TypeVar("ElseOut")
 ElseIfOut = TypeVar("ElseIfOut")
 PrevThenOut = TypeVar("PrevThenOut")
@@ -31,7 +34,9 @@ class ConditionerTransformer(
         super().__init__()
         self.implications = implications
         self.else_transformer = else_transformer
-        self._graph_node_props = {"shape": "diamond", "style": "filled", "port": "n"}
+        self._plotting_settings = PlottingSettings(
+            node_type=NodeType.Condition, has_children=True
+        )
         self._children = [
             *[impl.then_transformer for impl in implications],
             else_transformer,
@@ -57,12 +62,10 @@ class ConditionerTransformer(
 
     def copy(
         self,
-        transform: Callable[["Transformer", In], Union[ThenOut, ElseOut]] | None = None,
+        transform: Callable[[Self, In], Union[ThenOut, ElseOut]] | None = None,
         regenerate_instance_id: bool = False,
-    ) -> "ConditionerTransformer[In, ThenOut, ElseOut]":
-        copied: ConditionerTransformer[In, ThenOut, ElseOut] = super().copy(
-            transform, regenerate_instance_id
-        )
+    ) -> Self:
+        copied: Self = super().copy(transform, regenerate_instance_id)
         copied.implications = [
             _Implication(
                 impl.condition, impl.then_transformer.copy(regenerate_instance_id=True)
@@ -92,9 +95,9 @@ class _IfThen(Generic[In, ThenOut, PrevThenOut]):
         self._implication = implication
         self._prev_implications = prev_implications
         self._name = name
-        self._implications: list[
-            _Implication[In, Union[ThenOut, PrevThenOut]]
-        ] = self._prev_implications + [self._implication]
+        self._implications: list[_Implication[In, Union[ThenOut, PrevThenOut]]] = (
+            self._prev_implications + [self._implication]
+        )
 
     def Else(
         self, else_transformer: Transformer[In, ElseOut]
@@ -120,9 +123,9 @@ class _IfThen(Generic[In, ThenOut, PrevThenOut]):
     def ElseNone(
         self,
     ) -> Transformer[In, Optional[Union[ThenOut, PrevThenOut]]]:
-        new_transformer: ConditionerTransformer[
-            In, Union[ThenOut, PrevThenOut], None
-        ] = ConditionerTransformer(self._implications, forget)
+        new_transformer: ConditionerTransformer[In, Union[ThenOut, PrevThenOut], None] = (
+            ConditionerTransformer(self._implications, forget)
+        )
         new_transformer.__class__.__name__ = self.__class__.__name__
         return new_transformer
 

@@ -1,6 +1,8 @@
+import asyncio
 import unittest
 from typing import cast
 
+from gloe.utils import forward
 from tests.lib.transformers import (
     square,
     square_root,
@@ -16,6 +18,8 @@ from gloe import (
     TransformerException,
     UnsupportedTransformerArgException,
     transformer,
+    PreviousTransformer,
+    BaseTransformer,
 )
 
 
@@ -73,9 +77,37 @@ class TestFunctionTransformer(unittest.TestCase):
             >> (square >> (square_root, square_root), square >> square_root >> square)
         )
 
-        self.assertIsNone(
-            divergent_graph.previous[0].previous[0].previous.previous.previous.previous
-        )
+        previous: PreviousTransformer[BaseTransformer] = divergent_graph
+        for _ in range(8):
+            if previous is not None:
+                if type(previous) is tuple:
+                    previous = previous[0]
+                elif isinstance(previous, BaseTransformer):
+                    previous = previous.previous
+
+        self.assertIsNone(previous)
+
+    def test_visible_previous_property(self):
+        """
+        Test the previous property
+        """
+
+        linear_graph = square >> forward() >> square_root
+
+        self.assertEqual(linear_graph.visible_previous, square)
+
+        begin = forward[float]()
+        linear_graph2 = begin >> square_root
+
+        self.assertEqual(linear_graph2.visible_previous, begin)
+
+        graph3 = square >> (begin, square) >> forward()
+
+        self.assertEqual(graph3.visible_previous, graph3.previous)
+
+        graph4 = square
+
+        self.assertIsNone(graph4.visible_previous)
 
     def test_divergence_flow(self):
         """
@@ -192,16 +224,14 @@ class TestFunctionTransformer(unittest.TestCase):
     def test_transformer_pydoc_keeping(self):
         @transformer
         def to_string(num: int) -> str:
-            """
-            This transformer receives a number as input and return its representation as a string
-            """
+            """This transformer receives a number as input and return its representation
+            as a string"""
             return str(num)
 
         self.assertEqual(
             to_string.__doc__,
-            """
-            This transformer receives a number as input and return its representation as a string
-            """,
+            """This transformer receives a number as input and return its representation
+            as a string""",
         )
 
     def test_transformer_signature_representation(self):
@@ -260,6 +290,14 @@ class TestFunctionTransformer(unittest.TestCase):
         graph = logarithm(base=2)
         self.assertEqual(graph(2), 1)
         self.assertEqual(graph.label, "logarithm")
+
+    def test_transformers_on_a_running_event_loop(self):
+        async def run_main():
+            graph = square >> square_root
+            graph(9)
+
+        loop = asyncio.new_event_loop()
+        loop.run_until_complete(run_main())
 
 
 if __name__ == "__main__":

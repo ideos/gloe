@@ -9,7 +9,6 @@ from typing import (
     TypeVar,
     cast,
     Awaitable,
-    Generic,
 )
 
 from gloe.async_transformer import AsyncTransformer
@@ -27,36 +26,11 @@ S = TypeVar("S")
 S2 = TypeVar("S2")
 P1 = ParamSpec("P1")
 P2 = ParamSpec("P2")
-O = TypeVar("O")
-
-
-class _PartialTransformer(Generic[A, P1, S]):
-    def __init__(self, func: Callable[Concatenate[A, P1], S]):
-        self.func = func
-
-    def __call__(self, *args: P1.args, **kwargs: P1.kwargs) -> Transformer[A, S]:
-        func = self.func
-        func_signature = inspect.signature(func)
-
-        class LambdaTransformer(Transformer[A, S]):
-            __doc__ = func.__doc__
-            __annotations__ = cast(FunctionType, func).__annotations__
-
-            def signature(self) -> Signature:
-                return func_signature
-
-            def transform(self, data: A) -> S:
-                return func(data, *args, **kwargs)
-
-        lambda_transformer = LambdaTransformer()
-        lambda_transformer.__class__.__name__ = func.__name__
-        lambda_transformer._label = func.__name__
-        return lambda_transformer
 
 
 def partial_transformer(
     func: Callable[Concatenate[A, P1], S]
-) -> _PartialTransformer[A, P1, S]:
+) -> Callable[P1, Transformer[A, S]]:
     """
     This decorator let us create partial transformers, which are transformers that
     allow for partial application of their arguments. This capability is particularly
@@ -89,41 +63,35 @@ def partial_transformer(
             :code:`S`.
 
     Returns:
-        An instance of the :code:`_PartialTransformer`, an internal class utilized within
-        Gloe that facilitates partial instantiation of transformers by the user.
-        The underlying mechanics of :code:`_PartialTransformer` are managed internally,
-        the user just needs to understand its usage.
+        A callable that receives the same arguments as :code:`func`, excluding the first
+        one and returns a transformer with incoming type being :code:`A` and with
+        :code:`S` as the outcome type.
     """
-    return _PartialTransformer(func)
 
-
-class _PartialAsyncTransformer(Generic[A, P1, S]):
-    def __init__(self, func: Callable[Concatenate[A, P1], Awaitable[S]]):
-        self.func = func
-
-    def __call__(self, *args: P1.args, **kwargs: P1.kwargs) -> AsyncTransformer[A, S]:
-        func = self.func
+    def partial(*args: P1.args, **kwargs: P1.kwargs) -> Transformer[A, S]:
         func_signature = inspect.signature(func)
 
-        class LambdaTransformer(AsyncTransformer[A, S]):
+        class LambdaTransformer(Transformer[A, S]):
             __doc__ = func.__doc__
             __annotations__ = cast(FunctionType, func).__annotations__
 
             def signature(self) -> Signature:
                 return func_signature
 
-            async def transform_async(self, data: A) -> S:
-                return await func(data, *args, **kwargs)
+            def transform(self, data: A) -> S:
+                return func(data, *args, **kwargs)
 
         lambda_transformer = LambdaTransformer()
         lambda_transformer.__class__.__name__ = func.__name__
         lambda_transformer._label = func.__name__
         return lambda_transformer
 
+    return partial
+
 
 def partial_async_transformer(
     func: Callable[Concatenate[A, P1], Awaitable[S]]
-) -> _PartialAsyncTransformer[A, P1, S]:
+) -> Callable[P1, AsyncTransformer[A, S]]:
     """
     This decorator enables the creation of partial asynchronous transformers, which are
     transformers capable of partial argument application. Such functionality is invaluable
@@ -158,21 +126,35 @@ def partial_async_transformer(
             completion.
 
     Returns:
-        An instance of the :code:`_PartialAsyncTransformer`, an internally managed class
-        within Gloe designed to facilitate the partial instantiation of asynchronous
-        transformers. Users are encouraged to understand its application, as the
-        underlying mechanics of :code:`_PartialAsyncTransformer` are handled internally.
+        A callable that receives the same arguments as :code:`func`, excluding the first
+        one and returns an async transformer with incoming type being :code:`A` and with
+        :code:`S` as the outcome type.
     """
-    return _PartialAsyncTransformer(func)
+
+    def partial(*args: P1.args, **kwargs: P1.kwargs) -> AsyncTransformer[A, S]:
+        func_signature = inspect.signature(func)
+
+        class LambdaTransformer(AsyncTransformer[A, S]):
+            __doc__ = func.__doc__
+            __annotations__ = cast(FunctionType, func).__annotations__
+
+            def signature(self) -> Signature:
+                return func_signature
+
+            async def transform_async(self, data: A) -> S:
+                return await func(data, *args, **kwargs)
+
+        lambda_transformer = LambdaTransformer()
+        lambda_transformer.__class__.__name__ = func.__name__
+        lambda_transformer._label = func.__name__
+        return lambda_transformer
+
+    return partial
 
 
 def transformer(func: Callable[[A], S]) -> Transformer[A, S]:
     """
     Convert a callable to an instance of the Transformer class.
-
-    See Also:
-        The most common usage is as a decorator. This example demonstrates how to use the
-        `@transformer` decorator to filter a list of users::
 
     Example:
         The most common use is as a decorator::

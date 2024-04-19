@@ -1,23 +1,29 @@
-import traceback
 from abc import ABC, abstractmethod
 from inspect import Signature
 
-from typing import (
-    TypeVar,
-    overload,
-    cast,
-    Any,
-    TypeAlias,
-    Union,
-)
+from typing import TypeVar, overload, cast, TypeAlias
 
-from gloe.base_transformer import BaseTransformer, TransformerException
 from gloe.async_transformer import AsyncTransformer
+from gloe._transformer_utils import catch_transformer_exception
+from gloe.base_transformer import BaseTransformer
+
+from gloe._generic_types import (
+    AsyncNext2,
+    AsyncNext3,
+    AsyncNext4,
+    AsyncNext5,
+    AsyncNext6,
+    AsyncNext7,
+)
 
 __all__ = ["Transformer"]
 
-I = TypeVar("I")
-O = TypeVar("O")
+_I = TypeVar("_I", contravariant=True)
+_O = TypeVar("_O", covariant=True)
+
+Tr: TypeAlias = "Transformer"
+
+Item = TypeVar("Item")
 O1 = TypeVar("O1")
 O2 = TypeVar("O2")
 O3 = TypeVar("O3")
@@ -25,59 +31,10 @@ O4 = TypeVar("O4")
 O5 = TypeVar("O5")
 O6 = TypeVar("O6")
 O7 = TypeVar("O7")
+To = TypeVar("To", bound=BaseTransformer)
 
 
-Tr: TypeAlias = "Transformer"
-AT: TypeAlias = AsyncTransformer
-BT: TypeAlias = BaseTransformer[I, O, Any]
-
-AsyncNext2 = Union[
-    tuple[AT[O, O1], BT[O, O2]],
-    tuple[BT[O, O1], AT[O, O2]],
-]
-
-AsyncNext3 = Union[
-    tuple[AT[O, O1], BT[O, O2], BT[O, O3]],
-    tuple[BT[O, O1], AT[O, O2], BT[O, O3]],
-    tuple[BT[O, O1], BT[O, O2], AT[O, O3]],
-]
-
-AsyncNext4 = Union[
-    tuple[AT[O, O1], BT[O, O2], BT[O, O3], BT[O, O4]],
-    tuple[BT[O, O1], AT[O, O2], BT[O, O3], BT[O, O4]],
-    tuple[BT[O, O1], BT[O, O2], AT[O, O3], BT[O, O4]],
-    tuple[BT[O, O1], BT[O, O2], BT[O, O3], AT[O, O4]],
-]
-
-AsyncNext5 = Union[
-    tuple[AT[O, O1], BT[O, O2], BT[O, O3], BT[O, O4], BT[O, O5]],
-    tuple[BT[O, O1], AT[O, O2], BT[O, O3], BT[O, O4], BT[O, O5]],
-    tuple[BT[O, O1], BT[O, O2], AT[O, O3], BT[O, O4], BT[O, O5]],
-    tuple[BT[O, O1], BT[O, O2], BT[O, O3], AT[O, O4], BT[O, O5]],
-    tuple[BT[O, O1], BT[O, O2], BT[O, O3], BT[O, O4], AT[O, O5]],
-]
-
-AsyncNext6 = Union[
-    tuple[AT[O, O1], BT[O, O2], BT[O, O3], BT[O, O4], BT[O, O5], BT[O, O6]],
-    tuple[BT[O, O1], AT[O, O2], BT[O, O3], BT[O, O4], BT[O, O5], BT[O, O6]],
-    tuple[BT[O, O1], BT[O, O2], AT[O, O3], BT[O, O4], BT[O, O5], BT[O, O6]],
-    tuple[BT[O, O1], BT[O, O2], BT[O, O3], AT[O, O4], BT[O, O5], BT[O, O6]],
-    tuple[BT[O, O1], BT[O, O2], BT[O, O3], BT[O, O4], AT[O, O5], BT[O, O6]],
-    tuple[BT[O, O1], BT[O, O2], BT[O, O3], BT[O, O4], BT[O, O5], AT[O, O6]],
-]
-
-AsyncNext7 = Union[
-    tuple[AT[O, O1], BT[O, O2], BT[O, O3], BT[O, O4], BT[O, O5], BT[O, O6], BT[O, O7]],
-    tuple[BT[O, O1], AT[O, O2], BT[O, O3], BT[O, O4], BT[O, O5], BT[O, O6], BT[O, O7]],
-    tuple[BT[O, O1], BT[O, O2], AT[O, O3], BT[O, O4], BT[O, O5], BT[O, O6], BT[O, O7]],
-    tuple[BT[O, O1], BT[O, O2], BT[O, O3], AT[O, O4], BT[O, O5], BT[O, O6], BT[O, O7]],
-    tuple[BT[O, O1], BT[O, O2], BT[O, O3], BT[O, O4], AT[O, O5], BT[O, O6], BT[O, O7]],
-    tuple[BT[O, O1], BT[O, O2], BT[O, O3], BT[O, O4], BT[O, O5], AT[O, O6], BT[O, O7]],
-    tuple[BT[O, O1], BT[O, O2], BT[O, O3], BT[O, O4], BT[O, O5], BT[O, O6], AT[O, O7]],
-]
-
-
-class Transformer(BaseTransformer[I, O, "Transformer"], ABC):
+class Transformer(BaseTransformer[_I, _O], ABC):
     """
     A Transformer is the generic block with the responsibility to take an input of type
     `T` and transform it to an output of type `S`.
@@ -98,162 +55,140 @@ class Transformer(BaseTransformer[I, O, "Transformer"], ABC):
         self.__class__.__annotations__ = self.transform.__annotations__
 
     @abstractmethod
-    def transform(self, data: I) -> O:
-        """Main method to be implemented and responsible to perform the transformer logic"""
+    def transform(self, data: _I) -> _O:
+        """
+        Main method to be implemented and responsible to perform the transformer logic
+        """
 
     def signature(self) -> Signature:
         return self._signature(Transformer)
 
     def __repr__(self):
-        return f"{self.input_annotation} -> ({type(self).__name__}) -> {self.output_annotation}"
+        return (
+            f"{self.input_annotation}"
+            f" -> ({type(self).__name__})"
+            f" -> {self.output_annotation}"
+        )
 
-    def __call__(self, data: I) -> O:
+    def __call__(self, data: _I) -> _O:
         transform_exception = None
 
-        transformed: O | None = None
+        transformed: _O | None = None
         try:
             transformed = self.transform(data)
         except Exception as exception:
-            if type(exception.__cause__) == TransformerException:
-                transform_exception = exception.__cause__
-            else:
-                tb = traceback.extract_tb(exception.__traceback__)
-
-                # TODO: Make this filter condition stronger
-                transformer_frames = [
-                    frame
-                    for frame in tb
-                    if frame.name == self.__class__.__name__ or frame.name == "transform"
-                ]
-
-                if len(transformer_frames) == 1:
-                    transformer_frame = transformer_frames[0]
-                    exception_message = (
-                        f"\n  "
-                        f'File "{transformer_frame.filename}", line {transformer_frame.lineno}, '
-                        f'in transformer "{self.__class__.__name__}"\n  '
-                        f"  >> {transformer_frame.line}"
-                    )
-                else:
-                    exception_message = (
-                        f'An error occurred in transformer "{self.__class__.__name__}"'
-                    )
-
-                transform_exception = TransformerException(
-                    internal_exception=exception,
-                    raiser_transformer=self,
-                    message=exception_message,
-                )
+            transform_exception = catch_transformer_exception(exception, self)
 
         if transform_exception is not None:
             raise transform_exception.internal_exception
 
         if type(transformed) is not None:
-            return cast(O, transformed)
+            return cast(_O, transformed)
 
-        raise NotImplementedError
+        raise NotImplementedError()  # pragma: no cover
 
     @overload
-    def __rshift__(
-        self,
-        next_node: tuple["Tr[O, O1]", "Tr[O, O2]"],
-    ) -> "Tr[I, tuple[O1, O2]]":
+    def __rshift__(self, next_node: "Transformer[_O, O1]") -> "Transformer[_I, O1]":
         pass
 
     @overload
     def __rshift__(
         self,
-        next_node: tuple["Tr[O, O1]", "Tr[O, O2]", "Tr[O, O3]"],
-    ) -> "Transformer[I, tuple[O1, O2, O3]]":
+        next_node: tuple["Tr[_O, O1]", "Tr[_O, O2]"],
+    ) -> "Transformer[_I, tuple[O1, O2]]":
         pass
 
     @overload
     def __rshift__(
         self,
-        next_node: tuple["Tr[O, O1]", "Tr[O, O2]", "Tr[O, O3]", "Tr[O, O4]"],
-    ) -> "Tr[I, tuple[O1, O2, O3, O4]]":
+        next_node: tuple["Tr[_O, O1]", "Tr[_O, O2]", "Tr[_O, O3]"],
+    ) -> "Transformer[_I, tuple[O1, O2, O3]]":
         pass
 
     @overload
     def __rshift__(
         self,
-        next_node: tuple["Tr[O, O1]", "Tr[O, O2]", "Tr[O, O3]", "Tr[O, O4]", "Tr[O, O5]"],
-    ) -> "Tr[I, tuple[O1, O2, O3, O4, O5]]":
+        next_node: tuple["Tr[_O, O1]", "Tr[_O, O2]", "Tr[_O, O3]", "Tr[_O, O4]"],
+    ) -> "Transformer[_I, tuple[O1, O2, O3, O4]]":
         pass
 
     @overload
     def __rshift__(
         self,
         next_node: tuple[
-            "Tr[O, O1]", "Tr[O, O2]", "Tr[O, O3]", "Tr[O, O4]", "Tr[O, O5]", "Tr[O, O6]"
+            "Tr[_O, O1]", "Tr[_O, O2]", "Tr[_O, O3]", "Tr[_O, O4]", "Tr[_O, O5]"
         ],
-    ) -> "Tr[I, tuple[O1, O2, O3, O4, O5, O6]]":
+    ) -> "Transformer[_I, tuple[O1, O2, O3, O4, O5]]":
         pass
 
     @overload
     def __rshift__(
         self,
         next_node: tuple[
-            "Tr[O, O1]",
-            "Tr[O, O2]",
-            "Tr[O, O3]",
-            "Tr[O, O4]",
-            "Tr[O, O5]",
-            "Tr[O, O6]",
-            "Tr[O, O7]",
+            "Tr[_O, O1]",
+            "Tr[_O, O2]",
+            "Tr[_O, O3]",
+            "Tr[_O, O4]",
+            "Tr[_O, O5]",
+            "Tr[_O, O6]",
         ],
-    ) -> "Tr[I, tuple[O1, O2, O3, O4, O5, O6, O7]]":
-        pass
-
-    @overload
-    def __rshift__(self, next_node: "Tr[O, O1]") -> "Tr[I, O1]":
-        pass
-
-    @overload
-    def __rshift__(self, next_node: AsyncTransformer[O, O1]) -> AsyncTransformer[I, O1]:
+    ) -> "Transformer[_I, tuple[O1, O2, O3, O4, O5, O6]]":
         pass
 
     @overload
     def __rshift__(
         self,
-        next_node: AsyncNext2[O, O1, O2],
-    ) -> AsyncTransformer[I, tuple[O1, O2]]:
+        next_node: tuple[
+            "Tr[_O, O1]",
+            "Tr[_O, O2]",
+            "Tr[_O, O3]",
+            "Tr[_O, O4]",
+            "Tr[_O, O5]",
+            "Tr[_O, O6]",
+            "Tr[_O, O7]",
+        ],
+    ) -> "Transformer[_I, tuple[O1, O2, O3, O4, O5, O6, O7]]":
+        pass
+
+    @overload
+    def __rshift__(self, next_node: AsyncTransformer[_O, O1]) -> AsyncTransformer[_I, O1]:
         pass
 
     @overload
     def __rshift__(
-        self,
-        next_node: AsyncNext3[O, O1, O2, O3],
-    ) -> AsyncTransformer[I, tuple[O1, O2, O3]]:
+        self, next_node: AsyncNext2[_O, O1, O2]
+    ) -> AsyncTransformer[_I, tuple[O1, O2]]:
         pass
 
     @overload
     def __rshift__(
-        self,
-        next_node: AsyncNext4[O, O1, O2, O3, O4],
-    ) -> AsyncTransformer[I, tuple[O1, O2, O3, O4]]:
+        self, next_node: AsyncNext3[_O, O1, O2, O3]
+    ) -> AsyncTransformer[_I, tuple[O1, O2, O3]]:
         pass
 
     @overload
     def __rshift__(
-        self,
-        next_node: AsyncNext5[O, O1, O2, O3, O4, O5],
-    ) -> AsyncTransformer[I, tuple[O1, O2, O3, O4, O5]]:
+        self, next_node: AsyncNext4[_O, O1, O2, O3, O4]
+    ) -> AsyncTransformer[_I, tuple[O1, O2, O3, O4]]:
         pass
 
     @overload
     def __rshift__(
-        self,
-        next_node: AsyncNext6[O, O1, O2, O3, O4, O5, O6],
-    ) -> AsyncTransformer[I, tuple[O1, O2, O3, O4, O5, O6]]:
+        self, next_node: AsyncNext5[_O, O1, O2, O3, O4, O5]
+    ) -> AsyncTransformer[_I, tuple[O1, O2, O3, O4, O5]]:
         pass
 
     @overload
     def __rshift__(
-        self,
-        next_node: AsyncNext7[O, O1, O2, O3, O4, O5, O6, O7],
-    ) -> AsyncTransformer[I, tuple[O1, O2, O3, O4, O5, O6, O7]]:
+        self, next_node: AsyncNext6[_O, O1, O2, O3, O4, O5, O6]
+    ) -> AsyncTransformer[_I, tuple[O1, O2, O3, O4, O5, O6]]:
         pass
 
-    def __rshift__(self, next_node):
+    @overload
+    def __rshift__(
+        self, next_node: AsyncNext7[_O, O1, O2, O3, O4, O5, O6, O7]
+    ) -> AsyncTransformer[_I, tuple[O1, O2, O3, O4, O5, O6, O7]]:
+        pass
+
+    def __rshift__(self, next_node):  # pragma: no cover
         pass

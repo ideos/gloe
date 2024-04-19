@@ -40,7 +40,7 @@ def _resolve_serial_connection_signatures(
     return new_signature
 
 
-def _nerge_serial(transformer1, _transformer2):
+def _compose_serial(transformer1, _transformer2):
     if transformer1.previous is None:
         transformer1 = transformer1.copy(regenerate_instance_id=True)
 
@@ -131,7 +131,7 @@ def _nerge_serial(transformer1, _transformer2):
     return new_transformer
 
 
-def _merge_diverging(
+def _compose_diverging(
     incident_transformer,
     *receiving_transformers,
 ):
@@ -252,14 +252,14 @@ def _compose_nodes(
 ):
     if issubclass(type(current), BaseTransformer):
         if issubclass(type(next_node), BaseTransformer):
-            return _nerge_serial(current, next_node)
+            return _compose_serial(current, next_node)
         elif type(next_node) is tuple:
             is_all_base_transformers = all(
                 issubclass(type(next_transformer), BaseTransformer)
                 for next_transformer in next_node
             )
             if is_all_base_transformers:
-                return _merge_diverging(current, *next_node)
+                return _compose_diverging(current, *next_node)
 
             unsupported_elem = [
                 elem for elem in next_node if not isinstance(elem, BaseTransformer)

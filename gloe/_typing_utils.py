@@ -39,9 +39,9 @@ def _format_generic_alias(
 def _format_return_annotation(
     return_annotation, generic_input_param, input_annotation
 ) -> str:
-    if type(return_annotation) is str:
+    if isinstance(return_annotation, str):
         return return_annotation
-    if type(return_annotation) is tuple:
+    if isinstance(return_annotation, tuple):
         return _format_tuple(return_annotation, generic_input_param, input_annotation)
     if return_annotation.__name__ in {"tuple", "Tuple"}:
         return _format_tuple(

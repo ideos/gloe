@@ -17,7 +17,7 @@ _NextOut = TypeVar("_NextOut")
 
 
 def is_transformer(node):
-    if type(node) is list or type(node) is tuple:
+    if isinstance(node, list) or isinstance(node, tuple):
         return all(is_transformer(n) for n in node)
     return isinstance(node, Transformer)
 

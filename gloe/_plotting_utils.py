@@ -33,6 +33,8 @@ def export_dot_props(settings: PlottingSettings, instance_id: UUID) -> dict[str,
                 "width": 0.5,
                 "height": 0.5,
             }
+        case _:
+            pass
 
     if settings.has_children:
         node_props = node_props | {

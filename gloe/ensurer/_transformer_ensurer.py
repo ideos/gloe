@@ -216,17 +216,17 @@ class _ensure_both(Generic[_T, _S], _ensure_base):
         outcome: Sequence[Callable[[_S], Any]],
         changes: Sequence[Callable[[_T, _S], Any]],
     ):
-        incoming_seq = incoming if type(incoming) is list else [incoming]
+        incoming_seq = incoming if isinstance(incoming, list) else [incoming]
         self.input_ensurers_instances = [
             input_ensurer(ensurer) for ensurer in incoming_seq
         ]
 
-        outcome_seq = outcome if type(outcome) is list else [outcome]
+        outcome_seq = outcome if isinstance(outcome, list) else [outcome]
         self.output_ensurers_instances = [
             output_ensurer(ensurer) for ensurer in outcome_seq
         ]
 
-        changes_seq = changes if type(changes) is list else [changes]
+        changes_seq = changes if isinstance(changes, list) else [changes]
         self.output_ensurers_instances = self.output_ensurers_instances + [
             output_ensurer(ensurer) for ensurer in changes_seq
         ]

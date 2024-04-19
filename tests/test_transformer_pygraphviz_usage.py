@@ -1,6 +1,6 @@
 import os.path
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from tests.lib.transformers import plus1, square_root
 
@@ -8,7 +8,7 @@ from tests.lib.transformers import plus1, square_root
 class TestPygraphvizUsage(unittest.TestCase):
 
     @patch("builtins.__import__", side_effect=ImportError)
-    def test_import_error(self, mock_import):
+    def test_import_error(self, mock_import: MagicMock):
 
         foo = square_root >> plus1
 

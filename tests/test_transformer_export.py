@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 from tests.lib.transformers import plus1, square_root
 
 
-class TestPygraphvizUsage(unittest.TestCase):
+class TestTransformerExport(unittest.TestCase):
 
     @patch("builtins.__import__", side_effect=ImportError)
     def test_import_error(self, mock_import: MagicMock):

@@ -410,14 +410,14 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         """Export Transformer object in dot format"""
 
         try:
-            import pygraphviz
+            import pygraphviz  # noqa: F401
 
         except ImportError as err:
             raise ImportError(
-                """Please, the module pygraphviz is required for this method, install with """
+                "Please, the module pygraphviz is required for this method, install with "
                 + """"conda install --channel conda-forge pygraphviz" or """
                 + """"pip install pygraphviz". More information is available in """
-                + """https://pygraphviz.github.io/documentation/stable/install.html"""
+                + "https://pygraphviz.github.io/documentation/stable/install.html"
             ) from err
 
         net = self.graph()
@@ -431,9 +431,7 @@ class BaseTransformer(Generic[_In, _Out], ABC):
                 net.edges[u, v]["label"] = ""
 
         agraph = nx.nx_agraph.to_agraph(net)
-        subgraphs: Iterable[tuple] = groupby(
-            boxed_nodes, key=lambda x: x[1]["parent_id"]
-        )
+        subgraphs: Iterable[tuple] = groupby(boxed_nodes, key=lambda x: x[1]["parent_id"])
         for parent_id, nodes in subgraphs:
             nodes = list(nodes)
             node_ids = [node[0] for node in nodes]

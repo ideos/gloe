@@ -1,12 +1,8 @@
 .mypy_cache
-testes
 docs/build
 .idea
 playground
-build
 __pycache__
-src/*
-!gloe
 **/*.dot
 .coverage
 htmlcov

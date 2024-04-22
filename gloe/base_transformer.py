@@ -409,6 +409,19 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         return net
 
     def export(self, path: str, with_edge_labels: bool = True):  # pragma: no cover
+        """Export Transformer object in dot format"""
+
+        try:
+            import pygraphviz
+
+        except ImportError as err:
+            raise ImportError(
+                """Please, the module pygraphviz is required for this method, install with """
+                + """"conda install --channel conda-forge pygraphviz" or """
+                + """"pip install pygraphviz". More information is available in """
+                + """https://pygraphviz.github.io/documentation/stable/install.html"""
+            ) from err
+
         net = self.graph()
         boxed_nodes = [
             node

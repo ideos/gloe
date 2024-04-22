@@ -21,9 +21,6 @@ classifiers = [
 ]
 dependencies = [
     'typing_extensions~=4.7.1',
-    'schemdraw~=0.16',
-    'setuptools~=61.2.0',
-    'mypy~=1.7.0',
     'networkx~=3.1'
 ]
 
@@ -33,12 +30,11 @@ Documentation = "https://gloe.ideos.com.br"
 Issues = "https://github.com/ideos/gloe/issues"
 Repository = "https://github.com/ideos/gloe"
 
+[project.optional-dependencies]
+plot = ['pygraphviz>=1.11']
+types = ['mypy~=1.7.0']
+
 [tool.pytest.ini_options]
 pythonpath = [
   "gloe"
 ]
-
-[tool.black]
-line-length = 90
-
-

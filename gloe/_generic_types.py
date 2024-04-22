@@ -55,24 +55,66 @@ AsyncNext6 = Union[
 
 AsyncNext7 = Union[
     tuple[
-        AT[_O, O1], BT[_O, O2], BT[_O, O3], BT[_O, O4], BT[_O, O5], BT[_O, O6], BT[_O, O7]
+        AT[_O, O1],
+        BT[_O, O2],
+        BT[_O, O3],
+        BT[_O, O4],
+        BT[_O, O5],
+        BT[_O, O6],
+        BT[_O, O7],
     ],
     tuple[
-        BT[_O, O1], AT[_O, O2], BT[_O, O3], BT[_O, O4], BT[_O, O5], BT[_O, O6], BT[_O, O7]
+        BT[_O, O1],
+        AT[_O, O2],
+        BT[_O, O3],
+        BT[_O, O4],
+        BT[_O, O5],
+        BT[_O, O6],
+        BT[_O, O7],
     ],
     tuple[
-        BT[_O, O1], BT[_O, O2], AT[_O, O3], BT[_O, O4], BT[_O, O5], BT[_O, O6], BT[_O, O7]
+        BT[_O, O1],
+        BT[_O, O2],
+        AT[_O, O3],
+        BT[_O, O4],
+        BT[_O, O5],
+        BT[_O, O6],
+        BT[_O, O7],
     ],
     tuple[
-        BT[_O, O1], BT[_O, O2], BT[_O, O3], AT[_O, O4], BT[_O, O5], BT[_O, O6], BT[_O, O7]
+        BT[_O, O1],
+        BT[_O, O2],
+        BT[_O, O3],
+        AT[_O, O4],
+        BT[_O, O5],
+        BT[_O, O6],
+        BT[_O, O7],
     ],
     tuple[
-        BT[_O, O1], BT[_O, O2], BT[_O, O3], BT[_O, O4], AT[_O, O5], BT[_O, O6], BT[_O, O7]
+        BT[_O, O1],
+        BT[_O, O2],
+        BT[_O, O3],
+        BT[_O, O4],
+        AT[_O, O5],
+        BT[_O, O6],
+        BT[_O, O7],
     ],
     tuple[
-        BT[_O, O1], BT[_O, O2], BT[_O, O3], BT[_O, O4], BT[_O, O5], AT[_O, O6], BT[_O, O7]
+        BT[_O, O1],
+        BT[_O, O2],
+        BT[_O, O3],
+        BT[_O, O4],
+        BT[_O, O5],
+        AT[_O, O6],
+        BT[_O, O7],
     ],
     tuple[
-        BT[_O, O1], BT[_O, O2], BT[_O, O3], BT[_O, O4], BT[_O, O5], BT[_O, O6], AT[_O, O7]
+        BT[_O, O1],
+        BT[_O, O2],
+        BT[_O, O3],
+        BT[_O, O4],
+        BT[_O, O5],
+        BT[_O, O6],
+        AT[_O, O7],
     ],
 ]

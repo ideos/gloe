@@ -2,7 +2,9 @@ from types import GenericAlias
 from typing import TypeVar, get_origin
 
 
-def _format_tuple(tuple_annotation: tuple, generic_input_param, input_annotation) -> str:
+def _format_tuple(
+    tuple_annotation: tuple, generic_input_param, input_annotation
+) -> str:
     formatted: list[str] = []
     for annotation in tuple_annotation:
         formatted.append(
@@ -11,7 +13,9 @@ def _format_tuple(tuple_annotation: tuple, generic_input_param, input_annotation
     return f"({', '.join(formatted)})"
 
 
-def _format_union(tuple_annotation: tuple, generic_input_param, input_annotation) -> str:
+def _format_union(
+    tuple_annotation: tuple, generic_input_param, input_annotation
+) -> str:
     formatted: list[str] = []
     for annotation in tuple_annotation:
         formatted.append(
@@ -35,9 +39,9 @@ def _format_generic_alias(
 def _format_return_annotation(
     return_annotation, generic_input_param, input_annotation
 ) -> str:
-    if type(return_annotation) is str:
+    if isinstance(return_annotation, str):
         return return_annotation
-    if type(return_annotation) is tuple:
+    if isinstance(return_annotation, tuple):
         return _format_tuple(return_annotation, generic_input_param, input_annotation)
     if return_annotation.__name__ in {"tuple", "Tuple"}:
         return _format_tuple(
@@ -47,7 +51,9 @@ def _format_return_annotation(
         return _format_union(
             return_annotation.__args__, generic_input_param, input_annotation
         )
-    if type(return_annotation) is GenericAlias:  # _GenericAlias must be investigated too
+    if (
+        type(return_annotation) is GenericAlias
+    ):  # _GenericAlias must be investigated too
         return _format_generic_alias(
             return_annotation, generic_input_param, input_annotation
         )

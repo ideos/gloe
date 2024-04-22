@@ -73,12 +73,12 @@ html_sidebars: dict[str, list[str]] = {
 # autodoc_default_options = {"ignore-module-all": True}
 
 html_static_path = ["_static"]
-html_css_files = ["theme_customs.css"]
+# html_css_files = ["theme_customs.css"]
 html_favicon = "_static/assets/favicon.ico"
 html_theme_options = {
     # "main_nav_links": {"Docs": "/index", "About": "/about"},
-    "light_logo": "assets/gloe-logo-small.png",
-    "dark_logo": "assets/gloe-logo-small.png",
+    "light_logo": "assets/gloe-logo-small.webp",
+    "dark_logo": "assets/gloe-logo-small.webp",
     "dark_css_variables": {
         "color-brand-primary": "#00e6bf",
         "color-brand-content": "#00e6bf",
@@ -110,3 +110,12 @@ html_theme_options = {
 # pygments_style = "styles.GloeStyle"
 pygments_dark_style = "styles.GloeDarkStyle"
 pygments_light_style = "styles.GloeLightStyle"
+
+
+def source_read_handler(app, pagename, templatename, context, doctree):
+    if context["pageurl"] == f"{html_baseurl}index.html":
+        context["pageurl"] = html_baseurl.rstrip("/")
+
+
+def setup(app):
+    app.connect("html-page-context", source_read_handler)

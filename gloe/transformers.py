@@ -151,7 +151,9 @@ class Transformer(BaseTransformer[_I, _O], ABC):
         pass
 
     @overload
-    def __rshift__(self, next_node: AsyncTransformer[_O, O1]) -> AsyncTransformer[_I, O1]:
+    def __rshift__(
+        self, next_node: AsyncTransformer[_O, O1]
+    ) -> AsyncTransformer[_I, O1]:
         pass
 
     @overload

@@ -153,7 +153,8 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         if self.previous is not None:
             if type(self.previous) is tuple:
                 new_previous: list[BaseTransformer] = [
-                    previous_transformer.copy() for previous_transformer in self.previous
+                    previous_transformer.copy()
+                    for previous_transformer in self.previous
                 ]
                 copied._previous = cast(PreviousTransformer, tuple(new_previous))
             elif isinstance(self.previous, BaseTransformer):
@@ -317,9 +318,9 @@ class BaseTransformer(Generic[_In, _Out], ABC):
             net.add_nodes_from(child_net.nodes.data())
             net.add_edges_from(child_net.edges.data())
 
-            child_root_node = [n for n in child_net.nodes if child_net.in_degree(n) == 0][
-                0
-            ]
+            child_root_node = [
+                n for n in child_net.nodes if child_net.in_degree(n) == 0
+            ][0]
             child_final_node = [
                 n for n in child_net.nodes if child_net.out_degree(n) == 0
             ][0]
@@ -385,7 +386,8 @@ class BaseTransformer(Generic[_In, _Out], ABC):
                 previous_node_id = previous.node_id
 
                 if len(previous.children) == 0 and (
-                    not previous.plotting_settings.invisible or previous.previous is None
+                    not previous.plotting_settings.invisible
+                    or previous.previous is None
                 ):
                     previous_node_id = previous._add_net_node(net)
                     net.add_edge(
@@ -418,7 +420,9 @@ class BaseTransformer(Generic[_In, _Out], ABC):
                 net.edges[u, v]["label"] = ""
 
         agraph = nx.nx_agraph.to_agraph(net)
-        subgraphs: Iterable[tuple] = groupby(boxed_nodes, key=lambda x: x[1]["parent_id"])
+        subgraphs: Iterable[tuple] = groupby(
+            boxed_nodes, key=lambda x: x[1]["parent_id"]
+        )
         for parent_id, nodes in subgraphs:
             nodes = list(nodes)
             node_ids = [node[0] for node in nodes]

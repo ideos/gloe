@@ -88,7 +88,9 @@ class TestTransformerTypes(unittest.TestCase):
             >> square_root
             >> (to_string, square, to_string, square, to_string, square)
         )
-        assert_type(graph6, Transformer[float, tuple[str, float, str, float, str, float]])
+        assert_type(
+            graph6, Transformer[float, tuple[str, float, str, float, str, float]]
+        )
 
         graph7 = (
             square
@@ -104,7 +106,9 @@ class TestTransformerTypes(unittest.TestCase):
         Test the most simple transformer typing
         """
 
-        conditioned_graph = square >> square_root >> if_not_zero.Then(plus1).Else(minus1)
+        conditioned_graph = (
+            square >> square_root >> if_not_zero.Then(plus1).Else(minus1)
+        )
 
         assert_type(conditioned_graph, Transformer[float, float])
 

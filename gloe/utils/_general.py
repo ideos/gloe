@@ -1,10 +1,7 @@
 import sys
-from typing import Any, Tuple, TypeVar, Generic
-
+from typing import Any, TypeVar, Generic, Iterable
 from gloe.functional import transformer
 from gloe.transformers import Transformer
-
-__all__ = ["forget", "debug", "forward", "forward_incoming"]
 
 _In = TypeVar("_In")
 _Out = TypeVar("_Out")
@@ -52,7 +49,32 @@ class forward(Generic[_In], Transformer[_In, _In]):
         return data
 
 
+class bypass(Generic[_In], Transformer[_In, _In]):
+    def __init__(self, transformer: Transformer[_In, Any]):
+        super().__init__()
+        self.transformer = transformer
+        self.plotting_settings.invisible = True
+
+    def transform(self, data: _In) -> _In:
+        self.transformer(data)
+        return data
+
+
 def forward_incoming(
     inner_transformer: Transformer[_In, _Out]
-) -> Transformer[_In, Tuple[_Out, _In]]:
+) -> Transformer[_In, tuple[_Out, _In]]:
     return forward[_In]() >> (inner_transformer, forward())
+
+
+class flatten(Transformer[Iterable[_In | Iterable[_In]], Iterable[_In]]):
+    def transform(self, nested_list: Iterable[_In | Iterable[_In]]) -> Iterable[_In]:
+        flat_list = []
+        for inner_item in nested_list:
+            if isinstance(inner_item, Iterable):
+                if isinstance(inner_item, list):
+                    flat_list += inner_item
+                else:
+                    flat_list += list(inner_item)
+            else:
+                flat_list.append(inner_item)
+        return flat_list

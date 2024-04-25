@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gloe"
-version = "0.5.7"
+version = "0.5.8"
 authors = [
   { name="Samir Braga", email="samirchavess@gmail.com" },
 ]
@@ -20,7 +20,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    'typing_extensions~=4.7.1',
+    'typing_extensions^=4.7.1',
     'networkx~=3.1'
 ]
 

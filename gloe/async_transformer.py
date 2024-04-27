@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from inspect import Signature
-from typing import TypeVar, overload, cast, Callable, Generic, Union, Optional
+from typing import TypeVar, overload, cast, Callable, Generic, Optional
 
 from typing_extensions import Self
 

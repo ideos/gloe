@@ -18,7 +18,8 @@ from typing import (
     Iterable,
     get_args,
     get_origin,
-    Type, Optional,
+    Type,
+    Optional,
 )
 from uuid import UUID
 from itertools import groupby

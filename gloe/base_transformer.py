@@ -18,13 +18,12 @@ from typing import (
     Iterable,
     get_args,
     get_origin,
-    TypeAlias,
-    Type,
+    Type, Optional,
 )
 from uuid import UUID
 from itertools import groupby
 
-from typing_extensions import Self
+from typing_extensions import Self, TypeAlias
 
 from gloe._plotting_utils import PlottingSettings, NodeType, export_dot_props
 from gloe._typing_utils import _format_return_annotation
@@ -61,7 +60,7 @@ class TransformerException(Exception):
         self,
         internal_exception: Union["TransformerException", Exception],
         raiser_transformer: "BaseTransformer",
-        message: str | None = None,
+        message: Union[str, None] = None,
     ):
         self._internal_exception = internal_exception
         self.raiser_transformer = raiser_transformer
@@ -137,7 +136,7 @@ class BaseTransformer(Generic[_In, _Out], ABC):
 
     def _copy(
         self: Self,
-        transform: Callable[[Self, _In], _Out] | None = None,
+        transform: Optional[Callable[[Self, _In], _Out]] = None,
         regenerate_instance_id: bool = False,
         transform_method: str = "transform",
     ) -> Self:
@@ -168,7 +167,7 @@ class BaseTransformer(Generic[_In, _Out], ABC):
 
     def copy(
         self: Self,
-        transform: Callable[[Self, _In], _Out] | None = None,
+        transform: Optional[Callable[[Self, _In], _Out]] = None,
         regenerate_instance_id: bool = False,
     ) -> Self:
         return self._copy(transform, regenerate_instance_id)

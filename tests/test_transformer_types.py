@@ -2,7 +2,7 @@ import asyncio
 import os
 import unittest
 from pathlib import Path
-from typing import TypeVar, Iterable
+from typing import TypeVar, Iterable, Union
 from typing_extensions import assert_type
 
 from tests.lib.conditioners import if_not_zero, if_is_even
@@ -116,7 +116,7 @@ class TestTransformerTypes(unittest.TestCase):
             square >> square_root >> if_not_zero.Then(to_string).Else(square)
         )
 
-        assert_type(conditioned_graph2, Transformer[float, str | float])
+        assert_type(conditioned_graph2, Transformer[float, Union[str, float]])
 
     def _test_chained_condition_flow_types(self):
         """
@@ -127,7 +127,9 @@ class TestTransformerTypes(unittest.TestCase):
             if_is_even.Then(square).ElseIf(lambda x: x < 10).Then(to_string).ElseNone()
         )
 
-        assert_type(chained_conditions_graph, Transformer[float, float | str | None])
+        assert_type(
+            chained_conditions_graph, Transformer[float, Union[float, str, None]]
+        )
 
     def _test_partial_transformer(self):
         """

@@ -1,7 +1,17 @@
+import sys
 from dataclasses import dataclass
 from inspect import Signature
-from types import GenericAlias, UnionType
-from typing import Callable, Generic, Optional, TypeVar, Union
+from types import GenericAlias
+
+if sys.version_info >= (3, 10):
+    from types import UnionType
+from typing import (
+    Callable,
+    Generic,
+    Optional,
+    TypeVar,
+    Union,
+)
 
 from typing_extensions import Self
 
@@ -55,14 +65,26 @@ class ConditionerTransformer(
             impl.then_transformer.signature().return_annotation
             for impl in self.implications
         ] + [else_signature.return_annotation]
-        new_signature = else_signature.replace(
-            return_annotation=GenericAlias(UnionType, tuple(return_signature))
-        )
+
+        if sys.version_info >= (3, 10):
+            new_signature = else_signature.replace(
+                return_annotation=GenericAlias(
+                    UnionType,
+                    tuple(return_signature),
+                )
+            )
+        else:
+            new_signature = else_signature.replace(
+                return_annotation=GenericAlias(
+                    Union,  # type: ignore
+                    tuple(return_signature),
+                )
+            )
         return new_signature
 
     def copy(
         self,
-        transform: Callable[[Self, In], Union[ThenOut, ElseOut]] | None = None,
+        transform: Union[Callable[[Self, In], Union[ThenOut, ElseOut]], None] = None,
         regenerate_instance_id: bool = False,
     ) -> Self:
         copied: Self = super().copy(transform, regenerate_instance_id)
@@ -174,7 +196,7 @@ class If(Generic[In]):
         name: optional argument that adds a label to condition node during plotting.
     """
 
-    def __init__(self, condition: Callable[[In], bool], name: str | None = None):
+    def __init__(self, condition: Callable[[In], bool], name: Union[str, None] = None):
         super().__init__()
         self._condition = condition
         self._name: str = name or condition.__name__

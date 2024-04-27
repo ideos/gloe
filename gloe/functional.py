@@ -4,12 +4,11 @@ from inspect import Signature
 from types import FunctionType
 from typing import (
     Callable,
-    Concatenate,
-    ParamSpec,
     TypeVar,
     cast,
     Awaitable,
 )
+from typing_extensions import Concatenate, ParamSpec
 
 from gloe.async_transformer import AsyncTransformer
 from gloe.transformers import Transformer

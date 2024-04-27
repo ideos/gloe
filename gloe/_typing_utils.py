@@ -43,11 +43,15 @@ def _format_return_annotation(
         return return_annotation
     if isinstance(return_annotation, tuple):
         return _format_tuple(return_annotation, generic_input_param, input_annotation)
-    if return_annotation.__name__ in {"tuple", "Tuple"}:
+    return_name = getattr(return_annotation, "__name__", None)
+    if return_name is None:
+        return_name = getattr(return_annotation, "_name", None)
+
+    if return_name in {"tuple", "Tuple"}:
         return _format_tuple(
             return_annotation.__args__, generic_input_param, input_annotation
         )
-    if return_annotation.__name__ in {"Union"}:
+    if return_name in {"Union"}:
         return _format_union(
             return_annotation.__args__, generic_input_param, input_annotation
         )

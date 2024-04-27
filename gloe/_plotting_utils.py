@@ -24,17 +24,14 @@ class PlottingSettings:
 def export_dot_props(settings: PlottingSettings, instance_id: UUID) -> dict[str, Any]:
     node_props: dict[str, Any] = {"shape": "box"}
 
-    match settings.node_type:
-        case NodeType.Condition:
-            node_props = {"shape": "diamond", "style": "filled", "port": "n"}
-        case NodeType.Convergent:
-            node_props = {
-                "shape": "diamond",
-                "width": 0.5,
-                "height": 0.5,
-            }
-        case _:
-            pass
+    if settings.node_type == NodeType.Condition:
+        node_props = {"shape": "diamond", "style": "filled", "port": "n"}
+    elif settings.node_type == NodeType.Convergent:
+        node_props = {
+            "shape": "diamond",
+            "width": 0.5,
+            "height": 0.5,
+        }
 
     if settings.has_children:
         node_props = node_props | {

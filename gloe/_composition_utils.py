@@ -2,7 +2,7 @@ import asyncio
 import types
 from inspect import Signature
 from types import GenericAlias
-from typing import TypeVar, Any, cast, Optional
+from typing import TypeVar, Any, cast, Optional, Union
 
 from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe.async_transformer import AsyncTransformer
@@ -78,7 +78,7 @@ def _compose_serial(transformer1, _transformer2):
         def __len__(self):
             return len(transformer1) + len(transformer2)
 
-    new_transformer: BaseTransformer | None = None
+    new_transformer: Optional[BaseTransformer] = None
     if is_transformer(transformer1) and is_transformer(_transformer2):
 
         class NewTransformer1(BaseNewTransformer, Transformer[_In, _NextOut]):
@@ -248,7 +248,7 @@ def _compose_diverging(
 
 def _compose_nodes(
     current: BaseTransformer,
-    next_node: tuple | BaseTransformer,
+    next_node: Union[tuple, BaseTransformer],
 ):
     if issubclass(type(current), BaseTransformer):
         if issubclass(type(next_node), BaseTransformer):

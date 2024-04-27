@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from inspect import Signature
 
-from typing import TypeVar, overload, cast, TypeAlias
+from typing import TypeVar, overload, cast, Optional
+from typing_extensions import TypeAlias
 
 from gloe.async_transformer import AsyncTransformer
 from gloe._transformer_utils import catch_transformer_exception
@@ -73,7 +74,7 @@ class Transformer(BaseTransformer[_I, _O], ABC):
     def __call__(self, data: _I) -> _O:
         transform_exception = None
 
-        transformed: _O | None = None
+        transformed: Optional[_O] = None
         try:
             transformed = self.transform(data)
         except Exception as exception:

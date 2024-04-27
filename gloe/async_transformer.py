@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from inspect import Signature
-from typing import TypeVar, overload, cast, Callable, Generic
+from typing import TypeVar, overload, cast, Callable, Generic, Optional
 
 from typing_extensions import Self
 
@@ -57,7 +57,7 @@ class AsyncTransformer(Generic[_In, _Out], BaseTransformer[_In, _Out]):
     async def __call__(self, data: _In) -> _Out:
         transform_exception = None
 
-        transformed: _Out | None = None
+        transformed: Optional[_Out] = None
         try:
             transformed = await self.transform_async(data)
         except Exception as exception:
@@ -73,7 +73,7 @@ class AsyncTransformer(Generic[_In, _Out], BaseTransformer[_In, _Out]):
 
     def copy(
         self,
-        transform: Callable[[Self, _In], _Out] | None = None,
+        transform: Optional[Callable[[Self, _In], _Out]] = None,
         regenerate_instance_id: bool = False,
     ) -> Self:
         return self._copy(transform, regenerate_instance_id, "transform_async")

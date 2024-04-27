@@ -49,7 +49,7 @@ class forward(Generic[_In], Transformer[_In, _In]):
         return data
 
 
-class bypass(Generic[_In], Transformer[_In, _In]):
+class ghost(Generic[_In], Transformer[_In, _In]):
     def __init__(self, transformer: Transformer[_In, Any]):
         super().__init__()
         self.transformer = transformer
@@ -60,7 +60,7 @@ class bypass(Generic[_In], Transformer[_In, _In]):
         return data
 
 
-def forward_incoming(
+def attach(
     inner_transformer: Transformer[_In, _Out]
 ) -> Transformer[_In, tuple[_Out, _In]]:
     return forward[_In]() >> (inner_transformer, forward())

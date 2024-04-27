@@ -2,8 +2,8 @@ from gloe.utils._general import (
     forget,
     debug,
     forward,
-    forward_incoming,
-    bypass,
+    attach,
+    ghost,
     flatten,
 )
 from gloe.utils._pick import (
@@ -16,13 +16,14 @@ from gloe.utils._pick import (
     pick_last,
 )
 from gloe.utils._sequential import sequential
+from gloe.utils._split import split
 
 __all__ = [
     "forget",
     "debug",
     "forward",
-    "forward_incoming",
-    "bypass",
+    "attach",
+    "ghost",
     "pick_1st",
     "pick_2nd",
     "pick_3rd",
@@ -31,5 +32,6 @@ __all__ = [
     "pick_6th",
     "pick_last",
     "sequential",
+    "split",
     "flatten",
 ]

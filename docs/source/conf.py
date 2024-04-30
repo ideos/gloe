@@ -28,6 +28,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
     "sphinxext.opengraph",
+    "sphinxcontrib.katex",
     # "sphinx_autodoc_typehints",
     "myst_parser",
     "sphinx_copybutton",
@@ -57,10 +58,11 @@ autodoc_typehints = "description"
 autodoc_type_aliases = {
     "PreviousTransformer": "gloe.base_transformer.PreviousTransformer"
 }
+
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_title = "Gloe - Write a Better Python Code"
+html_title = "Gloe - Write a Better Python Flow"
 # html_logo = "assets/gloe-logo-small.png"
 html_theme = "furo"
 html_last_updated_fmt = ""

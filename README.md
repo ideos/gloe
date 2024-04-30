@@ -18,7 +18,7 @@
 
 ***
 
-# Write a Better Python Code
+# Write a Better Python Flow
 
 Gloe (pronounced /ɡloʊ/, like "glow") is a general-purpose library made to help developers create, maintain, document, and test both operational and flow-oriented code. It is particularly useful in data science and machine learning pipelines, as well as in servers and scripts, or any area where there is a gap between the code and the logical business understanding. Gloe is not intended to be used across an entire application or to replace existing libraries. Instead, it is built to integrate with other tools and to address areas where the code complexity may be higher than expected.
 

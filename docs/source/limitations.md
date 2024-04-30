@@ -1,12 +1,13 @@
 
 # Limitations
 
+(work-in-progress)=
 ## Work in progress
 
 The bellow limitations are already being investigated and will be released in the next versions.
 
 - **Parallel execution**: branches in a graph are not executed in parallel nor concurrently yet.
-- **Graph size limit**: Gloe was implemented using recursion to sequentially apply the transformations. Because of that, the graph size has a limit of nodes about 470, considering the default value of 1000 for the maximum depth of the Python interpreter stack. If you need an extremely large graph with thousands of nodes, you will need to [increase the recursion limit](https://docs.python.org/3/library/sys.html#sys.setrecursionlimit) or wait us to release a recursion free version.
+- **Graph size limit**: Gloe is implemented using recursion to sequentially apply the transformations. Because of that, the graph size has a limit of nodes about 470, considering the default value of 1000 for the maximum depth of the Python interpreter stack. If you need an extremely large graph with thousands of nodes, you will need to [increase the recursion limit](https://docs.python.org/3/library/sys.html#sys.setrecursionlimit) or wait us to release a recursion free version.
 
 ## Python limitations
 

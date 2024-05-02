@@ -37,12 +37,9 @@ Gloe (pronounced /ɡloʊ/, like "glow") is a general-purpose library made to hel
 - [Visualize you pipelines](https://gloe.ideos.com.br/getting-started/plotting.html) and the data flowing through it. ²
 - Use a functional approach to work with [conditions](https://gloe.ideos.com.br/getting-started/conditional-flows.html) and [collections](https://gloe.ideos.com.br/api-reference/gloe.collection.html).
 
-<small>
-<ol>
-<li>Gloe emerged in the context of a large application with extremely complex business logic. After transitioning the code to Gloe, maintenance efficiency improved by 200%, leading the entire team to adopt it widely.</li>
-<li>This feature is under development.</li>
-</ol>
-</small>
+<sub>1. Gloe emerged in the context of a large application with extremely complex business logic. After transitioning the code to Gloe, maintenance efficiency improved by 200%, leading the entire team to adopt it widely.</sub>
+
+<sub style="display: block; margin-top: -0.5rem;">2. This feature is under development.</sub>
 
 ## Example
 

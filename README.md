@@ -1,6 +1,6 @@
 
 <div align="center" style="margin-top: 2rem;">
-  <img src="https://github.com/ideos/gloe/raw/main/docs/source/_static/assets/gloe-logo.png"><br>
+  <img src="https://gloe.ideos.com.br/_static/assets/gloe-logo.png"><br>
 </div>
 
 
@@ -43,11 +43,11 @@ Gloe (pronounced /ɡloʊ/, like "glow") is a general-purpose library made to hel
 
 ## Example
 
-Consider the following pipeline. Its purpose is to send two types of promotion emails to users with a specific role.
+Consider the following pipeline. Its purpose is to send two types of promotional emails to users with specific roles. First, it extracts a role from an HTTP request, then fetches the users who belong to this role, sends the corresponding email to each group of users, and finally logs the results of the emails sent.
 
 ```python
 send_promotion = (
-    extract_role >>
+    extract_request_role >>
     get_users >> (
         filter_basic_subscription >> send_basic_subscription_promotion_email,
         filter_premium_subscription >> send_premium_subscription_promotion_email,
@@ -58,12 +58,12 @@ send_promotion = (
 
 By reading the code, do you think is it clear enough?
 
-When the manager asks you to send a promotion email to unsubscribed users as well, the refactor process is straightforward:
+When the manager asks you to include promotional emails for unsubscribed users as well, the refactoring process is straightforward:
 
 
 ```python
 send_promotion = (
-    extract_role >>
+    extract_request_role >>
     get_users >> (
         filter_basic_subscription >> send_basic_subscription_promotion_email,
         filter_premium_subscription >> send_premium_subscription_promotion_email,
@@ -75,9 +75,38 @@ send_promotion = (
 
 > See the [full code](https://gloe.ideos.com.br/getting-started/plotting.html).
 
-Finally, if you need to document it somewhere, you can just [plot it](https://gloe.ideos.com.br/getting-started/plotting.html).
+This pipeline can be invoked from a server, for example:
+
+```python
+@users_router.post('/send-promotion/:role')
+def send_promotion_emails_route(req: Request):
+    return send_promotion(req)
+```
+
+If you need to document it somewhere, you can just [plot it](https://gloe.ideos.com.br/getting-started/plotting.html).
 
 ![Graph for send_promotion](https://gloe.ideos.com.br/_images/graph_example.jpeg)
+
+If you don't need to extract the role within the pipeline beacuse you are using a web framework that already does it, like [FastAPI](https://fastapi.tiangolo.com/), you can remove the `extract_request_role` transformer. Since the incoming type for `get_users` is a string, the configuration would be:
+
+
+```python
+send_promotion = (
+    get_users >> (
+        filter_basic_subscription >> send_basic_subscription_promotion_email,
+        filter_premium_subscription >> send_premium_subscription_promotion_email,
+        filter_unsubscribed >> send_unsubscribed_promotion_email,
+    ) >>
+    log_emails_result
+)
+
+
+@users_router.post('/send-promotion/{role}')
+def send_promotion_emails_route(role: str):
+    return send_promotion(role)
+```
+
+We hope the above example illustrates how easily you can identify maintenance points and gain confidence that the rest of the code will continue to working properly, as long as the transformers' interfaces remain satisfied.
 
 ## Installing
 

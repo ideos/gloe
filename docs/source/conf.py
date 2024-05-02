@@ -84,6 +84,7 @@ html_theme_options = {
     "dark_css_variables": {
         "color-brand-primary": "#00e6bf",
         "color-brand-content": "#00e6bf",
+        "color-link--visited": "#14c9ee",
         "font-stack": "Roboto, sans-serif",
         "font-stack--monospace": "Courier, monospace",
         "font-size--normal": "Courier, monospace",

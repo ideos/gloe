@@ -1,3 +1,10 @@
+```{eval-rst} 
+:og:description: Gloe (pronounced like "glow") is a general-purpose library made to help developers create, maintain, document, and test both operational and flow-oriented code.
+
+.. meta::
+  :description: Gloe (pronounced like "glow") is a general-purpose library made to help developers create, maintain, document, and test both operational and flow-oriented code.
+```
+
 ```{include} ../../README.md
 ```
 

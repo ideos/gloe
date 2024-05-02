@@ -1,12 +1,12 @@
 
-<div align="center">
+<div align="center" style="margin-top: 2rem;">
   <img src="https://github.com/ideos/gloe/raw/main/docs/source/_static/assets/gloe-logo.png"><br>
 </div>
 
 
 
 | | | 
-| --- |----|
+| ---:|----|
 | Testing | [![CI - Test](https://github.com/ideos/gloe/actions/workflows/test.yml/badge.svg)](https://github.com/ideos/gloe/actions/workflows/test.yml) [![Coverage](https://codecov.io/github/ideos/gloe/coverage.svg?branch=main)](https://codecov.io/gh/ideos/gloe) |
 | Package | [![PyPI Latest Release](https://img.shields.io/pypi/v/gloe.svg?color=%2334D058)](https://pypi.org/project/gloe) [![Anaconda Latest Release](https://anaconda.org/conda-forge/gloe/badges/version.svg)](https://anaconda.org/conda-forge/gloe) [![Supported Python versions](https://img.shields.io/pypi/pyversions/gloe.svg?color=%2334D058)](https://pypi.org/project/gloe) |
 | Meta | [![License - Apache 2.0](https://img.shields.io/pypi/l/gloe.svg?color=%2304b367)](https://github.com/ideos/gloe/blob/main/LICENSE) |
@@ -16,11 +16,81 @@
 
 **Read the documentation**: [gloe.ideos.com.br](https://gloe.ideos.com.br)
 
+**Souce code**: [github.com/ideos/gloe](https://github.com/ideos/gloe)
+
+**FAQ**: [gloe.ideos.com.br/faq.html](https://gloe.ideos.com.br/faq.html)
+
 ***
 
 # Write a Better Python Flow
 
 Gloe (pronounced /ɡloʊ/, like "glow") is a general-purpose library made to help developers create, maintain, document, and test both operational and flow-oriented code. It is particularly useful in data science and machine learning pipelines, as well as in servers and scripts, or any area where there is a gap between the code and the logical business understanding. Gloe is not intended to be used across an entire application or to replace existing libraries. Instead, it is built to integrate with other tools and to address areas where the code complexity may be higher than expected.
+
+## Key Features
+
+- Use pure Python to write **type-safe** pipelines.
+- Express a pipeline as a set of **atomic**, **isolated**, **extensible** and **trackable** units of responsibility called [transformers](https://gloe.ideos.com.br/theory.html).
+- [Validate the input, the output and the changes between input and output](https://gloe.ideos.com.br/getting-started/ensurers.html) of transformers during execution.
+- [Mix sync and async](https://gloe.ideos.com.br/getting-started/async-transformers.html#async-pipelines) code without worrying about its concurrent nature.
+- Write a **readable** and **maintainable** code for extremely **complex flows**. ¹ 
+- Use it where and when you need it. Gloe does not require any significant changes to your existing workflow.
+- [Visualize you pipelines](https://gloe.ideos.com.br/getting-started/plotting.html) and the data flowing through it. ²
+- Use a functional approach to work with [conditions](https://gloe.ideos.com.br/getting-started/conditional-flows.html) and [collections](https://gloe.ideos.com.br/api-reference/gloe.collection.html).
+
+<sub>1. Gloe emerged in the context of a large application with extremely complex business logic. After transitioning the code to Gloe, maintenance efficiency improved by 200%, leading the entire team to adopt it widely.</sub>
+
+<sub style="display: block; margin-top: -0.5rem;">2. This feature is under development.</sub>
+
+## Example
+
+Consider the following pipeline. Its purpose is to send two types of promotion emails to users with a specific role.
+
+```python
+send_promotion = (
+    extract_role >>
+    get_users >> (
+        filter_basic_subscription >> send_basic_subscription_promotion_email,
+        filter_premium_subscription >> send_premium_subscription_promotion_email,
+    ) >>
+    log_emails_result
+)
+```
+
+By reading the code, do you think is it clear enough?
+
+When the manager asks you to send a promotion email to unsubscribed users as well, the refactor process is straightforward:
+
+
+```python
+send_promotion = (
+    extract_role >>
+    get_users >> (
+        filter_basic_subscription >> send_basic_subscription_promotion_email,
+        filter_premium_subscription >> send_premium_subscription_promotion_email,
+        filter_unsubscribed >> send_unsubscribed_promotion_email,
+    ) >>
+    log_emails_result
+)
+```
+
+> See the [full code](https://gloe.ideos.com.br/getting-started/plotting.html).
+
+Finally, if you need to document it somewhere, you can just [plot it](https://gloe.ideos.com.br/getting-started/plotting.html).
+
+![Graph for send_promotion](https://gloe.ideos.com.br/_images/graph_example.jpeg)
+
+## Installing
+
+```shell
+# PyPI
+pip install gloe
+```
+
+
+```shell
+# or conda
+conda install -c conda-forge gloe
+```
 
 ## Motivation
 
@@ -37,18 +107,6 @@ Gloe comes to turn this story coherent, logically organized and easy to follow. 
 
 Currently, unlike platforms like [Air Flow](https://airflow.apache.org/) that include scheduler backends for task orchestration, Gloe's primary purpose is to aid in development. The [graph structure](https://gloe.ideos.com.br/theory.html) aims to make the code [more flat and hence readable](https://en.wikibooks.org/wiki/Computer_Programming/Coding_Style/Minimize_nesting). However, it is important to note that Gloe does not offer functionalities for executing tasks in a dedicated environment, nor does it directly contribute to execution speed or scalability improvements.
 
-## Installing
-
-```shell
-# PyPI
-pip install gloe
-```
-
-
-```shell
-# or conda
-conda install -c conda-forge gloe
-```
 
 ## License
 

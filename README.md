@@ -87,7 +87,7 @@ If you need to document it somewhere, you can just [plot it](https://gloe.ideos.
 
 ![Graph for send_promotion](https://gloe.ideos.com.br/_images/graph_example.jpeg)
 
-If you don't need to extract the role within the pipeline beacuse you are using a web framework that already does it, like [FastAPI](https://fastapi.tiangolo.com/), you can remove the `extract_request_role` transformer. Since the incoming type for `get_users` is a string, the configuration would be:
+If you don't need to extract the role within the pipeline because you are using a web framework that already does it, like [FastAPI](https://fastapi.tiangolo.com/), you can remove the `extract_request_role` transformer. Since the incoming type for `get_users` is a string, the configuration would be:
 
 
 ```python

@@ -55,6 +55,20 @@ h3 {
 p {
     margin-bottom: 1.2rem;
 }
+
+html[data-content_root="./"] table thead th {
+    background: transparent;
+    border: none;
+}
+
+html[data-content_root="./"] table tbody td {
+    background: transparent;
+    border: none;
+}
+
+html[data-content_root="./"] table tbody td:first-child p::after {
+    content: ":";
+}
 </style>
 {% endblock %}
 

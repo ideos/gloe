@@ -45,6 +45,7 @@ Gloe (pronounced /ɡloʊ/, like "glow") is a general-purpose library made to hel
 
 Consider the following pipeline. Its purpose is to send two types of promotional emails to users with specific roles. First, it extracts a role from an HTTP request, then fetches the users who belong to this role, sends the corresponding email to each group of users, and finally logs the results of the emails sent.
 
+
 ```python
 send_promotion = (
     extract_request_role >>
@@ -55,11 +56,25 @@ send_promotion = (
     log_emails_result
 )
 ```
-
 By reading the code, do you think is it clear enough?
 
-When the manager asks you to include promotional emails for unsubscribed users as well, the refactoring process is straightforward:
+Each step of a Gloe pipeline is called a transformer and creating one is as easy as:
 
+```python
+from gloe import transformer
+
+@transformer
+def extract_request_role(req: Request) -> str:
+    # your logic goes here
+```
+
+You can connect many transformers using the right shift operator, just like the above example. When the argument of the `>>` is a tuple, you are creating branches. 
+
+> Learn more about [creating transformers](https://gloe.ideos.com.br/getting-started/transformers.html) and [pipelines](https://gloe.ideos.com.br/getting-started/transformers.html#building-a-pipeline).
+
+### Maintainance
+
+When the manager asks you to include promotional emails for unsubscribed users as well, the refactoring process is straightforward:
 
 ```python
 send_promotion = (
@@ -73,21 +88,50 @@ send_promotion = (
 )
 ```
 
-> See the [full code](https://gloe.ideos.com.br/getting-started/plotting.html).
+> See the [full code](https://gloe.ideos.com.br/getting-started/plotting.html) (transformers definition).
 
-This pipeline can be invoked from a server, for example:
+### Type checking
+
+If, by some chance, you connect two transformers with incompatible types, the IDE along with [Mypy](https://github.com/python/mypy) will warn you about the malformed pipeline.
+
+For example, suppose you implemented the `send_unsubscribed_promotion_email` transformer expecting a list of integer ids:
+
+```python
+@transformer
+def send_unsubscribed_promotion_email(ids: list[int]) -> Result:
+    ...
+```
+
+But the `filter_unsubscribed` transformer returns a list of users:
+
+```python
+@transformer
+def filter_unsubscribed(users: list[User]) -> list[User]:
+    ...
+```
+
+The result will be something like this:
+
+![Malformed pipeline example](https://gloe.ideos.com.br/_images/malformed-pipeline-example.jpeg)
+
+### Simple Usage
+
+Considering is everything okay about the types, this pipeline can be invoked from a server, for example:
 
 ```python
 @users_router.post('/send-promotion/:role')
 def send_promotion_emails_route(req: Request):
     return send_promotion(req)
 ```
+### Quick Documentation
 
-If you need to document it somewhere, you can just [plot it](https://gloe.ideos.com.br/getting-started/plotting.html).
+When you need to document it somewhere, you can just [plot it](https://gloe.ideos.com.br/getting-started/plotting.html).
 
 ![Graph for send_promotion](https://gloe.ideos.com.br/_images/graph_example.jpeg)
 
-If you don't need to extract the role within the pipeline because you are using a web framework that already does it, like [FastAPI](https://fastapi.tiangolo.com/), you can remove the `extract_request_role` transformer. Since the incoming type for `get_users` is a string, the configuration would be:
+### Integration 
+
+Suppose you don't need to extract the role within the pipeline because you are using a web framework that already does it, like [FastAPI](https://fastapi.tiangolo.com/), you can remove the `extract_request_role` transformer. Since the incoming type for `get_users` is string, the configuration would be:
 
 
 ```python

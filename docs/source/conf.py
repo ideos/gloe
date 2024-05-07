@@ -49,6 +49,9 @@ ogp_site_url = "https://gloe.ideos.com.br/"
 html_baseurl = "https://gloe.ideos.com.br/"
 sitemap_locales = [None]
 sitemap_url_scheme = "{link}"
+sitemap_excludes = [
+    "theory.html",
+]
 html_extra_path = ["_static/robots.txt"]
 ogp_description_length = 160
 

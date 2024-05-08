@@ -68,7 +68,7 @@ Just like in sync transformers, you can create [partial transformers](/getting-s
 from gloe import partial_async_transformer
 
 @partial_async_transformer
-def get_users_by_role(role: str, page: int = 0, page_size: int = 10) -> Page[User]:
+async def get_users_by_role(role: str, page: int = 0, page_size: int = 10) -> Page[User]:
     "Get users with a specific role. The response is paginated."
     ...
 

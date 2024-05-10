@@ -1,3 +1,4 @@
+import asyncio
 from abc import abstractmethod
 from inspect import Signature
 from typing import TypeVar, overload, cast, Callable, Generic, Optional
@@ -20,6 +21,19 @@ _O4 = TypeVar("_O4")
 _O5 = TypeVar("_O5")
 _O6 = TypeVar("_O6")
 _O7 = TypeVar("_O7")
+
+
+async def execute_async_ops(stacked_ops, arg):
+    result = arg
+    for op in stacked_ops:
+        if isinstance(op, list):
+            result = tuple([await execute_async_ops(nested, result) for nested in op])
+        else:
+            if asyncio.iscoroutinefunction(op._safe_transform):
+                result = await op._safe_transform(result)
+            else:
+                result = op._safe_transform(result)
+    return result
 
 
 class AsyncTransformer(Generic[_In, _Out], BaseTransformer[_In, _Out]):
@@ -48,13 +62,20 @@ class AsyncTransformer(Generic[_In, _Out], BaseTransformer[_In, _Out]):
         return self._signature(AsyncTransformer, "transform_async")
 
     def __repr__(self):
+        if len(self) == 1:
+            return (
+                f"{self.input_annotation}"
+                f" -> ({type(self).__name__})"
+                f" -> {self.output_annotation}"
+            )
+
         return (
             f"{self.input_annotation}"
-            f" -> ({type(self).__name__})"
+            f" -> ({len(self)} transformers omitted)"
             f" -> {self.output_annotation}"
         )
 
-    async def __call__(self, data: _In) -> _Out:
+    async def _safe_transform(self, data: _In) -> _Out:
         transform_exception = None
 
         transformed: Optional[_Out] = None
@@ -70,6 +91,9 @@ class AsyncTransformer(Generic[_In, _Out], BaseTransformer[_In, _Out]):
             return cast(_Out, transformed)
 
         raise NotImplementedError  # pragma: no cover
+
+    async def __call__(self, data: _In) -> _Out:
+        return await execute_async_ops(self._flow, data)
 
     def copy(
         self,

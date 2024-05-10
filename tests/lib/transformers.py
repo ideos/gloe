@@ -1,7 +1,8 @@
+import asyncio
 import math
 
 from tests.lib.exceptions import LnOfNegativeNumber
-from gloe import transformer, partial_transformer
+from gloe import transformer, partial_transformer, async_transformer
 
 
 @transformer
@@ -14,6 +15,12 @@ def plus1(num: float) -> float:
     """
     Sum 1 to the number
     """
+    return num + 1
+
+
+@async_transformer
+async def async_plus1(num: float) -> float:
+    await asyncio.sleep(0.00001)
     return num + 1
 
 
@@ -70,6 +77,15 @@ def duplicate(string: str) -> str:
 
 @transformer
 def natural_logarithm(num: float) -> float:
+    if num < 0:
+        raise LnOfNegativeNumber(num)
+    else:
+        return math.log(num, math.e)
+
+
+@async_transformer
+async def async_natural_logarithm(num: float) -> float:
+    await asyncio.sleep(0.00001)
     if num < 0:
         raise LnOfNegativeNumber(num)
     else:

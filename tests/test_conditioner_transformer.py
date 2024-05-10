@@ -74,7 +74,3 @@ class TestConditionerTransformer(unittest.TestCase):
         """
 
         self.assertEqual(8.0, len(conditioned_graph))
-
-
-if __name__ == "__main__":
-    unittest.main()

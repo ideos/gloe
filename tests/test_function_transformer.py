@@ -62,52 +62,52 @@ class TestFunctionTransformer(unittest.TestCase):
         ):
             _ = square >> (just_a_normal_function, plus1)  # type: ignore
 
-    def test_previous_property(self):
-        """
-        Test the previous property
-        """
-
-        linear_graph = square >> square_root
-
-        self.assertEqual(linear_graph.previous, square)
-
-        divergent_graph = (
-            square
-            >> square_root
-            >> (square >> (square_root, square_root), square >> square_root >> square)
-        )
-
-        previous: PreviousTransformer[BaseTransformer] = divergent_graph
-        for _ in range(8):
-            if previous is not None:
-                if type(previous) is tuple:
-                    previous = previous[0]
-                elif isinstance(previous, BaseTransformer):
-                    previous = previous.previous
-
-        self.assertIsNone(previous)
-
-    def test_visible_previous_property(self):
-        """
-        Test the previous property
-        """
-
-        linear_graph = square >> forward() >> square_root
-
-        self.assertEqual(linear_graph.visible_previous, square)
-
-        begin = forward[float]()
-        linear_graph2 = begin >> square_root
-
-        self.assertEqual(linear_graph2.visible_previous, begin)
-
-        graph3 = square >> (begin, square) >> forward()
-
-        self.assertEqual(graph3.visible_previous, graph3.previous)
-
-        graph4 = square
-
-        self.assertIsNone(graph4.visible_previous)
+    # def test_previous_property(self):
+    #     """
+    #     Test the previous property
+    #     """
+    #
+    #     linear_graph = square >> square_root
+    #
+    #     self.assertEqual(linear_graph.previous, square)
+    #
+    #     divergent_graph = (
+    #         square
+    #         >> square_root
+    #         >> (square >> (square_root, square_root), square >> square_root >> square)
+    #     )
+    #
+    #     previous: PreviousTransformer[BaseTransformer] = divergent_graph
+    #     for _ in range(8):
+    #         if previous is not None:
+    #             if type(previous) is tuple:
+    #                 previous = previous[0]
+    #             elif isinstance(previous, BaseTransformer):
+    #                 previous = previous.previous
+    #
+    #     self.assertIsNone(previous)
+    #
+    # def test_visible_previous_property(self):
+    #     """
+    #     Test the previous property
+    #     """
+    #
+    #     linear_graph = square >> forward() >> square_root
+    #
+    #     self.assertEqual(linear_graph.visible_previous, square)
+    #
+    #     begin = forward[float]()
+    #     linear_graph2 = begin >> square_root
+    #
+    #     self.assertEqual(linear_graph2.visible_previous, begin)
+    #
+    #     graph3 = square >> (begin, square) >> forward()
+    #
+    #     self.assertEqual(graph3.visible_previous, graph3.previous)
+    #
+    #     graph4 = square
+    #
+    #     self.assertIsNone(graph4.visible_previous)
 
     def test_divergence_flow(self):
         """
@@ -171,7 +171,7 @@ class TestFunctionTransformer(unittest.TestCase):
         """
         graph = plus1
 
-        max_iters = 475
+        max_iters = 1500
         for i in range(max_iters):
             graph = graph >> plus1
 
@@ -275,7 +275,7 @@ class TestFunctionTransformer(unittest.TestCase):
 
         graph = minus1 >> natural_logarithm
         try:
-            graph(0)
+            graph(-1)
         except LnOfNegativeNumber as exception:
             self.assertEqual(type(exception.__cause__), TransformerException)
 

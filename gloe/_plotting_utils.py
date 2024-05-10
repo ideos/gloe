@@ -18,6 +18,7 @@ class PlottingSettings:
     has_children: bool = False
     invisible: bool = False
     is_async: bool = False
+    is_gateway: bool = False
     parent_id: Optional[str] = None
 
 

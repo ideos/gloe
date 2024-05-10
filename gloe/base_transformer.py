@@ -78,18 +78,22 @@ _In = TypeVar("_In", contravariant=True)
 _Out = TypeVar("_Out", covariant=True)
 
 
+_FlowItem = Union["BaseTransformer", list["_FlowItem"]]
+Flow = list[_FlowItem]
+
+
 class BaseTransformer(Generic[_In, _Out], ABC):
     def __init__(self):
-        self._previous: PreviousTransformer["BaseTransformer"] = None
         self._children: TransformerChildren = []
         self.id = uuid.uuid4()
         self.instance_id = uuid.uuid4()
+        self.is_atomic = False
         self._label = self.__class__.__name__
         self._plotting_settings: PlottingSettings = PlottingSettings(
             invisible=False,
             node_type=NodeType.Transformer,
         )
-        self.events = []
+        self._flow: Flow = [self]
 
     @property
     def label(self) -> str:
@@ -111,14 +115,6 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         transformers are called children transformers.
         """
         return self._children
-
-    @property
-    def previous(self) -> PreviousTransformer["BaseTransformer"]:
-        """
-        Previous transformers. It can be None (when the transformer is the first of its
-        pipeline), a single transformer, or a tuple of many transformers.
-        """
-        return self._previous
 
     @property
     def plotting_settings(self) -> PlottingSettings:
@@ -150,20 +146,21 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         if regenerate_instance_id:
             copied.instance_id = uuid.uuid4()
 
-        if self.previous is not None:
-            if type(self.previous) is tuple:
-                new_previous: list[BaseTransformer] = [
-                    previous_transformer.copy()
-                    for previous_transformer in self.previous
-                ]
-                copied._previous = cast(PreviousTransformer, tuple(new_previous))
-            elif isinstance(self.previous, BaseTransformer):
-                copied._previous = self.previous.copy()
+        # if self.previous is not None:
+        #     if type(self.previous) is tuple:
+        #         new_previous: list[BaseTransformer] = [
+        #             previous_transformer.copy()
+        #             for previous_transformer in self.previous
+        #         ]
+        #         copied._previous = cast(PreviousTransformer, tuple(new_previous))
+        #     elif isinstance(self.previous, BaseTransformer):
+        #         copied._previous = self.previous.copy()
 
         copied._children = [
             child.copy(regenerate_instance_id=True) for child in self.children
         ]
-
+        if len(self) == 1:
+            copied._flow = [copied]
         return copied
 
     def copy(
@@ -188,15 +185,6 @@ class BaseTransformer(Generic[_In, _Out], ABC):
             nodes = {**nodes, **child.graph_nodes}
 
         return nodes
-
-    def _set_previous(self, previous: PreviousTransformer):
-        if self.previous is None:
-            self._previous = previous
-        elif type(self.previous) is tuple:
-            for previous_transformer in self.previous:
-                previous_transformer._set_previous(previous)
-        elif isinstance(self.previous, BaseTransformer):
-            self.previous._set_previous(previous)
 
     @abstractmethod
     def signature(self) -> Signature:
@@ -289,24 +277,6 @@ class BaseTransformer(Generic[_In, _Out], ABC):
     @property
     def node_id(self) -> str:
         return str(self.instance_id)
-
-    @cached_property
-    def visible_previous(self) -> PreviousTransformer["BaseTransformer"]:
-        previous = self.previous
-
-        if isinstance(previous, BaseTransformer):
-            if previous.plotting_settings.invisible:
-                if previous.previous is None:
-                    return previous
-
-                if type(previous.previous) is tuple:
-                    return previous.previous
-
-                return previous.visible_previous
-            else:
-                return previous
-
-        return previous
 
     def _add_children_subgraph(self, net: DiGraph, next_node: "BaseTransformer"):
         next_node_id = next_node.node_id

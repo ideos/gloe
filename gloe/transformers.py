@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 from inspect import Signature
 
-from typing import TypeVar, overload, cast, Optional
+from typing import TypeVar, overload, cast, Optional, Any
 from typing_extensions import TypeAlias
 
 from gloe.async_transformer import AsyncTransformer
 from gloe._transformer_utils import catch_transformer_exception
-from gloe.base_transformer import BaseTransformer
+from gloe.base_transformer import BaseTransformer, Flow
 
 from gloe._generic_types import (
     AsyncNext2,
@@ -33,6 +33,16 @@ O5 = TypeVar("O5")
 O6 = TypeVar("O6")
 O7 = TypeVar("O7")
 To = TypeVar("To", bound=BaseTransformer)
+
+
+def execute_ops(flow: Flow, arg: Any):
+    result = arg
+    for op in flow:
+        if isinstance(op, Transformer):
+            result = op._safe_transform(result)
+        elif isinstance(op, list):
+            result = tuple([execute_ops(nested, result) for nested in op])
+    return result
 
 
 class Transformer(BaseTransformer[_I, _O], ABC):
@@ -65,13 +75,20 @@ class Transformer(BaseTransformer[_I, _O], ABC):
         return self._signature(Transformer)
 
     def __repr__(self):
+        if len(self) == 1:
+            return (
+                f"{self.input_annotation}"
+                f" -> ({type(self).__name__})"
+                f" -> {self.output_annotation}"
+            )
+
         return (
             f"{self.input_annotation}"
-            f" -> ({type(self).__name__})"
+            f" -> ({len(self)} transformers omitted)"
             f" -> {self.output_annotation}"
         )
 
-    def __call__(self, data: _I) -> _O:
+    def _safe_transform(self, data: _I) -> _O:
         transform_exception = None
 
         transformed: Optional[_O] = None
@@ -86,7 +103,10 @@ class Transformer(BaseTransformer[_I, _O], ABC):
         if type(transformed) is not None:
             return cast(_O, transformed)
 
-        raise NotImplementedError()  # pragma: no cover
+        raise NotImplementedError()
+
+    def __call__(self, data: _I) -> _O:  # pragma: no cover
+        return execute_ops(self._flow, data)
 
     @overload
     def __rshift__(self, next_node: "Transformer[_O, O1]") -> "Transformer[_I, O1]":

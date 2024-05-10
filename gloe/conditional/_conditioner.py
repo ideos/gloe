@@ -55,9 +55,9 @@ class ConditionerTransformer(
     def transform(self, data: In) -> Union[ThenOut, ElseOut]:
         for implication in self.implications:
             if implication.condition(data):
-                return implication.then_transformer.transform(data)
+                return implication.then_transformer(data)
 
-        return self.else_transformer.transform(data)
+        return self.else_transformer(data)
 
     def signature(self) -> Signature:
         else_signature: Signature = self.else_transformer.signature()

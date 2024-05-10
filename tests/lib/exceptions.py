@@ -14,6 +14,10 @@ class NumbersNotEqual(Exception):
     pass
 
 
+class NumbersEqual(Exception):
+    pass
+
+
 class LnOfNegativeNumber(Exception):
     def __init__(self, num: float):
         super().__init__(

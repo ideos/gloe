@@ -15,11 +15,12 @@ def catch_transformer_exception(
         transformer_frames = [
             frame
             for frame in tb
-            if frame.name == transformer_name or frame.name == "transform"
+            if frame.name == transformer_name
+            or frame.name in ["transform", "transform_async"]
         ]
 
-        if len(transformer_frames) == 1:
-            transformer_frame = transformer_frames[0]
+        if len(transformer_frames) >= 1:
+            transformer_frame = transformer_frames[-1]
             exception_message = (
                 f"\n  "
                 f'File "{transformer_frame.filename}", line {transformer_frame.lineno},'

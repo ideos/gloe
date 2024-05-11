@@ -296,7 +296,7 @@ class TestTransformerTypes(unittest.TestCase):
             matches = re.findall(r"^[a-z_]+\.py:(\d+): error: (.+)", error)
             line_number, error = matches[0]
             if start_line <= int(line_number) <= end_line:
-                mypy_error = re.sub(r"\[assert-type\]$", "", error)
+                mypy_error = re.sub(r" \[assert-type\]$", "", error)
                 raise AssertionError(mypy_error)
 
 

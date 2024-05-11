@@ -93,21 +93,21 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
 
         result = await test_forward(_URL)
 
-        self.assertDictEqual(result, _DATA)
+        self.assertDictEqual(_DATA, result)
 
     async def test_begin_with_transformer(self):
         test_forward = forward[str]() >> request_data
 
         result = await test_forward(_URL)
 
-        self.assertDictEqual(result, _DATA)
+        self.assertDictEqual(_DATA, result)
 
     async def test_async_on_divergent_connection(self):
         test_forward = forward[str]() >> (forward[str](), request_data)
 
         result = await test_forward(_URL)
 
-        self.assertEqual(result, (_URL, _DATA))
+        self.assertEqual((_URL, _DATA), result)
 
     async def test_divergent_connection_from_async(self):
         test_forward = request_data >> (
@@ -117,7 +117,7 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
 
         result = await test_forward(_URL)
 
-        self.assertEqual(result, (_DATA, _DATA))
+        self.assertEqual((_DATA, _DATA), result)
 
     async def test_partial_async_transformer(self):
         @partial_async_transformer
@@ -253,7 +253,7 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
 
         pipeline = pipeline.copy()
         result = await pipeline(_URL)
-        self.assertEqual(result, _DATA)
+        self.assertEqual(_DATA, result)
 
     def test_async_transformer_wrong_signature(self):
         with self.assertWarns(RuntimeWarning):

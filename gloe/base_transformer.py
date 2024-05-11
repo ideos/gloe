@@ -3,7 +3,6 @@ import types
 import uuid
 import inspect
 from abc import ABC, abstractmethod
-from functools import cached_property
 from inspect import Signature
 
 import networkx as nx
@@ -14,7 +13,6 @@ from typing import (
     Generic,
     TypeVar,
     Union,
-    cast,
     Iterable,
     get_args,
     get_origin,

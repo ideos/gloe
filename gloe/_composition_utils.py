@@ -1,8 +1,7 @@
-import asyncio
 import types
 from inspect import Signature
 from types import GenericAlias
-from typing import TypeVar, Any, cast, Optional, Union
+from typing import TypeVar, Any, Optional, Union
 
 from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe.async_transformer import AsyncTransformer

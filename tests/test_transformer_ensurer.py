@@ -20,7 +20,6 @@ from gloe import (
     ensure,
     transformer,
     partial_transformer,
-    UnsupportedTransformerArgException,
     Transformer,
 )
 from tests.lib.transformers import square, divide_by_2, plus1, identity, times2

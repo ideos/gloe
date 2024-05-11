@@ -2,7 +2,6 @@ import asyncio
 import unittest
 from typing import cast
 
-from gloe.utils import forward
 from tests.lib.transformers import (
     square,
     square_root,
@@ -18,8 +17,6 @@ from gloe import (
     TransformerException,
     UnsupportedTransformerArgException,
     transformer,
-    PreviousTransformer,
-    BaseTransformer,
 )
 
 

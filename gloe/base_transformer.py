@@ -169,18 +169,12 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         return self._copy(transform, regenerate_instance_id)
 
     @property
-    def graph_nodes(self) -> dict[UUID, "BaseTransformer"]:
-        nodes = {self.instance_id: self}
+    def graph_nodes(self) -> dict[UUID, Optional["BaseTransformer"]]:
+        graph = self.graph()
 
-        if self.previous is not None:
-            if type(self.previous) is tuple:
-                for prev in self.previous:
-                    nodes = {**nodes, **prev.graph_nodes}
-            elif isinstance(self.previous, BaseTransformer):
-                nodes = {**nodes, **self.previous.graph_nodes}
-
-        for child in self.children:
-            nodes = {**nodes, **child.graph_nodes}
+        nodes = {}
+        for node_id, attrs in graph.nodes.items():
+            nodes[node_id] = attrs.get("transformer")
 
         return nodes
 
@@ -256,7 +250,12 @@ class BaseTransformer(Generic[_In, _Out], ABC):
     def _add_net_node(self, net: Graph, custom_data: dict[str, Any] = {}):
         node_id = self.node_id
         graph_node_props = export_dot_props(self.plotting_settings, self.instance_id)
-        props = {**graph_node_props, **custom_data, "label": self.label}
+        props = {
+            **graph_node_props,
+            **custom_data,
+            "label": self.label,
+            "transformer": self,
+        }
         if node_id not in net.nodes:
             net.add_node(node_id, **props)
         else:
@@ -314,66 +313,111 @@ class BaseTransformer(Generic[_In, _Out], ABC):
                     child_final_node, next_node_id, label=next_node.input_annotation
                 )
 
+    # def _dag(
+    #     self,
+    #     net: DiGraph,
+    #     next_node: Union["BaseTransformer", None] = None,
+    #     custom_data: dict[str, Any] = {},
+    # ):
+    #     in_nodes = [edge[1] for edge in net.in_edges()]
+    #
+    #     previous = self.previous
+    #     if previous is not None:
+    #         if type(previous) is tuple:
+    #             if self.plotting_settings.invisible and next_node is not None:
+    #                 next_node_id = next_node._add_net_node(net)
+    #                 _next_node = next_node
+    #             else:
+    #                 next_node_id = self._add_net_node(net, custom_data)
+    #                 _next_node = self
+    #
+    #             for prev in previous:
+    #                 previous_node_id = prev.node_id
+    #
+    #                 # TODO: check the impact of the below line to the Mapper transformer
+    #                 if not prev.plotting_settings.invisible and len(prev.children) == 0:
+    #                     net.add_edge(
+    #                         previous_node_id, next_node_id, label=prev.output_annotation
+    #                     )
+    #
+    #                 if previous_node_id not in in_nodes:
+    #                     prev._dag(net, _next_node, custom_data)
+    #
+    #         elif isinstance(previous, BaseTransformer):
+    #             if self.plotting_settings.invisible and next_node is not None:
+    #                 next_node_id = next_node._add_net_node(net)
+    #                 _next_node = next_node
+    #             else:
+    #                 next_node_id = self._add_net_node(net, custom_data)
+    #                 _next_node = self
+    #
+    #             previous_node_id = previous.node_id
+    #
+    #             if len(previous.children) == 0 and (
+    #                 not previous.plotting_settings.invisible
+    #                 or previous.previous is None
+    #             ):
+    #                 previous_node_id = previous._add_net_node(net)
+    #                 net.add_edge(
+    #                     previous_node_id, next_node_id, label=previous.output_annotation
+    #                 )
+    #
+    #             if previous_node_id not in in_nodes:
+    #                 previous._dag(net, _next_node, custom_data)
+    #     else:
+    #         self._add_net_node(net, custom_data)
+    #
+    #     if len(self.children) > 0 and next_node is not None:
+    #         self._add_children_subgraph(net, next_node)
     def _dag(
         self,
-        net: DiGraph,
-        next_node: Union["BaseTransformer", None] = None,
-        custom_data: dict[str, Any] = {},
-    ):
-        in_nodes = [edge[1] for edge in net.in_edges()]
-
-        previous = self.previous
-        if previous is not None:
-            if type(previous) is tuple:
-                if self.plotting_settings.invisible and next_node is not None:
-                    next_node_id = next_node._add_net_node(net)
-                    _next_node = next_node
-                else:
-                    next_node_id = self._add_net_node(net, custom_data)
-                    _next_node = self
-
-                for prev in previous:
-                    previous_node_id = prev.node_id
-
-                    # TODO: check the impact of the below line to the Mapper transformer
-                    if not prev.plotting_settings.invisible and len(prev.children) == 0:
+        net: nx.DiGraph,
+        root_nodes: list[Union[str, "BaseTransformer"]],
+        flow: Flow,
+    ) -> list["BaseTransformer"]:
+        prev_nodes = root_nodes
+        for node in flow:
+            if isinstance(node, list):
+                last_nodes = []
+                for flow in node:
+                    last_node = self._dag(net, prev_nodes, flow)
+                    last_nodes.extend(last_node)
+                converge_id = str(uuid.uuid4())
+                net.add_node(converge_id, label="", shape="diamond")
+                for last_node in last_nodes:
+                    if isinstance(last_node, str):
+                        net.add_edge(last_node, converge_id)
+                    else:
                         net.add_edge(
-                            previous_node_id, next_node_id, label=prev.output_annotation
+                            last_node.node_id,
+                            converge_id,
+                            label=last_node.output_annotation,
                         )
-
-                    if previous_node_id not in in_nodes:
-                        prev._dag(net, _next_node, custom_data)
-            elif isinstance(previous, BaseTransformer):
-                if self.plotting_settings.invisible and next_node is not None:
-                    next_node_id = next_node._add_net_node(net)
-                    _next_node = next_node
-                else:
-                    next_node_id = self._add_net_node(net, custom_data)
-                    _next_node = self
-
-                previous_node_id = previous.node_id
-
-                if len(previous.children) == 0 and (
-                    not previous.plotting_settings.invisible
-                    or previous.previous is None
-                ):
-                    previous_node_id = previous._add_net_node(net)
-                    net.add_edge(
-                        previous_node_id, next_node_id, label=previous.output_annotation
-                    )
-
-                if previous_node_id not in in_nodes:
-                    previous._dag(net, _next_node, custom_data)
-        else:
-            self._add_net_node(net, custom_data)
-
-        if len(self.children) > 0 and next_node is not None:
-            self._add_children_subgraph(net, next_node)
+                prev_nodes = [converge_id]
+            else:
+                node_id = node._add_net_node(net)
+                for prev_node in prev_nodes:
+                    if isinstance(prev_node, str):
+                        net.add_edge(prev_node, node_id, label=node.input_annotation)
+                    else:
+                        net.add_edge(
+                            prev_node.node_id,
+                            node_id,
+                            label=prev_node.output_annotation,
+                        )
+                prev_nodes = [node]
+        return prev_nodes
 
     def graph(self) -> DiGraph:
         net = nx.DiGraph()
         net.graph["splines"] = "ortho"
-        self._dag(net)
+        net.add_node("begin", label="", shape="circle")
+
+        last_nodes = self._dag(net, ["begin"], self._flow)
+
+        net.add_node("end", label="", shape="doublecircle")
+        for last_node in last_nodes:
+            net.add_edge(last_node.node_id, "end", label=last_node.output_annotation)
         return net
 
     def export(self, path: str, with_edge_labels: bool = True):  # pragma: no cover

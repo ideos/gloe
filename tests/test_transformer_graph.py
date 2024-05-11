@@ -71,11 +71,11 @@ class TestTransformerGraph(unittest.TestCase):
 
     def _assert_nodes_count(self, expected: int, graph: DiGraph):
         nodes = graph.nodes.items()
-        self.assertEqual(expected, len(nodes))
+        self.assertEqual(expected + 2, len(nodes))  # + 2 for begin and end nodes
 
     def _assert_edges_count(self, expected: int, graph: DiGraph):
         edges = [edge for edge, props in list(graph.edges.items())]
-        self.assertEqual(expected, len(edges))
+        self.assertEqual(expected + 2, len(edges))  # + 2 for begin and end nodes
 
     def _assert_nodes_properties(
         self,

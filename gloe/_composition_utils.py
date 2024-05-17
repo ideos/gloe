@@ -6,6 +6,8 @@ from typing import TypeVar, Any, Optional, Union
 from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe.async_transformer import AsyncTransformer
 from gloe.base_transformer import BaseTransformer
+from gloe.branches import parallel
+from gloe.branches._parallel import parallel_async
 from gloe.transformers import Transformer
 from gloe._typing_utils import _match_types, _specify_types
 from gloe.exceptions import UnsupportedTransformerArgException
@@ -130,44 +132,18 @@ def _compose_diverging(
     #     receiving_transformer._set_previous(incident_transformer)
 
     incident_signature: Signature = incident_transformer.signature()
-    receiving_signatures: list[Signature] = []
 
-    for receiving_transformer in receiving_transformers:
-        generic_vars = _match_types(
-            receiving_transformer.input_type, incident_signature.return_annotation
-        )
-
-        receiving_signature = receiving_transformer.signature()
-        return_annotation = receiving_signature.return_annotation
-
-        new_return_annotation = _specify_types(return_annotation, generic_vars)
-
-        new_signature = receiving_signature.replace(
-            return_annotation=new_return_annotation
-        )
-        receiving_signatures.append(new_signature)
-
-        # def _signature(_) -> Signature:
-        #     return new_signature
-        #
-        # if receiving_transformer._previous == incident_transformer:
-        #     setattr(
-        #         receiving_transformer,
-        #         "signature",
-        #         types.MethodType(_signature, receiving_transformer),
-        #     )
+    # def _signature(_) -> Signature:
+    #     return new_signature
+    #
+    # if receiving_transformer._previous == incident_transformer:
+    #     setattr(
+    #         receiving_transformer,
+    #         "signature",
+    #         types.MethodType(_signature, receiving_transformer),
+    #     )
 
     class BaseNewTransformer:
-        def signature(self) -> Signature:
-            receiving_signature_returns = [
-                r.return_annotation for r in receiving_signatures
-            ]
-            new_signature = incident_signature.replace(
-                return_annotation=GenericAlias(
-                    tuple, tuple(receiving_signature_returns)
-                )
-            )
-            return new_signature
 
         def __len__(self):
             lengths = [len(t) for t in receiving_transformers]
@@ -181,7 +157,7 @@ def _compose_diverging(
             def __init__(self):
                 super().__init__()
                 self._flow = incident_transformer._flow + [
-                    [trf._flow for trf in receiving_transformers]
+                    parallel(incident_signature, *receiving_transformers)
                 ]
 
             def transform(self, data):
@@ -197,7 +173,7 @@ def _compose_diverging(
             def __init__(self):
                 super().__init__()
                 self._flow = incident_transformer._flow + [
-                    [trf._flow for trf in receiving_transformers]
+                    parallel_async(incident_signature, *receiving_transformers)
                 ]
 
             async def transform_async(self, data):

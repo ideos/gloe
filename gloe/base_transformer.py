@@ -76,7 +76,7 @@ _In = TypeVar("_In", contravariant=True)
 _Out = TypeVar("_Out", covariant=True)
 
 
-_FlowItem = Union["BaseTransformer", list["_FlowItem"]]
+_FlowItem = Union["BaseTransformer", list[list["_FlowItem"]]]
 Flow = list[_FlowItem]
 
 
@@ -141,6 +141,7 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         if transform is not None:
             setattr(copied, transform_method, func_type(transform, copied))
 
+        old_instance_id = self.instance_id
         if regenerate_instance_id:
             copied.instance_id = uuid.uuid4()
 
@@ -180,6 +181,10 @@ class BaseTransformer(Generic[_In, _Out], ABC):
 
     @abstractmethod
     def signature(self) -> Signature:
+        """Transformer function-like signature"""
+
+    @abstractmethod
+    def __call__(self, data: _In) -> _Out:
         """Transformer function-like signature"""
 
     def _signature(self, klass: Type, transform_method: str = "transform") -> Signature:

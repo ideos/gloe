@@ -1,4 +1,7 @@
 import traceback
+from inspect import Signature
+
+from gloe._typing_utils import _match_types, _specify_types
 from gloe.base_transformer import BaseTransformer, TransformerException
 
 
@@ -36,3 +39,26 @@ def catch_transformer_exception(
             message=exception_message,
         )
     return transform_exception
+
+
+def _diverging_signatures(
+    prev_signature: Signature, *transformers: BaseTransformer
+) -> list[Signature]:
+    next_signatures: list[Signature] = []
+
+    for receiving_transformer in transformers:
+        generic_vars = _match_types(
+            receiving_transformer.input_type, prev_signature.return_annotation
+        )
+
+        receiving_signature = receiving_transformer.signature()
+        return_annotation = receiving_signature.return_annotation
+
+        new_return_annotation = _specify_types(return_annotation, generic_vars)
+
+        new_signature = receiving_signature.replace(
+            return_annotation=new_return_annotation
+        )
+        next_signatures.append(new_signature)
+
+    return next_signatures

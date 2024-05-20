@@ -18,6 +18,7 @@ from typing import (
     get_origin,
     Type,
     Optional,
+    Awaitable,
 )
 from uuid import UUID
 from itertools import groupby
@@ -76,8 +77,7 @@ _In = TypeVar("_In", contravariant=True)
 _Out = TypeVar("_Out", covariant=True)
 
 
-_FlowItem = Union["BaseTransformer", list[list["_FlowItem"]]]
-Flow = list[_FlowItem]
+Flow = list["BaseTransformer"]
 
 
 class BaseTransformer(Generic[_In, _Out], ABC):
@@ -87,6 +87,7 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         self.instance_id = uuid.uuid4()
         self.is_atomic = False
         self._label = self.__class__.__name__
+        self._already_copied = False
         self._plotting_settings: PlottingSettings = PlottingSettings(
             invisible=False,
             node_type=NodeType.Transformer,
@@ -134,7 +135,11 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         transform: Optional[Callable[[Self, _In], _Out]] = None,
         regenerate_instance_id: bool = False,
         transform_method: str = "transform",
+        force: bool = False,
     ) -> Self:
+        if self._already_copied and not force:
+            return self
+
         copied: Self = copy.copy(self)
 
         func_type = types.MethodType
@@ -145,29 +150,28 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         if regenerate_instance_id:
             copied.instance_id = uuid.uuid4()
 
-        # if self.previous is not None:
-        #     if type(self.previous) is tuple:
-        #         new_previous: list[BaseTransformer] = [
-        #             previous_transformer.copy()
-        #             for previous_transformer in self.previous
-        #         ]
-        #         copied._previous = cast(PreviousTransformer, tuple(new_previous))
-        #     elif isinstance(self.previous, BaseTransformer):
-        #         copied._previous = self.previous.copy()
-
         copied._children = [
             child.copy(regenerate_instance_id=True) for child in self.children
         ]
-        if len(self) == 1:
-            copied._flow = [copied]
+
+        copied._flow = [
+            (
+                copied
+                if child.instance_id == old_instance_id
+                else child.copy(regenerate_instance_id=regenerate_instance_id)
+            )
+            for child in self._flow
+        ]
+        copied._already_copied = True
         return copied
 
     def copy(
         self: Self,
         transform: Optional[Callable[[Self, _In], _Out]] = None,
         regenerate_instance_id: bool = False,
+        force: bool = False,
     ) -> Self:
-        return self._copy(transform, regenerate_instance_id)
+        return self._copy(transform, regenerate_instance_id, "transform", force)
 
     @property
     def graph_nodes(self) -> dict[UUID, Optional["BaseTransformer"]]:
@@ -184,7 +188,7 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         """Transformer function-like signature"""
 
     @abstractmethod
-    def __call__(self, data: _In) -> _Out:
+    def __call__(self, data: _In) -> Union[_Out, Awaitable[_Out]]:
         """Transformer function-like signature"""
 
     def _signature(self, klass: Type, transform_method: str = "transform") -> Signature:

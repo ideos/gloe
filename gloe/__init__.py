@@ -1,3 +1,5 @@
+from typing import Literal, Optional
+
 from gloe._composition_utils import _compose_nodes
 from gloe.functional import (
     transformer,
@@ -31,3 +33,5 @@ __all__ = [
 
 setattr(Transformer, "__rshift__", _compose_nodes)
 setattr(AsyncTransformer, "__rshift__", _compose_nodes)
+
+parallelism_handler: Optional[Literal["threads", "multiprocessing", "asyncio"]] = None

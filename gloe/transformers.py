@@ -35,13 +35,13 @@ O7 = TypeVar("O7")
 To = TypeVar("To", bound=BaseTransformer)
 
 
-def execute_ops(flow: Flow, arg: Any):
+def _execute_flow(flow: Flow, arg: Any) -> Any:
     result = arg
     for op in flow:
         if isinstance(op, Transformer):
             result = op._safe_transform(result)
-        elif isinstance(op, list):
-            result = tuple([execute_ops(nested, result) for nested in op])
+        else:
+            raise NotImplementedError()
     return result
 
 
@@ -106,7 +106,7 @@ class Transformer(BaseTransformer[_I, _O], ABC):
         raise NotImplementedError()
 
     def __call__(self, data: _I) -> _O:  # pragma: no cover
-        return execute_ops(self._flow, data)
+        return _execute_flow(self._flow, data)
 
     @overload
     def __rshift__(self, next_node: "Transformer[_O, O1]") -> "Transformer[_I, O1]":

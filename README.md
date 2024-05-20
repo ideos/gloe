@@ -41,6 +41,19 @@ Gloe (pronounced /ɡloʊ/, like "glow") is a general-purpose library made to hel
 
 <sub style="display: block; margin-top: -0.5rem;">2. This feature is under development.</sub>
 
+## Installing
+
+```shell
+# PyPI
+pip install gloe
+```
+
+
+```shell
+# or conda
+conda install -c conda-forge gloe
+```
+
 ## Example
 
 Consider the following pipeline. Its purpose is to send two types of promotional emails to users with specific roles. First, it extracts a role from an HTTP request, then fetches the users who belong to this role, sends the corresponding email to each group of users, and finally logs the results of the emails sent.
@@ -108,18 +121,6 @@ def send_promotion_emails_route(role: str):
 
 We hope the above example illustrates how easily you can identify maintenance points and gain confidence that the rest of the code will continue to working properly, as long as the transformers' interfaces remain satisfied.
 
-## Installing
-
-```shell
-# PyPI
-pip install gloe
-```
-
-
-```shell
-# or conda
-conda install -c conda-forge gloe
-```
 
 ## Motivation
 

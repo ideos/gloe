@@ -17,6 +17,7 @@ from gloe import (
     TransformerException,
     UnsupportedTransformerArgException,
     transformer,
+    Transformer,
 )
 
 
@@ -132,7 +133,7 @@ class TestFunctionTransformer(unittest.TestCase):
 
     def test_divergent_many_branches_flow(self):
         """
-        Test the divergent case with many branches
+        Test the divergent case with many gateways
         """
 
         convergent_graph = square >> (
@@ -166,14 +167,20 @@ class TestFunctionTransformer(unittest.TestCase):
         """
         Test the instantiation of large graph
         """
-        graph = plus1
+        max_iters = 320
 
-        max_iters = 1500
+        def ramification(
+            branch: Transformer[float, float]
+        ) -> Transformer[float, float]:
+            return plus1 >> (plus1, branch) >> sum_tuple2
+
+        graph = plus1
         for i in range(max_iters):
-            graph = graph >> plus1
+            graph = ramification(graph)
 
         result = graph(0)
-        self.assertEqual(result, max_iters + 1)
+
+        self.assertEqual(result, 52001)
 
     def test_recursive_flow(self):
         """

@@ -1,13 +1,11 @@
 import types
 from inspect import Signature
-from types import GenericAlias
 from typing import TypeVar, Any, Optional, Union
 
 from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe.async_transformer import AsyncTransformer
 from gloe.base_transformer import BaseTransformer
-from gloe.branches import parallel
-from gloe.branches._parallel import parallel_async
+from gloe.gateways._parallel import _Parallel, _ParallelAsync
 from gloe.transformers import Transformer
 from gloe._typing_utils import _match_types, _specify_types
 from gloe.exceptions import UnsupportedTransformerArgException
@@ -157,7 +155,7 @@ def _compose_diverging(
             def __init__(self):
                 super().__init__()
                 self._flow = incident_transformer._flow + [
-                    parallel(incident_signature, *receiving_transformers)
+                    _Parallel(incident_signature, *receiving_transformers)
                 ]
 
             def transform(self, data):
@@ -173,7 +171,7 @@ def _compose_diverging(
             def __init__(self):
                 super().__init__()
                 self._flow = incident_transformer._flow + [
-                    parallel_async(incident_signature, *receiving_transformers)
+                    _ParallelAsync(incident_signature, *receiving_transformers)
                 ]
 
             async def transform_async(self, data):

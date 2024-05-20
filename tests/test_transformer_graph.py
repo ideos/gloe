@@ -29,6 +29,7 @@ class TestTransformerGraph(unittest.TestCase):
         ids_by_name = {
             node.__class__.__name__: str(id)
             for id, node in transformer.graph_nodes.items()
+            if node is not None
         }
 
         return ids_by_name

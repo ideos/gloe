@@ -1,13 +1,13 @@
 import asyncio
 from abc import abstractmethod
 from inspect import Signature
-from typing import TypeVar, overload, cast, Callable, Generic, Optional
+from typing import TypeVar, overload, cast, Callable, Generic, Optional, Any
 
 from typing_extensions import Self
 
 from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe._transformer_utils import catch_transformer_exception
-from gloe.base_transformer import BaseTransformer
+from gloe.base_transformer import BaseTransformer, Flow
 
 __all__ = ["AsyncTransformer"]
 
@@ -23,16 +23,16 @@ _O6 = TypeVar("_O6")
 _O7 = TypeVar("_O7")
 
 
-async def execute_async_ops(stacked_ops, arg):
+async def _execute_async_flow(flow: Flow, arg: Any) -> Any:
     result = arg
-    for op in stacked_ops:
-        if isinstance(op, list):
-            result = tuple([await execute_async_ops(nested, result) for nested in op])
-        else:
+    for op in flow:
+        if isinstance(op, BaseTransformer):
             if asyncio.iscoroutinefunction(op._safe_transform):
                 result = await op._safe_transform(result)
             else:
                 result = op._safe_transform(result)
+        else:
+            raise NotImplementedError()
     return result
 
 
@@ -93,14 +93,15 @@ class AsyncTransformer(Generic[_In, _Out], BaseTransformer[_In, _Out]):
         raise NotImplementedError  # pragma: no cover
 
     async def __call__(self, data: _In) -> _Out:
-        return await execute_async_ops(self._flow, data)
+        return await _execute_async_flow(self._flow, data)
 
     def copy(
         self,
         transform: Optional[Callable[[Self, _In], _Out]] = None,
         regenerate_instance_id: bool = False,
+        force: bool = False,
     ) -> Self:
-        return self._copy(transform, regenerate_instance_id, "transform_async")
+        return self._copy(transform, regenerate_instance_id, "transform_async", force)
 
     @overload
     def __rshift__(

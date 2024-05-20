@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional, Any
 from uuid import UUID
@@ -13,12 +13,18 @@ class NodeType(Enum):
 
 
 @dataclass
+class GatewaySettings:
+    extra_labels: list[str] = field(default_factory=list)
+
+
+@dataclass
 class PlottingSettings:
     node_type: NodeType
     has_children: bool = False
     invisible: bool = False
     is_async: bool = False
     is_gateway: bool = False
+    gateway_settings: Optional[GatewaySettings] = None
     parent_id: Optional[str] = None
 
 

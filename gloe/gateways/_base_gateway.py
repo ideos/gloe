@@ -1,7 +1,9 @@
+import uuid
 from inspect import Signature
 from types import GenericAlias
 from typing import Any
 
+import networkx as nx
 from typing_extensions import Generic
 
 from gloe._generic_types import *
@@ -31,3 +33,40 @@ class _base_gateway(Generic[_In], BaseTransformer[_In, Any]):
             return_annotation=GenericAlias(tuple, tuple(receiving_signature_returns))
         )
         return new_signature
+
+    def _dag(
+        self,
+        net: nx.DiGraph,
+        root_nodes: list[Union[str, "BaseTransformer"]],
+    ) -> list["BaseTransformer"]:
+        in_converge_id = str(uuid.uuid4())
+        net.add_node(in_converge_id, label="", _label="gateway_begin", shape="diamond")
+
+        for prev_node in root_nodes:
+            if isinstance(prev_node, str):
+                net.add_edge(prev_node, in_converge_id, label=self.input_annotation)
+            else:
+                net.add_edge(
+                    prev_node.node_id,
+                    in_converge_id,
+                    label=self.input_annotation,
+                )
+
+        last_nodes = []
+        for child_node in self.children:
+            last_node = child_node._dag(net, [in_converge_id])
+            last_nodes.extend(last_node)
+
+        out_converge_id = str(uuid.uuid4())
+        net.add_node(out_converge_id, label="", _label="gateway_end", shape="diamond")
+
+        for last_node in last_nodes:
+            if isinstance(last_node, str):
+                net.add_edge(last_node, out_converge_id, label=self.output_annotation)
+            else:
+                net.add_edge(
+                    last_node.node_id,
+                    out_converge_id,
+                    label=last_node.output_annotation,
+                )
+        return [out_converge_id]

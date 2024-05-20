@@ -3,6 +3,7 @@ import types
 import uuid
 import inspect
 from abc import ABC, abstractmethod
+from functools import cache
 from inspect import Signature
 
 import networkx as nx
@@ -137,10 +138,9 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         transform_method: str = "transform",
         force: bool = False,
     ) -> Self:
-        if self._already_copied and not force:
-            return self
 
         copied: Self = copy.copy(self)
+        copied._already_copied = True
 
         func_type = types.MethodType
         if transform is not None:
@@ -150,19 +150,25 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         if regenerate_instance_id:
             copied.instance_id = uuid.uuid4()
 
-        copied._children = [
-            child.copy(regenerate_instance_id=True) for child in self.children
-        ]
+        if self._already_copied and not force:
+            copied._flow = [
+                copied if child.instance_id == old_instance_id else child
+                for child in self._flow
+            ]
+        else:
+            copied._children = [
+                child.copy(regenerate_instance_id=regenerate_instance_id)
+                for child in self.children
+            ]
 
-        copied._flow = [
-            (
-                copied
-                if child.instance_id == old_instance_id
-                else child.copy(regenerate_instance_id=regenerate_instance_id)
-            )
-            for child in self._flow
-        ]
-        copied._already_copied = True
+            copied._flow = [
+                (
+                    copied
+                    if child.instance_id == old_instance_id
+                    else child.copy(regenerate_instance_id=regenerate_instance_id)
+                )
+                for child in self._flow
+            ]
         return copied
 
     def copy(
@@ -179,7 +185,7 @@ class BaseTransformer(Generic[_In, _Out], ABC):
 
         nodes = {}
         for node_id, attrs in graph.nodes.items():
-            nodes[node_id] = attrs.get("transformer")
+            nodes[node_id] = attrs.get("transformer", attrs.get("_label"))
 
         return nodes
 
@@ -382,27 +388,14 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         self,
         net: nx.DiGraph,
         root_nodes: list[Union[str, "BaseTransformer"]],
-        flow: Flow,
     ) -> list["BaseTransformer"]:
         prev_nodes = root_nodes
-        for node in flow:
-            if isinstance(node, list):
-                last_nodes = []
-                for flow in node:
-                    last_node = self._dag(net, prev_nodes, flow)
-                    last_nodes.extend(last_node)
-                converge_id = str(uuid.uuid4())
-                net.add_node(converge_id, label="", shape="diamond")
-                for last_node in last_nodes:
-                    if isinstance(last_node, str):
-                        net.add_edge(last_node, converge_id)
-                    else:
-                        net.add_edge(
-                            last_node.node_id,
-                            converge_id,
-                            label=last_node.output_annotation,
-                        )
-                prev_nodes = [converge_id]
+        for node in self._flow:
+            if node.plotting_settings.invisible:
+                continue
+
+            if node.plotting_settings.is_gateway:
+                prev_nodes = node._dag(net, prev_nodes)
             else:
                 node_id = node._add_net_node(net)
                 for prev_node in prev_nodes:
@@ -417,14 +410,15 @@ class BaseTransformer(Generic[_In, _Out], ABC):
                 prev_nodes = [node]
         return prev_nodes
 
+    @cache
     def graph(self) -> DiGraph:
         net = nx.DiGraph()
         net.graph["splines"] = "ortho"
-        net.add_node("begin", label="", shape="circle")
+        net.add_node("begin", label="", _label="begin", shape="circle")
 
-        last_nodes = self._dag(net, ["begin"], self._flow)
+        last_nodes = self._dag(net, ["begin"])
 
-        net.add_node("end", label="", shape="doublecircle")
+        net.add_node("end", label="", _label="end", shape="doublecircle")
         for last_node in last_nodes:
             net.add_edge(last_node.node_id, "end", label=last_node.output_annotation)
         return net

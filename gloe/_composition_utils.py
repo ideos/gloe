@@ -80,12 +80,12 @@ def _compose_serial(transformer1, _transformer2):
             return new_len
 
     new_transformer: Optional[BaseTransformer] = None
-    if is_transformer(transformer1) and is_transformer(_transformer2):
+    if is_transformer(transformer1) and is_transformer(transformer2):
 
         class NewTransformer1(BaseNewTransformer, Transformer[_In, _NextOut]):
             def __init__(self):
                 super().__init__()
-                self._flow = transformer1._flow + _transformer2._flow
+                self._flow = transformer1._flow + transformer2._flow
 
             def transform(self, data):
                 return None
@@ -97,7 +97,7 @@ def _compose_serial(transformer1, _transformer2):
         class NewTransformer2(BaseNewTransformer, AsyncTransformer[_In, _NextOut]):
             def __init__(self):
                 super().__init__()
-                self._flow = transformer1._flow + _transformer2._flow
+                self._flow = transformer1._flow + transformer2._flow
 
             async def transform_async(self, data):
                 return None

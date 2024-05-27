@@ -387,40 +387,62 @@ class BaseTransformer(Generic[_In, _Out], ABC):
     def _dag(
         self,
         net: nx.DiGraph,
-        root_nodes: list[Union[str, "BaseTransformer"]],
-    ) -> list["BaseTransformer"]:
-        prev_nodes = root_nodes
+        root_node: Union[str, "BaseTransformer", DiGraph],
+    ) -> Union[str, "BaseTransformer", DiGraph]:
+        prev_node = root_node
         for node in self._flow:
+            # skip if the node is invisible
             if node.plotting_settings.invisible:
                 continue
 
+            # if the node is a gateway, we need to go deeper
             if node.plotting_settings.is_gateway:
-                prev_nodes = node._dag(net, prev_nodes)
-            else:
+                prev_node = node._dag(net, prev_node)
+            elif node.plotting_settings.has_children and len(node.children) > 0:
+                # if the node is not a gateway, but has children, we add its children
+                # to a subgraph
+                child_node = node.children[0]
+                subgraph_name = f"cluster_{node.instance_id}"
+                subgraph = child_node.graph(name=subgraph_name)
+                nx.set_node_attributes(subgraph, subgraph_name, "cluster")
+                net.add_nodes_from(subgraph.nodes.data())
+                net.add_edges_from(subgraph.edges.data())
+
+                begin_node = f"{subgraph_name}begin"
+                end_node = f"{subgraph_name}end"
+
+                if isinstance(prev_node, str):
+                    net.add_edge(prev_node, begin_node, label=node.input_annotation)
+                else:
+                    net.add_edge(
+                        prev_node.node_id,
+                        begin_node,
+                        label=prev_node.output_annotation,
+                    )
+                prev_node = end_node
+            else:  # otherwise, we add the node to the graph
                 node_id = node._add_net_node(net)
-                for prev_node in prev_nodes:
-                    if isinstance(prev_node, str):
-                        net.add_edge(prev_node, node_id, label=node.input_annotation)
-                    else:
-                        net.add_edge(
-                            prev_node.node_id,
-                            node_id,
-                            label=prev_node.output_annotation,
-                        )
-                prev_nodes = [node]
-        return prev_nodes
+                if isinstance(prev_node, str):
+                    net.add_edge(prev_node, node_id, label=node.input_annotation)
+                else:
+                    net.add_edge(
+                        prev_node.node_id,
+                        node_id,
+                        label=prev_node.output_annotation,
+                    )
+                prev_node = node
+        return prev_node
 
     @cache
-    def graph(self) -> DiGraph:
-        net = nx.DiGraph()
+    def graph(self, name: str = "") -> DiGraph:
+        net = nx.DiGraph(name=name)
         net.graph["splines"] = "ortho"
-        net.add_node("begin", label="", _label="begin", shape="circle")
+        net.add_node(f"{name}begin", label="", _label="begin", shape="circle")
 
-        last_nodes = self._dag(net, ["begin"])
+        last_node = self._dag(net, f"{name}begin")
 
-        net.add_node("end", label="", _label="end", shape="doublecircle")
-        for last_node in last_nodes:
-            net.add_edge(last_node.node_id, "end", label=last_node.output_annotation)
+        net.add_node(f"{name}end", label="", _label="end", shape="doublecircle")
+        net.add_edge(last_node.node_id, f"{name}end", label=last_node.output_annotation)
         return net
 
     def export(self, path: str, with_edge_labels: bool = True):  # pragma: no cover
@@ -439,27 +461,21 @@ class BaseTransformer(Generic[_In, _Out], ABC):
             ) from err
 
         net = self.graph()
-        boxed_nodes = [
-            node
-            for node in net.nodes.data()
-            if "parent_id" in node[1] and "bounding_box" in node[1]
-        ]
+        boxed_nodes = [node for node in net.nodes.data() if "cluster" in node[1]]
         if not with_edge_labels:
             for u, v in net.edges:
                 net.edges[u, v]["label"] = ""
 
         agraph = nx.nx_agraph.to_agraph(net)
-        subgraphs: Iterable[tuple] = groupby(
-            boxed_nodes, key=lambda x: x[1]["parent_id"]
-        )
-        for parent_id, nodes in subgraphs:
+        subgraphs: Iterable[tuple] = groupby(boxed_nodes, key=lambda x: x[1]["cluster"])
+        for cluster, nodes in subgraphs:
+            begin_node = f"{cluster}begin"
+            end_node = f"{cluster}end"
+            agraph.iteredges(begin_node)
             nodes = list(nodes)
             node_ids = [node[0] for node in nodes]
             if len(nodes) > 0:
-                label = nodes[0][1]["box_label"]
-                agraph.add_subgraph(
-                    node_ids, label=label, name=f"cluster_{parent_id}", style="dotted"
-                )
+                agraph.add_subgraph(node_ids, label="", name=cluster, style="dotted")
         agraph.write(path)
 
     def __len__(self):

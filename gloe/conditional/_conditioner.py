@@ -116,8 +116,8 @@ class ConditionerTransformer(
     def _dag(
         self,
         net: nx.DiGraph,
-        root_nodes: list[Union[str, BaseTransformer]],
-    ) -> list[BaseTransformer]:
+        root_node: Union[str, BaseTransformer],
+    ) -> Union[str, BaseTransformer]:
         in_converge_id = str(uuid.uuid4())
         label = self.__class__.__name__
         net.add_node(
@@ -127,20 +127,19 @@ class ConditionerTransformer(
             shape="diamond",
         )
 
-        for prev_node in root_nodes:
-            if isinstance(prev_node, str):
-                net.add_edge(prev_node, in_converge_id, label=self.input_annotation)
-            else:
-                net.add_edge(
-                    prev_node.node_id,
-                    in_converge_id,
-                    label=self.input_annotation,
-                )
+        if isinstance(root_node, str):
+            net.add_edge(root_node, in_converge_id, label=self.input_annotation)
+        else:
+            net.add_edge(
+                root_node.node_id,
+                in_converge_id,
+                label=self.input_annotation,
+            )
 
         last_nodes = []
         for child_node in self.children:
-            last_node = child_node._dag(net, [in_converge_id])
-            last_nodes.extend(last_node)
+            last_node = child_node._dag(net, in_converge_id)
+            last_nodes.append(last_node)
 
         out_converge_id = str(uuid.uuid4())
         net.add_node(out_converge_id, label="", _label=f"{label}_end", shape="diamond")
@@ -154,7 +153,7 @@ class ConditionerTransformer(
                     out_converge_id,
                     label=last_node.output_annotation,
                 )
-        return [out_converge_id]
+        return out_converge_id
 
 
 class _IfThen(Generic[In, ThenOut, PrevThenOut]):

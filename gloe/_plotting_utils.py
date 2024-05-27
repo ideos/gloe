@@ -48,3 +48,21 @@ def export_dot_props(settings: PlottingSettings, instance_id: UUID) -> dict[str,
         }
 
     return node_props
+
+
+class GloeGraph:
+    def __init__(self, name: str = ""):
+        self.name = name
+        self.attrs: dict[str, Any] = {}
+        self.nodes: dict[str, Any] = {}
+        self.edges: dict[tuple[str, str], Any] = {}
+        self.subgraphs: list["GloeGraph"] = []
+
+    def add_node(self, id: str, **attrs):
+        self.nodes[id] = attrs
+
+    def add_edge(self, u: str, v: str, **attrs):
+        self.edges[(u, v)] = attrs
+
+    def add_subgraph(self, subgraph: "GloeGraph"):
+        self.subgraphs.append(subgraph)

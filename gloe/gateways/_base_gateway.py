@@ -1,5 +1,5 @@
 import uuid
-from inspect import Signature
+from inspect import Signature, Parameter, _ParameterKind
 from types import GenericAlias
 from typing import Any
 
@@ -14,15 +14,24 @@ _In = TypeVar("_In")
 
 
 class _base_gateway(Generic[_In], BaseTransformer[_In, Any]):
-    def __init__(
-        self, prev_signature: Signature, *transformers: BaseTransformer[_In, Any]
-    ):
+    def __init__(self, *transformers: BaseTransformer[_In, Any]):
         super().__init__()
         self._children = list(transformers)
-        self._prev_signature = prev_signature
         self._plotting_settings.is_gateway = True
+
+        self._prev_signature = Signature(
+            parameters=[
+                Parameter(
+                    "data",
+                    kind=Parameter.POSITIONAL_OR_KEYWORD,
+                    annotation=GenericAlias(
+                        tuple, tuple(t.input_annotation for t in transformers)
+                    ),
+                )
+            ]
+        )
         self._receiving_signatures = _diverging_signatures(
-            prev_signature, *transformers
+            self._prev_signature, *transformers
         )
 
     def signature(self) -> Signature:

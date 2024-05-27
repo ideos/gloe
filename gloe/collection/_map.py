@@ -31,13 +31,8 @@ class Map(Generic[_T, _U], Transformer[Iterable[_T], Iterable[_U]]):
     def __init__(self, mapping_transformer: Transformer[_T, _U]):
         super().__init__()
         self.mapping_transformer = mapping_transformer
-        self.plotting_settings.invisible = True
+        self.plotting_settings.has_children = True
         self._children = [mapping_transformer]
-
-        self._plotting_settings: PlottingSettings = PlottingSettings(
-            has_children=True,
-            node_type=NodeType.Transformer,
-        )
 
     def transform(self, data: Iterable[_T]) -> Iterable[_U]:
         """

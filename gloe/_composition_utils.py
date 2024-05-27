@@ -155,7 +155,7 @@ def _compose_diverging(
             def __init__(self):
                 super().__init__()
                 self._flow = incident_transformer._flow + [
-                    _Parallel(incident_signature, *receiving_transformers)
+                    _Parallel(*receiving_transformers)
                 ]
 
             def transform(self, data):
@@ -171,7 +171,7 @@ def _compose_diverging(
             def __init__(self):
                 super().__init__()
                 self._flow = incident_transformer._flow + [
-                    _ParallelAsync(incident_signature, *receiving_transformers)
+                    _ParallelAsync(*receiving_transformers)
                 ]
 
             async def transform_async(self, data):

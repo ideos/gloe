@@ -81,21 +81,27 @@ class GloeGraph:
             ) from err
 
         A = pygraphviz.AGraph(
-            name=self.name, compound=True, directed=True, **self.attrs
+            name=self.name, compound=True, directed=True, style="dotted", **self.attrs
         )
 
-        for subgraph in self.subgraphs:
-            subgraph_nodes = []
-            for n, nodedata in subgraph.nodes.items():
-                A.add_node(n, **nodedata)
-                subgraph_nodes.append(n)
+        subgraphs_stack = [(self, self.subgraphs)]
+        sub_agraph = A
+        while len(subgraphs_stack) > 0:
+            graph, subgraphs = subgraphs_stack.pop(0)
+            for subgraph in subgraphs:
+                sub_agraph = sub_agraph.add_subgraph(name=subgraph.name)
 
-            for (u, v), edgedata in subgraph.edges.items():
-                A.add_edge(u, v, **edgedata)
-            A.add_subgraph(subgraph_nodes, name=subgraph.name, style="dotted")
-        # add nodes
-        for n, nodedata in self.nodes.items():
-            A.add_node(n, **nodedata)
+                for node, nodedata in subgraph.nodes.items():
+                    sub_agraph.add_node(node, **nodedata)
+
+                for (u, v), edgedata in subgraph.edges.items():
+                    sub_agraph.add_edge(u, v, **edgedata)
+
+                if len(subgraph.subgraphs) > 0:
+                    subgraphs_stack.append((subgraph, subgraph.subgraphs))
+
+        for node, nodedata in self.nodes.items():
+            A.add_node(node, **nodedata)
 
         for (u, v), edgedata in self.edges.items():
             A.add_edge(u, v, **edgedata)

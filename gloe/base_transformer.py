@@ -342,16 +342,21 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         last_node = self._dag(net, f"{name}begin")
 
         net.add_node(f"{name}end", label="", _label="end", shape="doublecircle")
-        net.add_edge(last_node.node_id, f"{name}end", label=last_node.output_annotation)
+
+        if isinstance(last_node, str):
+            net.add_edge(last_node, f"{name}end")
+        elif isinstance(last_node, BaseTransformer):
+            net.add_edge(
+                last_node.node_id,
+                f"{name}end",
+                label=last_node.output_annotation,
+            )
         return net
 
     def export(self, path: str, with_edge_labels: bool = True):  # pragma: no cover
         """Export Transformer object in dot format"""
 
-        net = self.graph()
-        A = net.to_agraph()
-
-        A.write(path)
+        self.graph().to_agraph().write(path)
 
     def __len__(self):
         return 1

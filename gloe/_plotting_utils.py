@@ -66,3 +66,38 @@ class GloeGraph:
 
     def add_subgraph(self, subgraph: "GloeGraph"):
         self.subgraphs.append(subgraph)
+
+    def to_agraph(self):
+        try:
+            import pygraphviz  # noqa: F401
+
+        except ImportError as err:
+            raise ImportError(
+                "Please, the module pygraphviz is required for this method,"
+                + " install with "
+                + """"conda install --channel conda-forge pygraphviz" or """
+                + """"pip install pygraphviz". More information is available in """
+                + "https://pygraphviz.github.io/documentation/stable/install.html"
+            ) from err
+
+        A = pygraphviz.AGraph(
+            name=self.name, compound=True, directed=True, **self.attrs
+        )
+
+        for subgraph in self.subgraphs:
+            subgraph_nodes = []
+            for n, nodedata in subgraph.nodes.items():
+                A.add_node(n, **nodedata)
+                subgraph_nodes.append(n)
+
+            for (u, v), edgedata in subgraph.edges.items():
+                A.add_edge(u, v, **edgedata)
+            A.add_subgraph(subgraph_nodes, name=subgraph.name, style="dotted")
+        # add nodes
+        for n, nodedata in self.nodes.items():
+            A.add_node(n, **nodedata)
+
+        for (u, v), edgedata in self.edges.items():
+            A.add_edge(u, v, **edgedata)
+
+        return A

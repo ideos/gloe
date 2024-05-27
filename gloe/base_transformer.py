@@ -6,8 +6,7 @@ from abc import ABC, abstractmethod
 from functools import cache
 from inspect import Signature
 
-import networkx as nx
-from networkx import DiGraph, Graph
+
 from typing import (
     Any,
     Callable,
@@ -26,7 +25,7 @@ from itertools import groupby
 
 from typing_extensions import Self, TypeAlias
 
-from gloe._plotting_utils import PlottingSettings, NodeType, export_dot_props
+from gloe._plotting_utils import PlottingSettings, NodeType, export_dot_props, GloeGraph
 from gloe._typing_utils import _format_return_annotation
 
 __all__ = ["BaseTransformer", "TransformerException", "PreviousTransformer"]
@@ -262,7 +261,7 @@ class BaseTransformer(Generic[_In, _Out], ABC):
     def input_annotation(self) -> str:
         return self.input_type.__name__
 
-    def _add_net_node(self, net: Graph, custom_data: dict[str, Any] = {}):
+    def _add_net_node(self, net: GloeGraph, custom_data: dict[str, Any] = {}):
         node_id = self.node_id
         graph_node_props = export_dot_props(self.plotting_settings, self.instance_id)
         props = {
@@ -274,121 +273,18 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         if node_id not in net.nodes:
             net.add_node(node_id, **props)
         else:
-            nx.set_node_attributes(net, {node_id: props})
+            net.nodes[node_id] = props
         return node_id
-
-    def _add_child_node(
-        self,
-        child: "BaseTransformer",
-        child_net: DiGraph,
-        parent_id: str,
-        next_node: "BaseTransformer",
-    ):
-        child._dag(child_net, next_node, custom_data={"parent_id": parent_id})
 
     @property
     def node_id(self) -> str:
         return str(self.instance_id)
 
-    def _add_children_subgraph(self, net: DiGraph, next_node: "BaseTransformer"):
-        next_node_id = next_node.node_id
-        children_nets = [DiGraph() for _ in self.children]
-        visible_previous = self.visible_previous
-
-        for child, child_net in zip(self.children, children_nets):
-            self._add_child_node(child, child_net, self.node_id, next_node)
-            net.add_nodes_from(child_net.nodes.data())
-            net.add_edges_from(child_net.edges.data())
-
-            child_root_node = [
-                n for n in child_net.nodes if child_net.in_degree(n) == 0
-            ][0]
-            child_final_node = [
-                n for n in child_net.nodes if child_net.out_degree(n) == 0
-            ][0]
-
-            if self.plotting_settings.invisible:
-                if type(visible_previous) is tuple:
-                    for prev in visible_previous:
-                        net.add_edge(
-                            prev.node_id, child_root_node, label=prev.output_annotation
-                        )
-                elif isinstance(visible_previous, BaseTransformer):
-                    net.add_edge(
-                        visible_previous.node_id,
-                        child_root_node,
-                        label=visible_previous.output_annotation,
-                    )
-            else:
-                node_id = self._add_net_node(net)
-                net.add_edge(node_id, child_root_node)
-
-            if child_final_node != next_node_id:
-                net.add_edge(
-                    child_final_node, next_node_id, label=next_node.input_annotation
-                )
-
-    # def _dag(
-    #     self,
-    #     net: DiGraph,
-    #     next_node: Union["BaseTransformer", None] = None,
-    #     custom_data: dict[str, Any] = {},
-    # ):
-    #     in_nodes = [edge[1] for edge in net.in_edges()]
-    #
-    #     previous = self.previous
-    #     if previous is not None:
-    #         if type(previous) is tuple:
-    #             if self.plotting_settings.invisible and next_node is not None:
-    #                 next_node_id = next_node._add_net_node(net)
-    #                 _next_node = next_node
-    #             else:
-    #                 next_node_id = self._add_net_node(net, custom_data)
-    #                 _next_node = self
-    #
-    #             for prev in previous:
-    #                 previous_node_id = prev.node_id
-    #
-    #                 # TODO: check the impact of the below line to the Mapper transformer
-    #                 if not prev.plotting_settings.invisible and len(prev.children) == 0:
-    #                     net.add_edge(
-    #                         previous_node_id, next_node_id, label=prev.output_annotation
-    #                     )
-    #
-    #                 if previous_node_id not in in_nodes:
-    #                     prev._dag(net, _next_node, custom_data)
-    #
-    #         elif isinstance(previous, BaseTransformer):
-    #             if self.plotting_settings.invisible and next_node is not None:
-    #                 next_node_id = next_node._add_net_node(net)
-    #                 _next_node = next_node
-    #             else:
-    #                 next_node_id = self._add_net_node(net, custom_data)
-    #                 _next_node = self
-    #
-    #             previous_node_id = previous.node_id
-    #
-    #             if len(previous.children) == 0 and (
-    #                 not previous.plotting_settings.invisible
-    #                 or previous.previous is None
-    #             ):
-    #                 previous_node_id = previous._add_net_node(net)
-    #                 net.add_edge(
-    #                     previous_node_id, next_node_id, label=previous.output_annotation
-    #                 )
-    #
-    #             if previous_node_id not in in_nodes:
-    #                 previous._dag(net, _next_node, custom_data)
-    #     else:
-    #         self._add_net_node(net, custom_data)
-    #
-    #     if len(self.children) > 0 and next_node is not None:
-    #         self._add_children_subgraph(net, next_node)
     def _dag(
         self,
-        net: nx.DiGraph,
-        root_node: Union[str, "BaseTransformer", DiGraph],
-    ) -> Union[str, "BaseTransformer", DiGraph]:
+        net: GloeGraph,
+        root_node: Union[str, "BaseTransformer", GloeGraph],
+    ) -> Union[str, "BaseTransformer", GloeGraph]:
         prev_node = root_node
         for node in self._flow:
             # skip if the node is invisible
@@ -404,20 +300,24 @@ class BaseTransformer(Generic[_In, _Out], ABC):
                 child_node = node.children[0]
                 subgraph_name = f"cluster_{node.instance_id}"
                 subgraph = child_node.graph(name=subgraph_name)
-                nx.set_node_attributes(subgraph, subgraph_name, "cluster")
-                net.add_nodes_from(subgraph.nodes.data())
-                net.add_edges_from(subgraph.edges.data())
+                net.add_subgraph(subgraph)
 
                 begin_node = f"{subgraph_name}begin"
                 end_node = f"{subgraph_name}end"
 
                 if isinstance(prev_node, str):
-                    net.add_edge(prev_node, begin_node, label=node.input_annotation)
+                    net.add_edge(
+                        prev_node,
+                        begin_node,
+                        label=node.input_annotation,
+                        lhead=subgraph_name,
+                    )
                 else:
                     net.add_edge(
                         prev_node.node_id,
                         begin_node,
                         label=prev_node.output_annotation,
+                        lhead=subgraph_name,
                     )
                 prev_node = end_node
             else:  # otherwise, we add the node to the graph
@@ -434,9 +334,9 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         return prev_node
 
     @cache
-    def graph(self, name: str = "") -> DiGraph:
-        net = nx.DiGraph(name=name)
-        net.graph["splines"] = "ortho"
+    def graph(self, name: str = "") -> GloeGraph:
+        net = GloeGraph(name=name)
+        net.attrs["splines"] = "ortho"
         net.add_node(f"{name}begin", label="", _label="begin", shape="circle")
 
         last_node = self._dag(net, f"{name}begin")
@@ -448,35 +348,10 @@ class BaseTransformer(Generic[_In, _Out], ABC):
     def export(self, path: str, with_edge_labels: bool = True):  # pragma: no cover
         """Export Transformer object in dot format"""
 
-        try:
-            import pygraphviz  # noqa: F401
-
-        except ImportError as err:
-            raise ImportError(
-                "Please, the module pygraphviz is required for this method,"
-                + " install with "
-                + """"conda install --channel conda-forge pygraphviz" or """
-                + """"pip install pygraphviz". More information is available in """
-                + "https://pygraphviz.github.io/documentation/stable/install.html"
-            ) from err
-
         net = self.graph()
-        boxed_nodes = [node for node in net.nodes.data() if "cluster" in node[1]]
-        if not with_edge_labels:
-            for u, v in net.edges:
-                net.edges[u, v]["label"] = ""
+        A = net.to_agraph()
 
-        agraph = nx.nx_agraph.to_agraph(net)
-        subgraphs: Iterable[tuple] = groupby(boxed_nodes, key=lambda x: x[1]["cluster"])
-        for cluster, nodes in subgraphs:
-            begin_node = f"{cluster}begin"
-            end_node = f"{cluster}end"
-            agraph.iteredges(begin_node)
-            nodes = list(nodes)
-            node_ids = [node[0] for node in nodes]
-            if len(nodes) > 0:
-                agraph.add_subgraph(node_ids, label="", name=cluster, style="dotted")
-        agraph.write(path)
+        A.write(path)
 
     def __len__(self):
         return 1

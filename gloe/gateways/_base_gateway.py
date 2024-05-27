@@ -3,10 +3,10 @@ from inspect import Signature
 from types import GenericAlias
 from typing import Any
 
-import networkx as nx
 from typing_extensions import Generic
 
 from gloe._generic_types import *
+from gloe._plotting_utils import GloeGraph
 from gloe._transformer_utils import _diverging_signatures
 from gloe.base_transformer import BaseTransformer
 
@@ -36,7 +36,7 @@ class _base_gateway(Generic[_In], BaseTransformer[_In, Any]):
 
     def _dag(
         self,
-        net: nx.DiGraph,
+        net: GloeGraph,
         root_node: Union[str, "BaseTransformer"],
     ) -> Union[str, "BaseTransformer"]:
         in_converge_id = str(uuid.uuid4())

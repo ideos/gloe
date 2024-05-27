@@ -3,7 +3,6 @@ import uuid
 from dataclasses import dataclass
 from inspect import Signature
 from types import GenericAlias
-import networkx as nx
 
 
 if sys.version_info >= (3, 10):
@@ -18,7 +17,7 @@ from typing import (
 
 from typing_extensions import Self
 
-from gloe._plotting_utils import PlottingSettings, NodeType
+from gloe._plotting_utils import PlottingSettings, NodeType, GloeGraph
 from gloe.transformers import Transformer
 from gloe.base_transformer import BaseTransformer
 from gloe.utils import forget
@@ -115,7 +114,7 @@ class ConditionerTransformer(
 
     def _dag(
         self,
-        net: nx.DiGraph,
+        net: GloeGraph,
         root_node: Union[str, BaseTransformer],
     ) -> Union[str, BaseTransformer]:
         in_converge_id = str(uuid.uuid4())

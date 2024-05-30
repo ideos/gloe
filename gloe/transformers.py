@@ -103,9 +103,9 @@ class Transformer(BaseTransformer[_I, _O], ABC):
         if type(transformed) is not None:
             return cast(_O, transformed)
 
-        raise NotImplementedError()
+        raise NotImplementedError()  # pragma: no cover
 
-    def __call__(self, data: _I) -> _O:  # pragma: no cover
+    def __call__(self, data: _I) -> _O:
         return _execute_flow(self._flow, data)
 
     @overload

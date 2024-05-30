@@ -7,6 +7,7 @@ from typing_extensions import Generic
 
 from gloe._generic_types import *
 from gloe._gloe_graph import GloeGraph
+from gloe._plotting_utils import dot_props, NodeType
 from gloe._transformer_utils import _diverging_signatures
 from gloe.base_transformer import BaseTransformer, GloeNode
 
@@ -58,11 +59,8 @@ class _base_gateway(Generic[_In], BaseTransformer[_In, Any]):
         size = 0.4
         net.add_node(
             in_converge_id,
-            label="",
             _label="gateway_begin",
-            width=size,
-            height=size,
-            shape="diamond",
+            **dot_props(NodeType.ParallelGatewayBegin),
         )
 
         net.add_edge(
@@ -85,11 +83,8 @@ class _base_gateway(Generic[_In], BaseTransformer[_In, Any]):
         )
         net.add_node(
             out_converge_id,
-            label="",
             _label="gateway_end",
-            width=size,
-            height=size,
-            shape="diamond",
+            **dot_props(NodeType.ParallelGatewayEnd),
         )
 
         for last_node in last_nodes:

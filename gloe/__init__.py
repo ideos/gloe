@@ -33,5 +33,3 @@ __all__ = [
 
 setattr(Transformer, "__rshift__", _compose_nodes)
 setattr(AsyncTransformer, "__rshift__", _compose_nodes)
-
-parallelism_handler: Optional[Literal["threads", "multiprocessing", "asyncio"]] = None

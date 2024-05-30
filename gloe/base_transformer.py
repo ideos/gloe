@@ -26,7 +26,7 @@ from uuid import UUID
 from typing_extensions import Self, TypeAlias, deprecated
 
 from gloe._gloe_graph import GloeGraph
-from gloe._plotting_utils import PlottingSettings, NodeType, export_dot_props
+from gloe._plotting_utils import PlottingSettings, NodeType, dot_props
 from gloe._typing_utils import _format_return_annotation
 
 __all__ = ["BaseTransformer", "TransformerException", "PreviousTransformer"]
@@ -199,10 +199,6 @@ class BaseTransformer(Generic[_In, _Out], ABC):
     def signature(self) -> Signature:
         """Transformer function-like signature"""
 
-    @abstractmethod
-    def __call__(self, data: _In) -> Union[_Out, Awaitable[_Out]]:
-        """Transformer function-like signature"""
-
     def _signature(self, klass: Type, transform_method: str = "transform") -> Signature:
         orig_bases = getattr(self, "__orig_bases__", [])
         transformer_args = [
@@ -273,7 +269,7 @@ class BaseTransformer(Generic[_In, _Out], ABC):
 
     def _add_net_node(self, net: GloeGraph, custom_data: dict[str, Any] = {}):
         node_id = self.node_id
-        graph_node_props = export_dot_props(self.plotting_settings, self.instance_id)
+        graph_node_props = dot_props(self.plotting_settings.node_type)
         props = {
             **graph_node_props,
             **custom_data,
@@ -350,14 +346,7 @@ class BaseTransformer(Generic[_In, _Out], ABC):
     def graph(self, name: str = "") -> GloeGraph:
         net = GloeGraph(name=name)
         # net.attrs["splines"] = "ortho"
-        net.add_node(
-            f"{name}begin",
-            label="",
-            _label="begin",
-            shape="circle",
-            width=0.3,
-            height=0.3,
-        )
+        net.add_node(f"{name}begin", _label="begin", **dot_props(NodeType.Begin))
 
         begin_node = GloeNode(
             id=f"{name}begin",
@@ -367,14 +356,7 @@ class BaseTransformer(Generic[_In, _Out], ABC):
 
         last_node = self._dag(net, begin_node)
 
-        net.add_node(
-            f"{name}end",
-            label="",
-            _label="end",
-            shape="doublecircle",
-            width=0.2,
-            height=0.2,
-        )
+        net.add_node(f"{name}end", _label="end", **dot_props(NodeType.End))
 
         net.add_edge(
             last_node.id,
@@ -385,20 +367,20 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         return net
 
     @deprecated("Use .to_dot() instead")
-    def export(self, path: str, with_edge_labels: bool = True):  # pragma: no cover
+    def export(self, path: str, with_edge_labels: bool = True):
         """Export Transformer object in dot format"""
 
-        self.graph().to_agraph().write(path)
+        self.graph().to_agraph(with_edge_labels).write(path)
 
-    def to_dot(self, path: str, with_edge_labels: bool = True):  # pragma: no cover
+    def to_dot(self, path: str, with_edge_labels: bool = True):
         """Export Transformer object in dot format"""
 
-        self.graph().to_agraph().write(path)
+        self.graph().to_agraph(with_edge_labels).write(path)
 
-    def to_image(self, path: str, with_edge_labels: bool = True):  # pragma: no cover
+    def to_image(self, path: str, with_edge_labels: bool = True):
         """Export Transformer object in a custom image format"""
 
-        self.graph().to_agraph().draw(path, prog="dot")
+        self.graph().to_agraph(with_edge_labels).draw(path, prog="dot")
 
     def __len__(self):
         return 1

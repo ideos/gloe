@@ -1,5 +1,8 @@
 import unittest
+from typing import Union
 
+from gloe import transformer
+from gloe.transformers import _execute_flow
 from gloe.utils import forward, forward_incoming, debug
 from tests.lib.transformers import sum_tuple2, square_root, square
 
@@ -15,8 +18,23 @@ class TestTransformerUtils(unittest.TestCase):
 
         self.assertEqual("int -> (forward) -> int", repr(test_forward))
 
-        two_nodes = square >> square_root
-        self.assertEqual("float -> (2 transformers omitted) -> float", repr(two_nodes))
+        @transformer
+        def test_union(num: float) -> Union[int, float]:
+            return num
+
+        union = square >> square_root >> test_union
+        self.assertEqual(
+            "float -> (3 transformers omitted) -> (int | float)", repr(union)
+        )
+
+        @transformer
+        def test_tuple(num: float) -> tuple[int, float]:
+            return 1, num
+
+        _tuple = square >> square_root >> test_tuple
+        self.assertEqual(
+            "float -> (3 transformers omitted) -> (int, float)", repr(_tuple)
+        )
 
     def test_debug(self):
         test_debug = forward[int]() >> debug()
@@ -31,5 +49,10 @@ class TestTransformerUtils(unittest.TestCase):
         self.assertIsNone(result)
         test2 = forward[float]() >> (square, square)
 
-        result = test2.transform(5)
-        self.assertIsNone(result)
+        result2 = test2.transform(5)
+        self.assertIsNone(result2)
+
+    def test_execute_async_wrong_flow(self):
+        flow = [2]
+        with self.assertRaises(NotImplementedError):
+            _execute_flow(flow, 1)  # type: ignore

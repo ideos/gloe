@@ -111,7 +111,7 @@ def repeat(content: str, n_times: int, linebreak: bool) -> str:
 
 
 @partial_transformer
-def repeat_list(content: int, n_times: int) -> list[int]:
+def repeat_list(content: float, n_times: int) -> list[float]:
     return [content] * n_times
 
 

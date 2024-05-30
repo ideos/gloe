@@ -160,7 +160,6 @@ def _compose_diverging(
     # new_transformer._previous = cast(Transformer, receiving_transformers)
     new_transformer.__class__.__name__ = "Converge"
     new_transformer._label = ""
-    new_transformer._plotting_settings = PlottingSettings(node_type=NodeType.Convergent)
 
     return new_transformer
 

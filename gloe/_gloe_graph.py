@@ -20,7 +20,7 @@ class GloeGraph:
     def add_subgraph(self, subgraph: "GloeGraph"):
         self.subgraphs.append(subgraph)
 
-    def to_agraph(self):
+    def to_agraph(self, with_edge_labels: bool = True):
         try:
             import pygraphviz  # noqa: F401
 
@@ -48,6 +48,8 @@ class GloeGraph:
                     sub_agraph.add_node(node, **nodedata)
 
                 for (u, v), edgedata in subgraph.edges.items():
+                    if not with_edge_labels:
+                        del edgedata["label"]
                     sub_agraph.add_edge(u, v, **edgedata)
 
                 if len(subgraph.subgraphs) > 0:
@@ -57,6 +59,8 @@ class GloeGraph:
             A.add_node(node, **nodedata)
 
         for (u, v), edgedata in self.edges.items():
+            if not with_edge_labels:
+                del edgedata["label"]
             A.add_edge(u, v, **edgedata)
 
         return A

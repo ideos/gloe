@@ -6,9 +6,9 @@ from typing import Any
 from typing_extensions import Generic
 
 from gloe._generic_types import *
-from gloe._plotting_utils import GloeGraph
+from gloe._gloe_graph import GloeGraph
 from gloe._transformer_utils import _diverging_signatures
-from gloe.base_transformer import BaseTransformer
+from gloe.base_transformer import BaseTransformer, GloeNode
 
 _In = TypeVar("_In")
 
@@ -19,14 +19,19 @@ class _base_gateway(Generic[_In], BaseTransformer[_In, Any]):
         self._children = list(transformers)
         self._plotting_settings.is_gateway = True
 
+        input_annotations = [t.input_annotation for t in transformers]
+        all_same_input = len(set(input_annotations)) == 1
+        annotation = (
+            input_annotations[0]
+            if all_same_input
+            else GenericAlias(tuple, tuple(t.input_annotation for t in transformers))
+        )
         self._prev_signature = Signature(
             parameters=[
                 Parameter(
                     "data",
                     kind=Parameter.POSITIONAL_OR_KEYWORD,
-                    annotation=GenericAlias(
-                        tuple, tuple(t.input_annotation for t in transformers)
-                    ),
+                    annotation=annotation,
                 )
             ]
         )
@@ -43,38 +48,55 @@ class _base_gateway(Generic[_In], BaseTransformer[_In, Any]):
         )
         return new_signature
 
-    def _dag(
-        self,
-        net: GloeGraph,
-        root_node: Union[str, "BaseTransformer"],
-    ) -> Union[str, "BaseTransformer"]:
+    def _dag(self, net: GloeGraph, root_node: GloeNode) -> GloeNode:
         in_converge_id = str(uuid.uuid4())
-        net.add_node(in_converge_id, label="", _label="gateway_begin", shape="diamond")
+        in_converge = GloeNode(
+            id=in_converge_id,
+            input_annotation=self.input_annotation,
+            output_annotation="",
+        )
+        size = 0.4
+        net.add_node(
+            in_converge_id,
+            label="",
+            _label="gateway_begin",
+            width=size,
+            height=size,
+            shape="diamond",
+        )
 
-        if isinstance(root_node, str):
-            net.add_edge(root_node, in_converge_id, label=self.input_annotation)
-        else:
-            net.add_edge(
-                root_node.node_id,
-                in_converge_id,
-                label=self.input_annotation,
-            )
+        net.add_edge(
+            root_node.id,
+            in_converge_id,
+            label=root_node.output_annotation,
+            ltail=root_node.ltail,
+        )
 
         last_nodes = []
         for child_node in self.children:
-            last_node = child_node._dag(net, in_converge_id)
+            last_node = child_node._dag(net, in_converge)
             last_nodes.append(last_node)
 
         out_converge_id = str(uuid.uuid4())
-        net.add_node(out_converge_id, label="", _label="gateway_end", shape="diamond")
+        out_converge = GloeNode(
+            id=out_converge_id,
+            input_annotation=self.input_annotation,
+            output_annotation="",
+        )
+        net.add_node(
+            out_converge_id,
+            label="",
+            _label="gateway_end",
+            width=size,
+            height=size,
+            shape="diamond",
+        )
 
         for last_node in last_nodes:
-            if isinstance(last_node, str):
-                net.add_edge(last_node, out_converge_id, label=self.output_annotation)
-            else:
-                net.add_edge(
-                    last_node.node_id,
-                    out_converge_id,
-                    label=last_node.output_annotation,
-                )
-        return out_converge_id
+            net.add_edge(
+                last_node.id,
+                out_converge_id,
+                label=last_node.output_annotation,
+                ltail=last_node.ltail,
+            )
+        return out_converge

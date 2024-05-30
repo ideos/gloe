@@ -17,9 +17,10 @@ from typing import (
 
 from typing_extensions import Self
 
-from gloe._plotting_utils import PlottingSettings, NodeType, GloeGraph
+from gloe._gloe_graph import GloeGraph
+from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe.transformers import Transformer
-from gloe.base_transformer import BaseTransformer
+from gloe.base_transformer import BaseTransformer, GloeNode
 from gloe.utils import forget
 
 
@@ -115,44 +116,53 @@ class ConditionerTransformer(
     def _dag(
         self,
         net: GloeGraph,
-        root_node: Union[str, BaseTransformer],
-    ) -> Union[str, BaseTransformer]:
+        root_node: GloeNode,
+    ) -> GloeNode:
         in_converge_id = str(uuid.uuid4())
         label = self.__class__.__name__
+        in_converge = GloeNode(
+            id=in_converge_id,
+            input_annotation=self.input_annotation,
+            output_annotation="",
+        )
+        size = 0.4
         net.add_node(
             in_converge_id,
             label=label,
             _label=label,
+            width=size,
+            height=size,
             shape="diamond",
         )
 
-        if isinstance(root_node, str):
-            net.add_edge(root_node, in_converge_id, label=self.input_annotation)
-        else:
-            net.add_edge(
-                root_node.node_id,
-                in_converge_id,
-                label=self.input_annotation,
-            )
+        net.add_edge(
+            root_node.id,
+            in_converge_id,
+            label=self.input_annotation,
+            ltail=root_node.ltail,
+        )
 
         last_nodes = []
         for child_node in self.children:
-            last_node = child_node._dag(net, in_converge_id)
+            last_node = child_node._dag(net, in_converge)
             last_nodes.append(last_node)
 
         out_converge_id = str(uuid.uuid4())
         net.add_node(out_converge_id, label="", _label=f"{label}_end", shape="diamond")
+        out_converge = GloeNode(
+            id=out_converge_id,
+            input_annotation=self.input_annotation,
+            output_annotation="",
+        )
 
         for last_node in last_nodes:
-            if isinstance(last_node, str):
-                net.add_edge(last_node, out_converge_id, label=self.output_annotation)
-            else:
-                net.add_edge(
-                    last_node.node_id,
-                    out_converge_id,
-                    label=last_node.output_annotation,
-                )
-        return out_converge_id
+            net.add_edge(
+                last_node.id,
+                out_converge_id,
+                label=last_node.output_annotation,
+                ltail=last_node.ltail,
+            )
+        return out_converge
 
 
 class _IfThen(Generic[In, ThenOut, PrevThenOut]):

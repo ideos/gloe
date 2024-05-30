@@ -22,7 +22,6 @@ classifiers = [
 ]
 dependencies = [
     'typing_extensions~=4.7',
-    'networkx~=3.1'
 ]
 
 [project.urls]

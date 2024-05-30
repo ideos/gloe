@@ -2,12 +2,13 @@ import unittest
 
 from gloe.exceptions import UnsupportedEnsurerArgException
 from gloe.utils import forward
-from lib.exceptions import NumbersEqual
+
 from tests.lib.exceptions import (
     NumberIsEven,
     NumberLessThanOrEquals10,
     NumbersNotEqual,
     NumberIsOdd,
+    NumbersEqual,
 )
 from tests.lib.ensurers import (
     is_odd,

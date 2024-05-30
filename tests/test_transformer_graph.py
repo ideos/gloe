@@ -1,9 +1,7 @@
 import unittest
 from typing import Any
-
-from networkx import DiGraph
-
 from gloe import Transformer, transformer
+from gloe._gloe_graph import GloeGraph
 from gloe.utils import forward
 
 from tests.lib.conditioners import if_is_even
@@ -37,7 +35,7 @@ class TestTransformerGraph(unittest.TestCase):
     def _assert_graph_has_edges(
         self,
         transformer: Transformer,
-        graph: DiGraph,
+        graph: GloeGraph,
         expected_edges: list[tuple[str, str]],
     ):
         ids_by_name = self._get_nodes_by_name(transformer)
@@ -54,7 +52,7 @@ class TestTransformerGraph(unittest.TestCase):
     def _assert_edge_properties(
         self,
         transformer: Transformer,
-        graph: DiGraph,
+        graph: GloeGraph,
         expected_edges_props: dict[tuple[str, str], Any],
     ):
         ids_by_name = self._get_nodes_by_name(transformer)
@@ -62,19 +60,17 @@ class TestTransformerGraph(unittest.TestCase):
             (ids_by_name[edge[0]], ids_by_name[edge[1]]): props
             for edge, props in expected_edges_props.items()
         }
-        current_edge_props = {
-            (u, v): graph.get_edge_data(u, v) for u, v in edges_with_id
-        }
+        current_edge_props = {(u, v): graph.edges[(u, v)] for u, v in edges_with_id}
 
         for edge, current_props in current_edge_props.items():
             expected_props = edges_with_id[edge]
             self.assertDictEqual(current_props | expected_props, current_props)
 
-    def _assert_nodes_count(self, expected: int, graph: DiGraph):
+    def _assert_nodes_count(self, expected: int, graph: GloeGraph):
         nodes = graph.nodes.items()
         self.assertEqual(expected + 2, len(nodes))  # + 2 for begin and end nodes
 
-    def _assert_edges_count(self, expected: int, graph: DiGraph):
+    def _assert_edges_count(self, expected: int, graph: GloeGraph):
         edges = [edge for edge, props in list(graph.edges.items())]
         self.assertEqual(expected + 2, len(edges))  # + 2 for begin and end nodes
 
@@ -82,7 +78,7 @@ class TestTransformerGraph(unittest.TestCase):
         self,
         nodes_properties: dict[str, dict[str, Any]],
         transformer: Transformer,
-        graph: DiGraph,
+        graph: GloeGraph,
     ):
         ids_by_name = self._get_nodes_by_name(transformer)
         props_by_id = dict(graph.nodes)
@@ -94,7 +90,7 @@ class TestTransformerGraph(unittest.TestCase):
 
     def test_simplest_case(self):
         identity = square >> square_root >> plus1 >> minus1
-        graph: DiGraph = identity.graph()
+        graph: GloeGraph = identity.graph()
 
         self._assert_nodes_count(4, graph)
         self._assert_edges_count(3, graph)
@@ -110,7 +106,7 @@ class TestTransformerGraph(unittest.TestCase):
     def test_simple_divergent_case(self):
         divergent = square >> (plus1, minus1) >> sum_tuple2
 
-        graph: DiGraph = divergent.graph()
+        graph: GloeGraph = divergent.graph()
 
         self._assert_nodes_count(6, graph)
 
@@ -144,7 +140,7 @@ class TestTransformerGraph(unittest.TestCase):
         )
         divergent.export("./divergent.dot", with_edge_labels=True)
 
-        graph: DiGraph = divergent.graph()
+        graph: GloeGraph = divergent.graph()
 
         # Each divergent connection has a hidden node
         self._assert_nodes_count(12, graph)
@@ -184,7 +180,7 @@ class TestTransformerGraph(unittest.TestCase):
             >> aux_last
         )
 
-        graph: DiGraph = divergent.graph()
+        graph: GloeGraph = divergent.graph()
 
         # Each divergent connection has a hidden node
         self._assert_nodes_count(13, graph)
@@ -201,7 +197,7 @@ class TestTransformerGraph(unittest.TestCase):
     def test_simple_conditional_case(self):
         conditional = square_root >> if_is_even.Then(plus1).Else(forward()) >> minus1
 
-        graph: DiGraph = conditional.graph()
+        graph: GloeGraph = conditional.graph()
 
         self._assert_nodes_count(5, graph)
         self._assert_edges_count(5, graph)
@@ -221,7 +217,7 @@ class TestTransformerGraph(unittest.TestCase):
             square_root >> if_is_even.Then(then_graph).Else(forward()) >> minus1
         )
 
-        graph: DiGraph = conditional.graph()
+        graph: GloeGraph = conditional.graph()
 
         self._assert_nodes_count(11, graph)
         self._assert_edges_count(12, graph)
@@ -250,7 +246,7 @@ class TestTransformerGraph(unittest.TestCase):
             plus1 >> plus1 >> (plus1 >> plus1 >> plus1, minus1 >> minus1) >> sum_tuple2
         )
 
-        graph: DiGraph = repeated.graph()
+        graph: GloeGraph = repeated.graph()
 
         self._assert_nodes_count(10, graph)
         self._assert_edges_count(10, graph)
@@ -258,7 +254,7 @@ class TestTransformerGraph(unittest.TestCase):
     def test_begin_node_case(self):
         begin1 = forward[float]() >> (plus1, minus1) >> sum_tuple2
 
-        graph: DiGraph = begin1.graph()
+        graph: GloeGraph = begin1.graph()
 
         self._assert_nodes_count(5, graph)
         self._assert_edges_count(5, graph)
@@ -280,7 +276,7 @@ class TestTransformerGraph(unittest.TestCase):
 
         begin3 = begin1 >> begin2
 
-        graph: DiGraph = begin3.graph()
+        graph: GloeGraph = begin3.graph()
 
         self._assert_nodes_count(10, graph)
         self._assert_edges_count(11, graph)
@@ -288,7 +284,7 @@ class TestTransformerGraph(unittest.TestCase):
     def test_partial_transformer_case(self):
         init_graph = logarithm(2) >> square
 
-        graph: DiGraph = init_graph.graph()
+        graph: GloeGraph = init_graph.graph()
 
         self._assert_nodes_count(2, graph)
         self._assert_edges_count(1, graph)
@@ -339,14 +335,14 @@ class TestTransformerGraph(unittest.TestCase):
             plus1 >> (square >> to_string, square_root) >> tuple_concatenate
         )
         graph = divergent_edges.graph()
-
         expected_edge_props = {
-            ("plus1", "square"): {"label": "float"},
-            ("plus1", "square_root"): {"label": "float"},
+            ("plus1", "gateway_begin"): {"label": "float"},
+            ("gateway_begin", "square"): {"label": "float"},
+            ("gateway_begin", "square_root"): {"label": "float"},
             ("square", "to_string"): {"label": "float"},
-            ("to_string", "Converge"): {"label": "str"},
-            ("square_root", "Converge"): {"label": "float"},
-            ("Converge", "tuple_concatenate"): {"label": "(str, float)"},
+            ("to_string", "gateway_end"): {"label": "str"},
+            ("square_root", "gateway_end"): {"label": "float"},
+            ("gateway_end", "tuple_concatenate"): {"label": "(str, float)"},
         }
 
         self._assert_edge_properties(divergent_edges, graph, expected_edge_props)

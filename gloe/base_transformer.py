@@ -3,6 +3,7 @@ import types
 import uuid
 import inspect
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from functools import cache
 from inspect import Signature
 
@@ -21,11 +22,11 @@ from typing import (
     Awaitable,
 )
 from uuid import UUID
-from itertools import groupby
 
-from typing_extensions import Self, TypeAlias
+from typing_extensions import Self, TypeAlias, deprecated
 
-from gloe._plotting_utils import PlottingSettings, NodeType, export_dot_props, GloeGraph
+from gloe._gloe_graph import GloeGraph
+from gloe._plotting_utils import PlottingSettings, NodeType, export_dot_props
 from gloe._typing_utils import _format_return_annotation
 
 __all__ = ["BaseTransformer", "TransformerException", "PreviousTransformer"]
@@ -71,6 +72,22 @@ class TransformerException(Exception):
     @property
     def internal_exception(self):
         return self._internal_exception.with_traceback(self._traceback)
+
+
+@dataclass
+class GloeNode:
+    id: str
+    input_annotation: str
+    output_annotation: str
+    ltail: Optional[str] = None
+
+    @staticmethod
+    def from_transformer(transformer: "BaseTransformer") -> "GloeNode":
+        return GloeNode(
+            id=transformer.node_id,
+            input_annotation=transformer.input_annotation,
+            output_annotation=transformer.output_annotation,
+        )
 
 
 _In = TypeVar("_In", contravariant=True)
@@ -259,7 +276,10 @@ class BaseTransformer(Generic[_In, _Out], ABC):
 
     @property
     def input_annotation(self) -> str:
-        return self.input_type.__name__
+        input_type = self.input_type
+
+        incoming_type = _format_return_annotation(input_type, None, None)
+        return incoming_type
 
     def _add_net_node(self, net: GloeGraph, custom_data: dict[str, Any] = {}):
         node_id = self.node_id
@@ -280,11 +300,39 @@ class BaseTransformer(Generic[_In, _Out], ABC):
     def node_id(self) -> str:
         return str(self.instance_id)
 
+    def _add_subgraph(
+        self,
+        net: GloeGraph,
+        prev_node: GloeNode,
+        current_node: "BaseTransformer",
+    ) -> GloeNode:
+        child_node = current_node.children[0]
+        subgraph_name = f"cluster_{current_node.instance_id}"
+        subgraph = child_node.graph(name=subgraph_name)
+        net.add_subgraph(subgraph)
+
+        begin_node = f"{subgraph_name}begin"
+        end_node = f"{subgraph_name}end"
+
+        net.add_edge(
+            prev_node.id,
+            begin_node,
+            label=prev_node.output_annotation,
+            lhead=subgraph_name,
+            ltail=prev_node.ltail,
+        )
+        return GloeNode(
+            id=end_node,
+            input_annotation="",
+            output_annotation=current_node.output_annotation,
+            ltail=subgraph_name,
+        )
+
     def _dag(
         self,
         net: GloeGraph,
-        root_node: Union[str, "BaseTransformer", GloeGraph],
-    ) -> Union[str, "BaseTransformer", GloeGraph]:
+        root_node: GloeNode,
+    ) -> GloeNode:
         prev_node = root_node
         for node in self._flow:
             # skip if the node is invisible
@@ -297,66 +345,72 @@ class BaseTransformer(Generic[_In, _Out], ABC):
             elif node.plotting_settings.has_children and len(node.children) > 0:
                 # if the node is not a gateway, but has children, we add its children
                 # to a subgraph
-                child_node = node.children[0]
-                subgraph_name = f"cluster_{node.instance_id}"
-                subgraph = child_node.graph(name=subgraph_name)
-                net.add_subgraph(subgraph)
-
-                begin_node = f"{subgraph_name}begin"
-                end_node = f"{subgraph_name}end"
-
-                if isinstance(prev_node, str):
-                    net.add_edge(
-                        prev_node,
-                        begin_node,
-                        label=node.input_annotation,
-                        lhead=subgraph_name,
-                    )
-                else:
-                    net.add_edge(
-                        prev_node.node_id,
-                        begin_node,
-                        label=prev_node.output_annotation,
-                        lhead=subgraph_name,
-                    )
-                prev_node = end_node
+                return self._add_subgraph(net, prev_node, node)
             else:  # otherwise, we add the node to the graph
                 node_id = node._add_net_node(net)
-                if isinstance(prev_node, str):
-                    net.add_edge(prev_node, node_id, label=node.input_annotation)
-                else:
-                    net.add_edge(
-                        prev_node.node_id,
-                        node_id,
-                        label=prev_node.output_annotation,
-                    )
-                prev_node = node
+
+                net.add_edge(
+                    prev_node.id,
+                    node_id,
+                    label=node.input_annotation,
+                    ltail=prev_node.ltail,
+                )
+                prev_node = GloeNode.from_transformer(node)
         return prev_node
 
     @cache
     def graph(self, name: str = "") -> GloeGraph:
         net = GloeGraph(name=name)
-        net.attrs["splines"] = "ortho"
-        net.add_node(f"{name}begin", label="", _label="begin", shape="circle")
+        # net.attrs["splines"] = "ortho"
+        net.add_node(
+            f"{name}begin",
+            label="",
+            _label="begin",
+            shape="circle",
+            width=0.3,
+            height=0.3,
+        )
 
-        last_node = self._dag(net, f"{name}begin")
+        begin_node = GloeNode(
+            id=f"{name}begin",
+            input_annotation="",
+            output_annotation=self.input_annotation,
+        )
 
-        net.add_node(f"{name}end", label="", _label="end", shape="doublecircle")
+        last_node = self._dag(net, begin_node)
 
-        if isinstance(last_node, str):
-            net.add_edge(last_node, f"{name}end")
-        elif isinstance(last_node, BaseTransformer):
-            net.add_edge(
-                last_node.node_id,
-                f"{name}end",
-                label=last_node.output_annotation,
-            )
+        net.add_node(
+            f"{name}end",
+            label="",
+            _label="end",
+            shape="doublecircle",
+            width=0.2,
+            height=0.2,
+        )
+
+        net.add_edge(
+            last_node.id,
+            f"{name}end",
+            label=last_node.output_annotation,
+            ltail=last_node.ltail,
+        )
         return net
 
+    @deprecated("Use .to_dot() instead")
     def export(self, path: str, with_edge_labels: bool = True):  # pragma: no cover
         """Export Transformer object in dot format"""
 
         self.graph().to_agraph().write(path)
+
+    def to_dot(self, path: str, with_edge_labels: bool = True):  # pragma: no cover
+        """Export Transformer object in dot format"""
+
+        self.graph().to_agraph().write(path)
+
+    def to_image(self, path: str, with_edge_labels: bool = True):  # pragma: no cover
+        """Export Transformer object in a custom image format"""
+
+        self.graph().to_agraph().draw(path, prog="dot")
 
     def __len__(self):
         return 1

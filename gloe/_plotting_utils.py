@@ -8,7 +8,8 @@ class NodeType(Enum):
     Transformer = "Transformer"
     Begin = "Begin"
     End = "End"
-    Condition = "Condition"
+    ConditionBegin = "ConditionBegin"
+    ConditionEnd = "ConditionEnd"
     ParallelGatewayBegin = "ParallelGatewayBegin"
     ParallelGatewayEnd = "ParallelGatewayEnd"
 
@@ -32,8 +33,16 @@ class PlottingSettings:
 def dot_props(node_type: NodeType) -> dict[str, Any]:
     node_props: dict[str, Any] = {"shape": "box"}
 
-    if node_type == NodeType.Condition:
+    if node_type == NodeType.ConditionBegin:
         node_props = {"shape": "diamond", "style": "filled", "port": "n"}
+    elif node_type == NodeType.ConditionEnd:
+        node_props = {
+            "shape": "diamond",
+            "style": "filled",
+            "port": "n",
+            "width": 0.4,
+            "height": 0.4,
+        }
     elif node_type == NodeType.ParallelGatewayBegin:
         node_props = {"shape": "diamond", "width": 0.4, "height": 0.4, "label": ""}
     elif node_type == NodeType.ParallelGatewayEnd:

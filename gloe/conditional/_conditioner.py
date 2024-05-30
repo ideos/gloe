@@ -18,7 +18,7 @@ from typing import (
 from typing_extensions import Self
 
 from gloe._gloe_graph import GloeGraph
-from gloe._plotting_utils import PlottingSettings, NodeType
+from gloe._plotting_utils import PlottingSettings, NodeType, dot_props
 from gloe.transformers import Transformer
 from gloe.base_transformer import BaseTransformer, GloeNode
 from gloe.utils import forget
@@ -49,7 +49,7 @@ class ConditionerTransformer(
         self.implications = implications
         self.else_transformer = else_transformer
         self._plotting_settings = PlottingSettings(
-            node_type=NodeType.Condition, has_children=True, is_gateway=True
+            NodeType.Transformer, has_children=True, is_gateway=True
         )
         self._children = [
             *[impl.then_transformer for impl in implications],
@@ -125,14 +125,12 @@ class ConditionerTransformer(
             input_annotation=self.input_annotation,
             output_annotation="",
         )
-        size = 0.4
+
         net.add_node(
             in_converge_id,
             label=label,
             _label=label,
-            width=size,
-            height=size,
-            shape="diamond",
+            **dot_props(NodeType.ConditionBegin),
         )
 
         net.add_edge(
@@ -148,7 +146,12 @@ class ConditionerTransformer(
             last_nodes.append(last_node)
 
         out_converge_id = str(uuid.uuid4())
-        net.add_node(out_converge_id, label="", _label=f"{label}_end", shape="diamond")
+        net.add_node(
+            out_converge_id,
+            label="",
+            _label=f"{label}_end",
+            **dot_props(NodeType.ConditionEnd),
+        )
         out_converge = GloeNode(
             id=out_converge_id,
             input_annotation=self.input_annotation,

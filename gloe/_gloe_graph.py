@@ -42,13 +42,15 @@ class GloeGraph:
         while len(subgraphs_stack) > 0:
             graph, subgraphs = subgraphs_stack.pop(0)
             for subgraph in subgraphs:
-                sub_agraph = sub_agraph.add_subgraph(name=subgraph.name)
+                sub_agraph = sub_agraph.add_subgraph(
+                    name=subgraph.name, **subgraph.attrs
+                )
 
                 for node, nodedata in subgraph.nodes.items():
                     sub_agraph.add_node(node, **nodedata)
 
                 for (u, v), edgedata in subgraph.edges.items():
-                    if not with_edge_labels:
+                    if not with_edge_labels and "label" in edgedata:
                         del edgedata["label"]
                     sub_agraph.add_edge(u, v, **edgedata)
 
@@ -59,7 +61,7 @@ class GloeGraph:
             A.add_node(node, **nodedata)
 
         for (u, v), edgedata in self.edges.items():
-            if not with_edge_labels:
+            if not with_edge_labels and "label" in edgedata:
                 del edgedata["label"]
             A.add_edge(u, v, **edgedata)
 

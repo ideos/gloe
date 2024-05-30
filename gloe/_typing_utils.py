@@ -71,7 +71,7 @@ def _format_return_annotation(
     return str(return_annotation.__name__)
 
 
-def _match_types(generic, specific, ignore_mismatches=True):
+def _match_types(generic, specific):
     if type(generic) is TypeVar:
         return {generic: specific}
 
@@ -86,32 +86,22 @@ def _match_types(generic, specific, ignore_mismatches=True):
         or generic_origin is None
         or not issubclass(specific_origin, generic_origin)
     ):
-        if ignore_mismatches:
-            return {}
-        raise Exception(f"Type {generic} does not match with {specific}")
+        return {}
 
     generic_args = getattr(generic, "__args__", None)
     specific_args = getattr(specific, "__args__", None)
 
-    if specific_args is None and specific_args is None:
+    if specific_args is None or specific_args is None:
         return {}
 
     if generic_args is None:
-        if ignore_mismatches:
-            return {}
-        raise Exception(f"Type {generic} in generic has no arguments")
+        return {}
 
     if specific_args is None:
-        if ignore_mismatches:
-            return {}
-        raise Exception(f"Type {specific} in specific has no arguments")
+        return {}
 
     if len(generic_args) != len(specific_args):
-        if ignore_mismatches:
-            return {}
-        raise Exception(
-            f"Number of arguments of type {generic} is different in specific type"
-        )
+        return {}
 
     matches = {}
     for generic_arg, specific_arg in zip(generic_args, specific_args):

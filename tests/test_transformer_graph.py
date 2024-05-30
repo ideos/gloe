@@ -138,8 +138,6 @@ class TestTransformerGraph(unittest.TestCase):
             )
             >> sum_tuple3
         )
-        divergent.export("./divergent.dot", with_edge_labels=True)
-
         graph: GloeGraph = divergent.graph()
 
         # Each divergent connection has a hidden node

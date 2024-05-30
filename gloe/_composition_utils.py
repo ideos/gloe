@@ -126,21 +126,6 @@ def _compose_diverging(
         ]
     )
 
-    # for receiving_transformer in receiving_transformers:
-    #     receiving_transformer._set_previous(incident_transformer)
-
-    incident_signature: Signature = incident_transformer.signature()
-
-    # def _signature(_) -> Signature:
-    #     return new_signature
-    #
-    # if receiving_transformer._previous == incident_transformer:
-    #     setattr(
-    #         receiving_transformer,
-    #         "signature",
-    #         types.MethodType(_signature, receiving_transformer),
-    #     )
-
     class BaseNewTransformer:
 
         def __len__(self):

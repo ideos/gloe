@@ -78,7 +78,11 @@ def _match_types(generic, specific, ignore_mismatches=True):
     if specific_origin is None and generic_origin is None:
         return {}
 
-    if specific_origin is None or generic_origin is None:
+    if (
+        specific_origin is None
+        or generic_origin is None
+        or not issubclass(specific_origin, generic_origin)
+    ):
         if ignore_mismatches:
             return {}
         raise Exception(f"Type {generic} does not match with {specific}")

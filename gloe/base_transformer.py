@@ -293,6 +293,7 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         child_node = current_node.children[0]
         subgraph_name = f"cluster_{current_node.instance_id}"
         subgraph = child_node.graph(name=subgraph_name)
+        subgraph.attrs["label"] = current_node.label
         net.add_subgraph(subgraph)
 
         begin_node = f"{subgraph_name}begin"

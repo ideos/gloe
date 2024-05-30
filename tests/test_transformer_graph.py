@@ -1,7 +1,8 @@
 import unittest
 from typing import Any
-from gloe import Transformer, transformer
+from gloe import Transformer, transformer, BaseTransformer
 from gloe._gloe_graph import GloeGraph
+from gloe.collection import Map
 from gloe.utils import forward
 
 from tests.lib.conditioners import if_is_even
@@ -24,21 +25,24 @@ from tests.lib.transformers import (
 
 
 class TestTransformerGraph(unittest.TestCase):
-    def _get_nodes_by_name(self, transformer: Transformer) -> dict[str, str]:
-        ids_by_name = {
-            node if isinstance(node, str) else node.__class__.__name__: str(id)
-            for id, node in transformer.graph_nodes.items()
-        }
+    def _get_nodes_by_name(self, graph: GloeGraph) -> dict[str, str]:
+        ids_by_name = {}
+        for id, attrs in graph.nodes.items():
+            _transformer = attrs.get("transformer")
+            if _transformer is not None and isinstance(_transformer, BaseTransformer):
+                ids_by_name[_transformer.label] = id
+            elif label := attrs.get("_label"):
+                ids_by_name[label] = id
+        return ids_by_name
 
         return ids_by_name
 
     def _assert_graph_has_edges(
         self,
-        transformer: Transformer,
         graph: GloeGraph,
         expected_edges: list[tuple[str, str]],
     ):
-        ids_by_name = self._get_nodes_by_name(transformer)
+        ids_by_name = self._get_nodes_by_name(graph)
 
         edges = [edge for edge, props in list(graph.edges.items())]
 
@@ -51,11 +55,10 @@ class TestTransformerGraph(unittest.TestCase):
 
     def _assert_edge_properties(
         self,
-        transformer: Transformer,
         graph: GloeGraph,
         expected_edges_props: dict[tuple[str, str], Any],
     ):
-        ids_by_name = self._get_nodes_by_name(transformer)
+        ids_by_name = self._get_nodes_by_name(graph)
         edges_with_id = {
             (ids_by_name[edge[0]], ids_by_name[edge[1]]): props
             for edge, props in expected_edges_props.items()
@@ -77,10 +80,9 @@ class TestTransformerGraph(unittest.TestCase):
     def _assert_nodes_properties(
         self,
         nodes_properties: dict[str, dict[str, Any]],
-        transformer: Transformer,
         graph: GloeGraph,
     ):
-        ids_by_name = self._get_nodes_by_name(transformer)
+        ids_by_name = self._get_nodes_by_name(graph)
         props_by_id = dict(graph.nodes)
         for name, properties in nodes_properties.items():
             node_id = ids_by_name[name]
@@ -101,7 +103,7 @@ class TestTransformerGraph(unittest.TestCase):
             ("plus1", "minus1"),
         ]
 
-        self._assert_graph_has_edges(identity, graph, expected_edges)
+        self._assert_graph_has_edges(graph, expected_edges)
 
     def test_simple_divergent_case(self):
         divergent = square >> (plus1, minus1) >> sum_tuple2
@@ -126,7 +128,7 @@ class TestTransformerGraph(unittest.TestCase):
             ("gateway_end", "sum_tuple2"),
         ]
 
-        self._assert_graph_has_edges(divergent, graph, expected_edges)
+        self._assert_graph_has_edges(graph, expected_edges)
 
     def test_complex_divergent_case(self):
         divergent = (
@@ -161,7 +163,7 @@ class TestTransformerGraph(unittest.TestCase):
             ("gateway_end", "sum_tuple3"),
         ]
 
-        self._assert_graph_has_edges(divergent, graph, expected_edges)
+        self._assert_graph_has_edges(graph, expected_edges)
 
     def test_nested_divergent_case(self):
         @transformer
@@ -190,7 +192,7 @@ class TestTransformerGraph(unittest.TestCase):
             ("times2", "divide_by_2"),
         ]
 
-        self._assert_graph_has_edges(divergent, graph, expected_edges)
+        self._assert_graph_has_edges(graph, expected_edges)
 
     def test_simple_conditional_case(self):
         conditional = square_root >> if_is_even.Then(plus1).Else(forward()) >> minus1
@@ -207,7 +209,7 @@ class TestTransformerGraph(unittest.TestCase):
             ("if_is_even_end", "minus1"),
         ]
 
-        self._assert_graph_has_edges(conditional, graph, expected_edges)
+        self._assert_graph_has_edges(graph, expected_edges)
 
     def test_complex_conditional_case(self):
         then_graph = plus1 >> square >> (times2, divide_by_2) >> sum_tuple2
@@ -237,7 +239,7 @@ class TestTransformerGraph(unittest.TestCase):
             ("if_is_even_end", "minus1"),
         ]
 
-        self._assert_graph_has_edges(conditional, graph, expected_edges)
+        self._assert_graph_has_edges(graph, expected_edges)
 
     def test_repeated_nodes_case(self):
         repeated = (
@@ -265,7 +267,7 @@ class TestTransformerGraph(unittest.TestCase):
             ("gateway_end", "sum_tuple2"),
         ]
 
-        self._assert_graph_has_edges(begin1, graph, expected_edges)
+        self._assert_graph_has_edges(graph, expected_edges)
 
     def test_invisible_nodes_case(self):
         begin1 = forward[float]() >> (plus1, minus1) >> sum_tuple2
@@ -291,7 +293,7 @@ class TestTransformerGraph(unittest.TestCase):
             ("logarithm", "square"),
         ]
 
-        self._assert_graph_has_edges(init_graph, graph, expected_edges)
+        self._assert_graph_has_edges(graph, expected_edges)
 
     def test_nodes_properties_case(self):
         then_graph = plus1 >> square >> (times2, divide_by_2) >> sum_tuple2
@@ -319,7 +321,7 @@ class TestTransformerGraph(unittest.TestCase):
             "if_is_even": {"label": "if_is_even", "shape": "diamond"},
         }
 
-        self._assert_nodes_properties(nodes_properties, conditional, graph)
+        self._assert_nodes_properties(nodes_properties, graph)
 
     def test_edge_labels_case(self):
         single_edge = plus1 >> square
@@ -327,7 +329,7 @@ class TestTransformerGraph(unittest.TestCase):
 
         expected_edge_props = {("plus1", "square"): {"label": "float"}}
 
-        self._assert_edge_properties(single_edge, graph, expected_edge_props)
+        self._assert_edge_properties(graph, expected_edge_props)
 
         divergent_edges = (
             plus1 >> (square >> to_string, square_root) >> tuple_concatenate
@@ -343,4 +345,20 @@ class TestTransformerGraph(unittest.TestCase):
             ("gateway_end", "tuple_concatenate"): {"label": "(str, float)"},
         }
 
-        self._assert_edge_properties(divergent_edges, graph, expected_edge_props)
+        self._assert_edge_properties(graph, expected_edge_props)
+
+    def test_subgraphs(self):
+        nested_transformer = forward[list[int]]() >> Map(square >> square_root)
+        nested_graph = nested_transformer.graph()
+        subgraphs = nested_graph.subgraphs
+        self.assertEqual(len(subgraphs), 1)
+
+        subgraph = subgraphs[0]
+        self._assert_nodes_count(2, subgraph)
+        self._assert_edges_count(1, subgraph)
+
+        expected_edges = [
+            ("square", "square_root"),
+        ]
+
+        self._assert_graph_has_edges(subgraph, expected_edges)

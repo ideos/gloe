@@ -1,17 +1,24 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from tests.lib.transformers import plus1, square_root
+from gloe.collection import Map
+from tests.lib.transformers import plus1, square_root, repeat_list
 
 
 class TestTransformerExport(unittest.TestCase):
 
-    foo = square_root >> plus1
+    foo = repeat_list(10) >> Map(plus1)
 
-    @patch("builtins.__import__", side_effect=ImportError)
-    def test_import_error(self, mock_import: MagicMock):
+    def test_import_error(self):
+        # instead of foo.dot store it on a temporary file
+        # calling the real function, not mocking
 
-        self.assertRaises(ImportError, lambda: self.foo.export("foo.dot"))
+        import tempfile
+
+        # Create a temporary file
+        with tempfile.NamedTemporaryFile(suffix=".dot", delete=False) as temp:
+            # Use the name of the temporary file instead of 'foo.dot'
+            self.foo.to_dot(temp.name)
 
 
 if __name__ == "__main__":

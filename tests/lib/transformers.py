@@ -110,6 +110,11 @@ def repeat(content: str, n_times: int, linebreak: bool) -> str:
     return repeated
 
 
+@partial_transformer
+def repeat_list(content: int, n_times: int) -> list[int]:
+    return [content] * n_times
+
+
 @transformer
 def identity(num: float) -> float:
     return num

@@ -9,6 +9,7 @@ from gloe import (
     AsyncTransformer,
     TransformerException,
 )
+from gloe.async_transformer import _execute_async_flow
 
 from gloe.functional import partial_async_transformer
 from gloe.utils import forward
@@ -276,6 +277,15 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
             repr(class_request_data), "str -> (RequestData) -> dict[str, str]"
         )
 
+        @transformer
+        def dict_to_str(_dict: dict) -> str:
+            return str(_dict)
+
+        request_and_serialize = request_data >> dict_to_str
+        self.assertEqual(
+            repr(request_and_serialize), "dict -> (2 transformers omitted) -> str"
+        )
+
     async def test_exhausting_large_flow(self):
         """
         Test the instantiation of large graph
@@ -303,6 +313,21 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
 
             exception_ctx = cast(TransformerException, exception.__cause__)
             self.assertEqual(async_natural_logarithm, exception_ctx.raiser_transformer)
+
+    async def test_execute_async_wrong_flow(self):
+        flow = [2]
+        with self.assertRaises(NotImplementedError):
+            await _execute_async_flow(flow, 1)  # type: ignore
+
+    async def test_composition_transform_method(self):
+        test3 = forward[float]() >> async_plus1
+
+        result = await test3.transform_async(5)
+        self.assertIsNone(result)
+        test2 = forward[float]() >> (async_plus1, async_plus1)
+
+        result2 = await test2.transform_async(5)
+        self.assertIsNone(result2)
 
 
 if __name__ == "__main__":

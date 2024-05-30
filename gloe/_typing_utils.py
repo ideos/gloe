@@ -1,5 +1,5 @@
 from types import GenericAlias
-from typing import TypeVar, get_origin
+from typing import TypeVar, get_origin, _GenericAlias  # type: ignore
 
 
 def _format_tuple(
@@ -27,7 +27,9 @@ def _format_union(
 def _format_generic_alias(
     return_annotation: GenericAlias, generic_input_param, input_annotation
 ) -> str:
-    alias_name = return_annotation.__name__
+    alias_name = getattr(return_annotation, "__name__", None)
+    if alias_name is None:
+        alias_name = getattr(return_annotation, "_name")
     formatted: list[str] = []
     for annotation in return_annotation.__args__:
         formatted.append(
@@ -57,6 +59,7 @@ def _format_return_annotation(
         )
     if (
         type(return_annotation) is GenericAlias
+        or type(return_annotation) is _GenericAlias
     ):  # _GenericAlias must be investigated too
         return _format_generic_alias(
             return_annotation, generic_input_param, input_annotation

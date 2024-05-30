@@ -337,5 +337,5 @@ class _GatewayFactory(Protocol):
     ) -> AsyncTransformer[_I, tuple[O1, O2, O3, O4, O5, O6, O7]]:
         pass
 
-    def __call__(self, *args):
+    def __call__(self, *args):  # pragma: no cover
         pass

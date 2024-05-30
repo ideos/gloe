@@ -225,6 +225,9 @@ class TestFunctionTransformer(unittest.TestCase):
         self.assertNotEqual(graph, square_root)
         self.assertNotEqual(square, square_root)
 
+        with self.assertRaises(NotImplementedError):
+            self.assertEqual(square, 1)
+
     def test_transformer_pydoc_keeping(self):
         @transformer
         def to_string(num: int) -> str:

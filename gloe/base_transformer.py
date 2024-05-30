@@ -145,7 +145,7 @@ class BaseTransformer(Generic[_In, _Out], ABC):
     def __eq__(self, other):
         if isinstance(other, BaseTransformer):
             return self.id == other.id
-        return NotImplemented
+        raise NotImplementedError()
 
     def _copy(
         self: Self,
@@ -194,16 +194,6 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         force: bool = False,
     ) -> Self:
         return self._copy(transform, regenerate_instance_id, "transform", force)
-
-    @property
-    def graph_nodes(self) -> dict[UUID, Optional["BaseTransformer"]]:
-        graph = self.graph()
-
-        nodes = {}
-        for node_id, attrs in graph.nodes.items():
-            nodes[node_id] = attrs.get("transformer", attrs.get("_label"))
-
-        return nodes
 
     @abstractmethod
     def signature(self) -> Signature:
@@ -290,10 +280,8 @@ class BaseTransformer(Generic[_In, _Out], ABC):
             "label": self.label,
             "transformer": self,
         }
-        if node_id not in net.nodes:
-            net.add_node(node_id, **props)
-        else:
-            net.nodes[node_id] = props
+
+        net.add_node(node_id, **props)
         return node_id
 
     @property
@@ -345,7 +333,7 @@ class BaseTransformer(Generic[_In, _Out], ABC):
             elif node.plotting_settings.has_children and len(node.children) > 0:
                 # if the node is not a gateway, but has children, we add its children
                 # to a subgraph
-                return self._add_subgraph(net, prev_node, node)
+                prev_node = self._add_subgraph(net, prev_node, node)
             else:  # otherwise, we add the node to the graph
                 node_id = node._add_net_node(net)
 

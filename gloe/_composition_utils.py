@@ -21,10 +21,6 @@ def is_transformer(node):
     return isinstance(node, Transformer)
 
 
-def is_async_transformer(node):
-    return isinstance(node, AsyncTransformer)
-
-
 def _resolve_serial_connection_signatures(
     transformer2: BaseTransformer, generic_vars: dict, signature2: Signature
 ) -> Signature:
@@ -34,7 +30,7 @@ def _resolve_serial_connection_signatures(
     )
     new_signature = signature2.replace(
         parameters=[new_parameter],
-        return_annotation=_specify_types(signature2.return_annotation, generic_vars),
+        return_annotation=_specify_types(transformer2.output_type, generic_vars),
     )
     return new_signature
 
@@ -44,16 +40,13 @@ def _compose_serial(transformer1, _transformer2):
         transformer1 = transformer1.copy(regenerate_instance_id=True)
 
     transformer2 = _transformer2.copy(regenerate_instance_id=True)
-    # transformer2._set_previous(transformer1)
 
     signature1: Signature = transformer1.signature()
     signature2: Signature = transformer2.signature()
 
-    input_generic_vars = _match_types(
-        transformer2.input_type, signature1.return_annotation
-    )
+    input_generic_vars = _match_types(transformer2.input_type, transformer1.output_type)
     output_generic_vars = _match_types(
-        signature1.return_annotation, transformer2.input_type
+        transformer1.output_type, transformer2.input_type
     )
     generic_vars = {**input_generic_vars, **output_generic_vars}
 

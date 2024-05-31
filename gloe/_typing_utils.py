@@ -2,71 +2,48 @@ from types import GenericAlias
 from typing import TypeVar, get_origin, _GenericAlias  # type: ignore
 
 
-def _format_tuple(
-    tuple_annotation: tuple, generic_input_param, input_annotation
-) -> str:
+def _format_tuple(tuple_annotation: tuple, input_annotation) -> str:
     formatted: list[str] = []
     for annotation in tuple_annotation:
-        formatted.append(
-            _format_return_annotation(annotation, generic_input_param, input_annotation)
-        )
+        formatted.append(_format_return_annotation(annotation, input_annotation))
     return f"({', '.join(formatted)})"
 
 
-def _format_union(
-    tuple_annotation: tuple, generic_input_param, input_annotation
-) -> str:
+def _format_union(tuple_annotation: tuple, input_annotation) -> str:
     formatted: list[str] = []
     for annotation in tuple_annotation:
-        formatted.append(
-            _format_return_annotation(annotation, generic_input_param, input_annotation)
-        )
+        formatted.append(_format_return_annotation(annotation, input_annotation))
     return f"({' | '.join(formatted)})"
 
 
-def _format_generic_alias(
-    return_annotation: GenericAlias, generic_input_param, input_annotation
-) -> str:
+def _format_generic_alias(return_annotation: GenericAlias, input_annotation) -> str:
     alias_name = getattr(return_annotation, "__name__", None)
     if alias_name is None:
         alias_name = getattr(return_annotation, "_name")
     formatted: list[str] = []
     for annotation in return_annotation.__args__:
-        formatted.append(
-            _format_return_annotation(annotation, generic_input_param, input_annotation)
-        )
+        formatted.append(_format_return_annotation(annotation, input_annotation))
     return f"{alias_name}[{', '.join(formatted)}]"
 
 
-def _format_return_annotation(
-    return_annotation, generic_input_param, input_annotation
-) -> str:
+def _format_return_annotation(return_annotation, input_annotation=None) -> str:
     if isinstance(return_annotation, str):
         return return_annotation
     if isinstance(return_annotation, tuple):
-        return _format_tuple(return_annotation, generic_input_param, input_annotation)
+        return _format_tuple(return_annotation, input_annotation)
     return_name = getattr(return_annotation, "__name__", None)
     if return_name is None:
         return_name = getattr(return_annotation, "_name", None)
 
     if return_name in {"tuple", "Tuple"}:
-        return _format_tuple(
-            return_annotation.__args__, generic_input_param, input_annotation
-        )
+        return _format_tuple(return_annotation.__args__, input_annotation)
     if return_name in {"Union"}:
-        return _format_union(
-            return_annotation.__args__, generic_input_param, input_annotation
-        )
+        return _format_union(return_annotation.__args__, input_annotation)
     if (
         type(return_annotation) is GenericAlias
         or type(return_annotation) is _GenericAlias
     ):  # _GenericAlias must be investigated too
-        return _format_generic_alias(
-            return_annotation, generic_input_param, input_annotation
-        )
-
-    if return_annotation == generic_input_param:
-        return str(input_annotation.__name__)
+        return _format_generic_alias(return_annotation, input_annotation)
 
     return str(return_annotation.__name__)
 
@@ -88,17 +65,8 @@ def _match_types(generic, specific):
     ):
         return {}
 
-    generic_args = getattr(generic, "__args__", None)
-    specific_args = getattr(specific, "__args__", None)
-
-    if specific_args is None or specific_args is None:
-        return {}
-
-    if generic_args is None:
-        return {}
-
-    if specific_args is None:
-        return {}
+    generic_args = getattr(generic, "__args__", ())
+    specific_args = getattr(specific, "__args__", ())
 
     if len(generic_args) != len(specific_args):
         return {}

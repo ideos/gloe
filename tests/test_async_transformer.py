@@ -13,11 +13,10 @@ from gloe.async_transformer import _execute_async_flow
 
 from gloe.functional import partial_async_transformer
 from gloe.utils import forward
-from tests.lib.exceptions import LnOfNegativeNumber
-from tests.lib.transformers import (
-    async_plus1,
-    async_natural_logarithm,
-)
+
+from tests.lib.ensurers import is_odd
+from tests.lib.exceptions import LnOfNegativeNumber, NumbersEqual, NumberIsEven
+from tests.lib.transformers import async_plus1, async_natural_logarithm, minus1
 
 _In = TypeVar("_In")
 
@@ -328,6 +327,38 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
 
         result2 = await test2.transform_async(5)
         self.assertIsNone(result2)
+
+    async def test_async_pipeline_ensurer(self):
+        def is_not_equal(_in: int, _out: int):
+            if _in == _out:
+                raise NumbersEqual()
+
+        incoming_odd_ensurer = ensure(incoming=[is_odd])
+        ensured_pipeline = incoming_odd_ensurer(async_plus1 >> minus1)
+        with self.assertRaises(NumberIsEven):
+            await ensured_pipeline(2)
+
+        ensured_pipeline = incoming_odd_ensurer(minus1 >> async_plus1)
+        with self.assertRaises(NumberIsEven):
+            await ensured_pipeline(2)
+
+        outcome_odd_ensurer = ensure(outcome=[is_odd])
+        ensured_pipeline = outcome_odd_ensurer(async_plus1 >> minus1)
+        with self.assertRaises(NumberIsEven):
+            await ensured_pipeline(2)
+
+        ensured_pipeline = outcome_odd_ensurer(minus1 >> async_plus1)
+        with self.assertRaises(NumberIsEven):
+            await ensured_pipeline(2)
+
+        not_equal_ensurer = ensure(changes=[is_not_equal])
+        ensured_pipeline = not_equal_ensurer(async_plus1 >> minus1) >> forward()
+        with self.assertRaises(NumbersEqual):
+            await ensured_pipeline(2)
+
+        ensured_pipeline = not_equal_ensurer(minus1 >> async_plus1) >> forward()
+        with self.assertRaises(NumbersEqual):
+            await ensured_pipeline(2)
 
 
 if __name__ == "__main__":

@@ -14,7 +14,8 @@ class TestTransformerExport(unittest.TestCase):
     @patch("builtins.__import__", side_effect=ImportError)
     def test_no_graphviz_installed(self, mock_import: MagicMock):
         with self.assertRaises(ImportError):
-            self.foo.to_dot("foo.dot")
+            with tempfile.NamedTemporaryFile(suffix=".dot", delete=False) as temp:
+                self.foo.to_dot(temp.name)
 
     def test_export_no_errors(self):
         with tempfile.NamedTemporaryFile(suffix=".dot", delete=False) as temp:

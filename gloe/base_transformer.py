@@ -158,9 +158,8 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         copied: Self = copy.copy(self)
         copied._already_copied = True
 
-        func_type = types.MethodType
         if transform is not None:
-            setattr(copied, transform_method, func_type(transform, copied))
+            setattr(copied, transform_method, types.MethodType(transform, copied))
 
         old_instance_id = self.instance_id
         if regenerate_instance_id:
@@ -250,7 +249,7 @@ class BaseTransformer(Generic[_In, _Out], ABC):
     def output_annotation(self) -> str:
         output_type = self.output_type
 
-        return_type = _format_return_annotation(output_type, None, None)
+        return_type = _format_return_annotation(output_type)
         return return_type
 
     @property
@@ -264,7 +263,7 @@ class BaseTransformer(Generic[_In, _Out], ABC):
     def input_annotation(self) -> str:
         input_type = self.input_type
 
-        incoming_type = _format_return_annotation(input_type, None, None)
+        incoming_type = _format_return_annotation(input_type)
         return incoming_type
 
     def _add_net_node(self, net: GloeGraph, custom_data: dict[str, Any] = {}):

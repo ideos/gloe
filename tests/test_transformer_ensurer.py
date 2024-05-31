@@ -314,6 +314,10 @@ class TestTransformerEnsurer(unittest.TestCase):
 
         self.assertRaises(NumberIsEven, lambda: ensured_pipeline(2))
 
+        outcome_even_ensurer = ensure(outcome=[is_even])
+        ensured_pipeline = outcome_even_ensurer(int_identity >> int_identity)
+        self.assertEqual(2, ensured_pipeline(2))
+
         outcome_odd_ensurer = ensure(outcome=[is_odd])
 
         ensured_pipeline = outcome_odd_ensurer(int_identity >> int_identity)

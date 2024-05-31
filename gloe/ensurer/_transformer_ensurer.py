@@ -181,32 +181,50 @@ class _ensure_base:
             return transformer.copy(transform_async)
 
         if (
-            isinstance(first_node, AsyncTransformer)
-            and len(self.input_ensurers_instances) > 0
+            len(self.input_ensurers_instances) > 0
+            or len(self.output_ensurers_instances) > 0
         ):
+            if isinstance(first_node, AsyncTransformer):
 
-            async def transform_async(_, data):
-                for ensurer in self.input_ensurers_instances:
-                    ensurer.validate_input(data)
-                output = await first_node.transform_async(data)
-                self._input_data = data
-                return output
+                async def transform_async(_, data):
+                    for ensurer in self.input_ensurers_instances:
+                        ensurer.validate_input(data)
+                    output = await first_node.transform_async(data)
+                    self._input_data = data
+                    return output
 
-            transformer._flow[0] = first_node.copy(transform_async)
+                transformer._flow[0] = first_node.copy(transform_async)
+            elif isinstance(first_node, Transformer):
 
-        if (
-            isinstance(last_node, AsyncTransformer)
-            and len(self.output_ensurers_instances) > 0
-        ):
+                def transform(_, data):
+                    for ensurer in self.input_ensurers_instances:
+                        ensurer.validate_input(data)
+                    output = first_node.transform(data)
+                    self._input_data = data
+                    return output
 
-            async def transform_async(_, data):
-                output = await last_node.transform_async(data)
-                for ensurer in self.output_ensurers_instances:
-                    ensurer.validate_output(self._input_data, output)
-                del self._input_data
-                return output
+                transformer._flow[0] = first_node.copy(transform)
 
-            transformer._flow[-1] = last_node.copy(transform_async)
+        if len(self.output_ensurers_instances) > 0:
+            if isinstance(last_node, AsyncTransformer):
+
+                async def transform_async(_, data):
+                    output = await last_node.transform_async(data)
+                    for ensurer in self.output_ensurers_instances:
+                        ensurer.validate_output(self._input_data, output)
+                    return output
+
+                transformer._flow[-1] = last_node.copy(transform_async)
+
+            elif isinstance(last_node, Transformer):
+
+                def transform(_, data):
+                    output = last_node.transform(data)
+                    for ensurer in self.output_ensurers_instances:
+                        ensurer.validate_output(self._input_data, output)
+                    return output
+
+                transformer._flow[-1] = last_node.copy(transform)
 
         return transformer
 

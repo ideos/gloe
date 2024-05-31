@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gloe"
-version = "0.5.9"
+dynamic = ["version"]
 authors = [
   { name="Samir Braga", email="samirchavess@gmail.com" },
 ]

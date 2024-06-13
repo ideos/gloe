@@ -1,11 +1,10 @@
 import uuid
-from inspect import Signature, Parameter, _ParameterKind
+from inspect import Signature, Parameter
 from types import GenericAlias
-from typing import Any
+from typing import Any, TypeVar
 
 from typing_extensions import Generic
 
-from gloe._generic_types import *
 from gloe._gloe_graph import GloeGraph
 from gloe._plotting_utils import dot_props, NodeType
 from gloe._transformer_utils import _diverging_signatures
@@ -56,7 +55,6 @@ class _base_gateway(Generic[_In], BaseTransformer[_In, Any]):
             input_annotation=self.input_annotation,
             output_annotation="",
         )
-        size = 0.4
         net.add_node(
             in_converge_id,
             _label="gateway_begin",

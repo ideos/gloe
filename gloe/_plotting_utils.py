@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional, Any
-from uuid import UUID
 
 
 class NodeType(Enum):

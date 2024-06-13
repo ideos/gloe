@@ -37,7 +37,10 @@ def _format_return_annotation(return_annotation, input_annotation=None) -> str:
 
     if return_name in {"tuple", "Tuple"}:
         return _format_tuple(return_annotation.__args__, input_annotation)
-    if return_name in {"Union"}:
+    if (
+        return_name == "Union"
+        or return_annotation.__class__.__name__ == "_UnionGenericAlias"
+    ):
         return _format_union(return_annotation.__args__, input_annotation)
     if (
         type(return_annotation) is GenericAlias
@@ -45,7 +48,7 @@ def _format_return_annotation(return_annotation, input_annotation=None) -> str:
     ):  # _GenericAlias must be investigated too
         return _format_generic_alias(return_annotation, input_annotation)
 
-    return str(return_annotation.__name__)
+    return str(return_name)
 
 
 def _match_types(generic, specific):

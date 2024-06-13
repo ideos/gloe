@@ -2,15 +2,14 @@ from typing import Generic, TypeVar, Iterable
 
 from gloe import AsyncTransformer
 from gloe._plotting_utils import PlottingSettings, NodeType
-from gloe.transformers import Transformer
 
 _T = TypeVar("_T")
 
 
 class Filter(Generic[_T], AsyncTransformer[Iterable[_T], Iterable[_T]]):
     """
-    Async transformer used to filter values in an iterable using other async transformers
-    instead of functions.
+    Async transformer used to filter values in an iterable using other async
+    transformers instead of functions.
 
     Example:
         In this example, we fetch a list of users and then filter the administrators.::

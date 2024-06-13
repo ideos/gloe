@@ -1,5 +1,3 @@
-from typing import Literal, Optional
-
 from gloe._composition_utils import _compose_nodes
 from gloe.functional import (
     transformer,

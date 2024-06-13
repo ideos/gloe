@@ -1,4 +1,3 @@
-import asyncio
 from typing import TypeVar, Any
 
 from typing_extensions import cast

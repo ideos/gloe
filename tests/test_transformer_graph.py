@@ -1,6 +1,6 @@
 import unittest
 from typing import Any
-from gloe import Transformer, transformer, BaseTransformer
+from gloe import transformer, BaseTransformer
 from gloe._gloe_graph import GloeGraph
 from gloe.collection import Map
 from gloe.utils import forward

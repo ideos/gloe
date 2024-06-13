@@ -1,8 +1,7 @@
-import asyncio
-from typing import Any
-from typing_extensions import cast
+from typing import Any, TypeVar
+from typing_extensions import cast, TypeAlias
 
-from gloe._generic_types import *
+from gloe.base_transformer import BaseTransformer
 from gloe.async_transformer import AsyncTransformer, _execute_async_flow
 from gloe.gateways._base_gateway import _base_gateway
 from gloe.gateways._gateway_factory import _GatewayFactory

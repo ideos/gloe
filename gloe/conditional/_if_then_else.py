@@ -1,5 +1,3 @@
-import sys
-
 from gloe.async_transformer import AsyncTransformer
 from gloe.base_transformer import BaseTransformer
 from gloe.exceptions import UnsupportedTransformerArgException
@@ -11,8 +9,6 @@ from gloe.conditional._implication import (
     _BaseImplication,
 )
 
-if sys.version_info >= (3, 10):
-    from types import UnionType
 from typing import (
     Callable,
     Generic,

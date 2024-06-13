@@ -2,7 +2,6 @@ import types
 from inspect import Signature
 from typing import TypeVar, Any, Optional, Union
 
-from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe.async_transformer import AsyncTransformer
 from gloe.base_transformer import BaseTransformer
 from gloe.gateways._parallel import _Parallel, _ParallelAsync

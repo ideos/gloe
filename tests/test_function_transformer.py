@@ -2,7 +2,6 @@ import asyncio
 import unittest
 from typing import cast
 
-from gloe.collection import Map
 from tests.lib.transformers import (
     square,
     square_root,
@@ -13,7 +12,6 @@ from tests.lib.transformers import (
     natural_logarithm,
     logarithm,
     LnOfNegativeNumber,
-    repeat_list,
 )
 from gloe import (
     TransformerException,

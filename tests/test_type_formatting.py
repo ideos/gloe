@@ -1,6 +1,5 @@
-import inspect
 import unittest
-from typing import TypeVar, Union, NewType
+from typing import TypeVar, Union
 from collections.abc import Iterable
 
 from gloe import Transformer

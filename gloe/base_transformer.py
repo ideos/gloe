@@ -14,14 +14,12 @@ from typing import (
     Generic,
     TypeVar,
     Union,
-    Iterable,
     get_args,
     get_origin,
     Type,
     Optional,
-    Awaitable,
+    cast,
 )
-from uuid import UUID
 
 from typing_extensions import Self, TypeAlias, deprecated
 
@@ -167,7 +165,11 @@ class BaseTransformer(Generic[_In, _Out], ABC):
 
         if self._already_copied and not force:
             copied._flow = [
-                copied if child.instance_id == old_instance_id else child
+                (
+                    cast(BaseTransformer, copied)
+                    if child.instance_id == old_instance_id
+                    else child
+                )
                 for child in self._flow
             ]
         else:
@@ -178,7 +180,7 @@ class BaseTransformer(Generic[_In, _Out], ABC):
 
             copied._flow = [
                 (
-                    copied
+                    cast(BaseTransformer, copied)
                     if child.instance_id == old_instance_id
                     else child.copy(regenerate_instance_id=regenerate_instance_id)
                 )

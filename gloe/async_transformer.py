@@ -1,4 +1,3 @@
-import asyncio
 from abc import abstractmethod
 from inspect import Signature
 from typing import TypeVar, overload, cast, Callable, Generic, Optional, Any
@@ -27,10 +26,13 @@ async def _execute_async_flow(flow: Flow, arg: Any) -> Any:
     result = arg
     for op in flow:
         if isinstance(op, BaseTransformer):
-            if asyncio.iscoroutinefunction(op._safe_transform):
+            if isinstance(op, AsyncTransformer):
                 result = await op._safe_transform(result)
             else:
-                result = op._safe_transform(result)
+                if hasattr(op, "_safe_transform"):
+                    result = op._safe_transform(result)
+                else:
+                    raise NotImplementedError()
         else:
             raise NotImplementedError()
     return result

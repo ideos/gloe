@@ -4,7 +4,7 @@ from inspect import Signature
 from types import GenericAlias
 
 from gloe.base_transformer import BaseTransformer
-from gloe.conditional._implication import _Implication, _BaseImplication
+from gloe.conditional._implication import _BaseImplication
 
 if sys.version_info >= (3, 10):
     from types import UnionType

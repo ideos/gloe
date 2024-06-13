@@ -1,11 +1,26 @@
-from typing import overload
+from typing import overload, TypeVar
 
-from typing_extensions import Protocol
+from typing_extensions import Protocol, TypeAlias
 
-from gloe._generic_types import *
+from gloe.async_transformer import AsyncTransformer
+from gloe.base_transformer import BaseTransformer
 from gloe.transformers import Transformer
 
-_I = TypeVar("_I", contravariant=True)
+
+_I = TypeVar("_I")
+_O = TypeVar("_O", covariant=True)
+
+AT: TypeAlias = AsyncTransformer
+BT: TypeAlias = BaseTransformer[_I, _O]
+
+O1 = TypeVar("O1")
+O2 = TypeVar("O2")
+O3 = TypeVar("O3")
+O4 = TypeVar("O4")
+O5 = TypeVar("O5")
+O6 = TypeVar("O6")
+O7 = TypeVar("O7")
+
 
 Tr: TypeAlias = Transformer
 

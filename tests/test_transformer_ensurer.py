@@ -1,10 +1,14 @@
 import unittest
 
+from gloe.exceptions import UnsupportedEnsurerArgException
+from gloe.utils import forward
+
 from tests.lib.exceptions import (
     NumberIsEven,
     NumberLessThanOrEquals10,
     NumbersNotEqual,
     NumberIsOdd,
+    NumbersEqual,
 )
 from tests.lib.ensurers import (
     is_odd,
@@ -17,7 +21,6 @@ from gloe import (
     ensure,
     transformer,
     partial_transformer,
-    UnsupportedTransformerArgException,
     Transformer,
 )
 from tests.lib.transformers import square, divide_by_2, plus1, identity, times2
@@ -33,7 +36,7 @@ class TestTransformerEnsurer(unittest.TestCase):
         self.assertRaises(NumberIsOdd, lambda: divide_by_2(3))
         self.assertEqual(divide_by_2(2), 1)
 
-    def test_output_ensurer(self):
+    def test_output_and_changes_ensurers(self):
         @ensure(outcome=[is_greater_than_10])
         @transformer
         def multiply_by_2(num: float) -> float:
@@ -44,17 +47,19 @@ class TestTransformerEnsurer(unittest.TestCase):
 
         @ensure(changes=[same_value_int])
         @transformer
-        def _plus1(num: int) -> int:
-            return num + 1
-
-        self.assertRaises(NumbersNotEqual, lambda: _plus1(4))
-
-        @ensure(changes=[same_value_int])
-        @transformer
         def _times1(num: int) -> int:
             return num * 1
 
         self.assertEqual(_times1(8), 8)
+
+        @ensure(changes=[same_value_int])
+        @transformer
+        def _plus1(num: int) -> int:
+            return num + 1
+
+        pipeline = _plus1 >> _times1
+
+        self.assertRaises(NumbersNotEqual, lambda: pipeline(4))
 
         @ensure(outcome=[is_greater_than_10], changes=[same_value])
         @transformer
@@ -288,10 +293,39 @@ class TestTransformerEnsurer(unittest.TestCase):
 
         ensured_pipeline = odd_ensurer(generic_identity)
 
+        self.assertRaises(UnsupportedEnsurerArgException, lambda: ensured_pipeline(1))
         self.assertRaises(
-            UnsupportedTransformerArgException, lambda: ensured_pipeline(1)
-        )
-        self.assertRaises(
-            UnsupportedTransformerArgException,
+            UnsupportedEnsurerArgException,
             lambda: odd_ensurer("generic_string"),  # type: ignore
         )
+
+    def test_pipeline_ensurer(self):
+        def is_not_equal(_in: int, _out: int):
+            if _in == _out:
+                raise NumbersEqual()
+
+        incoming_odd_ensurer = ensure(incoming=[is_odd])
+
+        @transformer
+        def int_identity(n: int) -> int:
+            return n
+
+        ensured_pipeline = incoming_odd_ensurer(int_identity >> int_identity)
+
+        self.assertRaises(NumberIsEven, lambda: ensured_pipeline(2))
+
+        outcome_even_ensurer = ensure(outcome=[is_even])
+        ensured_pipeline = outcome_even_ensurer(int_identity >> int_identity)
+        self.assertEqual(2, ensured_pipeline(2))
+
+        outcome_odd_ensurer = ensure(outcome=[is_odd])
+
+        ensured_pipeline = outcome_odd_ensurer(int_identity >> int_identity)
+
+        self.assertRaises(NumberIsEven, lambda: ensured_pipeline(2))
+
+        not_equal_ensurer = ensure(changes=[is_not_equal])
+
+        ensured_pipeline = not_equal_ensurer(int_identity >> int_identity) >> forward()
+
+        self.assertRaises(NumbersEqual, lambda: ensured_pipeline(2))

@@ -1,20 +1,31 @@
 import asyncio
 import unittest
-from typing import TypeVar, Any
+from typing import TypeVar, Any, cast
 from gloe import (
     async_transformer,
     ensure,
     UnsupportedTransformerArgException,
     transformer,
     AsyncTransformer,
+    TransformerException,
 )
+from gloe.async_transformer import _execute_async_flow
 
 from gloe.functional import partial_async_transformer
 from gloe.utils import forward
 
+from tests.lib.ensurers import is_odd
+from tests.lib.exceptions import LnOfNegativeNumber, NumbersEqual, NumberIsEven
+from tests.lib.transformers import async_plus1, async_natural_logarithm, minus1
+
 _In = TypeVar("_In")
 
 _DATA = {"foo": "bar"}
+
+
+async def raise_an_error():
+    await asyncio.sleep(0.1)
+    raise NotImplementedError()
 
 
 @async_transformer
@@ -82,21 +93,21 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
 
         result = await test_forward(_URL)
 
-        self.assertDictEqual(result, _DATA)
+        self.assertDictEqual(_DATA, result)
 
     async def test_begin_with_transformer(self):
         test_forward = forward[str]() >> request_data
 
         result = await test_forward(_URL)
 
-        self.assertDictEqual(result, _DATA)
+        self.assertDictEqual(_DATA, result)
 
     async def test_async_on_divergent_connection(self):
         test_forward = forward[str]() >> (forward[str](), request_data)
 
         result = await test_forward(_URL)
 
-        self.assertEqual(result, (_URL, _DATA))
+        self.assertEqual((_URL, _DATA), result)
 
     async def test_divergent_connection_from_async(self):
         test_forward = request_data >> (
@@ -106,7 +117,7 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
 
         result = await test_forward(_URL)
 
-        self.assertEqual(result, (_DATA, _DATA))
+        self.assertEqual((_DATA, _DATA), result)
 
     async def test_partial_async_transformer(self):
         @partial_async_transformer
@@ -242,7 +253,7 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
 
         pipeline = pipeline.copy()
         result = await pipeline(_URL)
-        self.assertEqual(result, _DATA)
+        self.assertEqual(_DATA, result)
 
     def test_async_transformer_wrong_signature(self):
         with self.assertWarns(RuntimeWarning):
@@ -264,3 +275,91 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             repr(class_request_data), "str -> (RequestData) -> dict[str, str]"
         )
+
+        @transformer
+        def dict_to_str(_dict: dict) -> str:
+            return str(_dict)
+
+        request_and_serialize = request_data >> dict_to_str
+        self.assertEqual(
+            repr(request_and_serialize), "dict -> (2 transformers omitted) -> str"
+        )
+
+    async def test_exhausting_large_flow(self):
+        """
+        Test the instantiation of large graph
+        """
+        graph = async_plus1
+
+        max_iters = 1500
+        for i in range(max_iters):
+            graph = graph >> async_plus1
+
+        result = await graph(0)
+        self.assertEqual(result, max_iters + 1)
+
+    async def test_async_transformer_error_handling(self):
+        """
+        Test if a raised error stores the correct TransformerException as its cause
+        """
+
+        async_graph = async_plus1 >> async_natural_logarithm
+
+        try:
+            await async_graph(-2)
+        except LnOfNegativeNumber as exception:
+            self.assertEqual(type(exception.__cause__), TransformerException)
+
+            exception_ctx = cast(TransformerException, exception.__cause__)
+            self.assertEqual(async_natural_logarithm, exception_ctx.raiser_transformer)
+
+    async def test_execute_async_wrong_flow(self):
+        flow = [2]
+        with self.assertRaises(NotImplementedError):
+            await _execute_async_flow(flow, 1)  # type: ignore
+
+    async def test_composition_transform_method(self):
+        test3 = forward[float]() >> async_plus1
+
+        result = await test3.transform_async(5)
+        self.assertIsNone(result)
+        test2 = forward[float]() >> (async_plus1, async_plus1)
+
+        result2 = await test2.transform_async(5)
+        self.assertIsNone(result2)
+
+    async def test_async_pipeline_ensurer(self):
+        def is_not_equal(_in: int, _out: int):
+            if _in == _out:
+                raise NumbersEqual()
+
+        incoming_odd_ensurer = ensure(incoming=[is_odd])
+        ensured_pipeline = incoming_odd_ensurer(async_plus1 >> minus1)
+        with self.assertRaises(NumberIsEven):
+            await ensured_pipeline(2)
+
+        ensured_pipeline = incoming_odd_ensurer(minus1 >> async_plus1)
+        with self.assertRaises(NumberIsEven):
+            await ensured_pipeline(2)
+
+        outcome_odd_ensurer = ensure(outcome=[is_odd])
+        ensured_pipeline = outcome_odd_ensurer(async_plus1 >> minus1)
+        with self.assertRaises(NumberIsEven):
+            await ensured_pipeline(2)
+
+        ensured_pipeline = outcome_odd_ensurer(minus1 >> async_plus1)
+        with self.assertRaises(NumberIsEven):
+            await ensured_pipeline(2)
+
+        not_equal_ensurer = ensure(changes=[is_not_equal])
+        ensured_pipeline = not_equal_ensurer(async_plus1 >> minus1) >> forward()
+        with self.assertRaises(NumbersEqual):
+            await ensured_pipeline(2)
+
+        ensured_pipeline = not_equal_ensurer(minus1 >> async_plus1) >> forward()
+        with self.assertRaises(NumbersEqual):
+            await ensured_pipeline(2)
+
+
+if __name__ == "__main__":
+    unittest.main()

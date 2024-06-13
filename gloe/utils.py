@@ -16,7 +16,7 @@ def forget(data: Any) -> None:
     return None
 
 
-class debug(Generic[_In], Transformer[_In, _In]):
+class debug(Generic[_In], Transformer[_In, _In]):  # pragma: no cover
     def __init__(self):
         super().__init__()
         self.plotting_settings.invisible = True

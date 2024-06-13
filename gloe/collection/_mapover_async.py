@@ -1,18 +1,17 @@
 from typing import Generic, Iterable, TypeVar
 
-
-from gloe.transformers import Transformer
+from gloe import AsyncTransformer
 
 _T = TypeVar("_T")
 _S = TypeVar("_S")
 _U = TypeVar("_U")
 
 
-class MapOver(Generic[_T, _U], Transformer[_T, Iterable[_U]]):
+class MapOverAsync(Generic[_T, _U], AsyncTransformer[_T, Iterable[_U]]):
     def __init__(
         self,
         iterable: Iterable[_S],
-        mapping_transformer: Transformer[tuple[_T, _S], _U],
+        mapping_transformer: AsyncTransformer[tuple[_T, _S], _U],
     ):
         super().__init__()
         self.iterable = iterable
@@ -20,8 +19,9 @@ class MapOver(Generic[_T, _U], Transformer[_T, Iterable[_U]]):
         self.plotting_settings.has_children = True
         self._children = [mapping_transformer]
 
-    def transform(self, data: _T) -> Iterable[_U]:
+    async def transform_async(self, data: _T) -> Iterable[_U]:
         lopping_result = []
         for item in self.iterable:
-            lopping_result.append(self.mapping_transformer((data, item)))
+            result = await self.mapping_transformer((data, item))
+            lopping_result.append(result)
         return lopping_result

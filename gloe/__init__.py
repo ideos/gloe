@@ -1,3 +1,5 @@
+from typing import Literal, Optional
+
 from gloe._composition_utils import _compose_nodes
 from gloe.functional import (
     transformer,
@@ -12,6 +14,8 @@ from gloe.transformers import Transformer
 from gloe.base_transformer import BaseTransformer, PreviousTransformer
 from gloe.base_transformer import TransformerException
 from gloe.async_transformer import AsyncTransformer
+
+__version__ = "0.6.0-rc0"
 
 __all__ = [
     "transformer",

@@ -25,7 +25,7 @@ class _SequentialAsync(_base_gateway[_In], AsyncTransformer[_In, tuple[Any, ...]
     async def transform_async(self, data: _In) -> tuple[Any, ...]:
         results = []
         for transformer in self._children:
-            if asyncio.iscoroutinefunction(transformer.__call__):
+            if isinstance(transformer, AsyncTransformer):
                 result = await _execute_async_flow(transformer._flow, data)
             else:
                 result = _execute_flow(transformer._flow, data)

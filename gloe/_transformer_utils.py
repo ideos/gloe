@@ -27,15 +27,17 @@ def catch_transformer_exception(
             f' in transformer "{transformer_name}"\n  '
             f"  >> {transformer_frame.line}"
         )
-    else:
-        exception_message = f'An error occurred in transformer "{transformer_name}"'
 
-    transform_exception = TransformerException(
-        internal_exception=exception,
-        raiser_transformer=raiser_transformer,
-        message=exception_message,
-    )
-    return transform_exception
+        transform_exception = TransformerException(
+            internal_exception=exception,
+            raiser_transformer=raiser_transformer,
+            message=exception_message,
+        )
+        return transform_exception
+
+    raise NotImplementedError(
+        "This exception was not raised by a transformer"
+    )  # pragma: no cover
 
 
 def _diverging_signatures(

@@ -5,14 +5,14 @@ name: Docs publishing
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ "main" ]
     paths:
       - docs/**
       - gloe/**
       - .github/workflows/docs-publish.yml
       - README.md
   pull_request:
-    branches: [ "develop" ]
+    branches: [ "main" ]
     types: [opened, reopened]
     paths:
       - docs/**

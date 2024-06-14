@@ -60,17 +60,39 @@ class _IfThen(_BaseIfThen[In, ThenOut, PrevThenOut]):
             list(self._prev_implications) + [self._implication]
         )
 
+    @overload
     def Else(
         self, else_transformer: Transformer[In, ElseOut]
     ) -> Transformer[In, Union[ThenOut, PrevThenOut, ElseOut]]:
-        new_transformer: Conditioner[In, Union[ThenOut, PrevThenOut], ElseOut] = (
-            Conditioner(self._implications, else_transformer)
-        )
+        pass
 
-        new_transformer.__class__.__name__ = self._name
-        new_transformer._label = self._name
+    @overload
+    def Else(
+        self, else_transformer: AsyncTransformer[In, ElseOut]
+    ) -> AsyncTransformer[In, Union[ThenOut, PrevThenOut, ElseOut]]:
+        pass
 
-        return new_transformer
+    def Else(self, else_transformer):
+        if isinstance(else_transformer, AsyncTransformer):
+            new_atransformer: AsyncConditioner = AsyncConditioner(
+                self._implications, else_transformer
+            )
+            new_atransformer.__class__.__name__ = self._name
+            new_atransformer._label = self._name
+
+            return new_atransformer
+
+        elif isinstance(else_transformer, Transformer):
+            new_transformer: Conditioner = Conditioner(
+                self._implications, else_transformer
+            )
+
+            new_transformer.__class__.__name__ = self._name
+            new_transformer._label = self._name
+
+            return new_transformer
+
+        raise NotImplementedError()
 
     def ElseNone(
         self,
@@ -93,7 +115,7 @@ class _IfThen(_BaseIfThen[In, ThenOut, PrevThenOut]):
 
 class _AsyncIfThen(_BaseIfThen[In, ThenOut, PrevThenOut]):
     def Else(
-        self, else_transformer: AsyncTransformer[In, ElseOut]
+        self, else_transformer: BaseTransformer[In, ElseOut]
     ) -> AsyncTransformer[In, Union[ThenOut, PrevThenOut, ElseOut]]:
         new_transformer: AsyncConditioner[In, Union[ThenOut, PrevThenOut], ElseOut] = (
             AsyncConditioner(self._implications, else_transformer)
@@ -170,22 +192,12 @@ class _ElseIf(_BaseElseIf[In, PrevThenOut]):
             )
             return async_if_then
 
-        has_async_prev_impl = any(
-            isinstance(impl, _AsyncImplication) for impl in self._prev_implications
-        )
-        if has_async_prev_impl:
-            async_implication = _AsyncImplication(self._condition, next_transformer)
-            async_if_then = _AsyncIfThen(
-                async_implication, self._name, self._prev_implications
-            )
-            return async_if_then
-        else:
-            if isinstance(next_transformer, Transformer):
-                implication = _Implication(self._condition, next_transformer)
-                if_then = _IfThen(implication, self._name, self._prev_implications)
-                return if_then
+        if isinstance(next_transformer, Transformer):
+            implication = _Implication(self._condition, next_transformer)
+            if_then = _IfThen(implication, self._name, self._prev_implications)
+            return if_then
 
-            raise UnsupportedTransformerArgException(next_transformer)
+        raise UnsupportedTransformerArgException(next_transformer)
 
 
 class _AsyncElseIf(_BaseElseIf[In, PrevThenOut]):

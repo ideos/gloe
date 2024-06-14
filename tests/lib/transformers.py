@@ -1,7 +1,8 @@
+import asyncio
 import math
 
 from tests.lib.exceptions import LnOfNegativeNumber
-from gloe import transformer, partial_transformer
+from gloe import transformer, partial_transformer, async_transformer
 
 
 @transformer
@@ -15,6 +16,18 @@ def plus1(num: float) -> float:
     Sum 1 to the number
     """
     return num + 1
+
+
+@async_transformer
+async def async_plus1(num: float) -> float:
+    await asyncio.sleep(0.00001)
+    return num + 1
+
+
+@async_transformer
+async def async_minus1(num: float) -> float:
+    await asyncio.sleep(0.00001)
+    return num - 1
 
 
 @transformer
@@ -39,6 +52,12 @@ def divide_by_2(num: float) -> float:
 
 @transformer
 def sum_tuple2(num: tuple[float, float]) -> float:
+    return num[0] + num[1]
+
+
+@async_transformer
+async def async_sum_tuple2(num: tuple[float, float]) -> float:
+    await asyncio.sleep(0.01)
     return num[0] + num[1]
 
 
@@ -76,6 +95,15 @@ def natural_logarithm(num: float) -> float:
         return math.log(num, math.e)
 
 
+@async_transformer
+async def async_natural_logarithm(num: float) -> float:
+    await asyncio.sleep(0.00001)
+    if num < 0:
+        raise LnOfNegativeNumber(num)
+    else:
+        return math.log(num, math.e)
+
+
 @partial_transformer
 def logarithm(arg: float, base: float) -> float:
     return math.log(arg) / math.log(base)
@@ -92,6 +120,11 @@ def repeat(content: str, n_times: int, linebreak: bool) -> str:
     if linebreak:
         repeated += "\n"
     return repeated
+
+
+@partial_transformer
+def repeat_list(content: float, n_times: int) -> list[float]:
+    return [content] * n_times
 
 
 @transformer

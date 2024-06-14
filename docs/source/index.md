@@ -17,10 +17,9 @@
 :hidden:
 
 Introduction <self>
-theory
-philosophy
 getting-started/index
 faq
+philosophy
 limitations
 
 ```

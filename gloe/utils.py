@@ -1,5 +1,6 @@
 import sys
 from typing import Any, Tuple, TypeVar, Generic
+from typing_extensions import deprecated
 
 from gloe.functional import transformer
 from gloe.transformers import Transformer
@@ -16,7 +17,7 @@ def forget(data: Any) -> None:
     return None
 
 
-class debug(Generic[_In], Transformer[_In, _In]):
+class debug(Generic[_In], Transformer[_In, _In]):  # pragma: no cover
     def __init__(self):
         super().__init__()
         self.plotting_settings.invisible = True
@@ -52,7 +53,14 @@ class forward(Generic[_In], Transformer[_In, _In]):
         return data
 
 
+@deprecated("Use `attach` instead.")
 def forward_incoming(
+    inner_transformer: Transformer[_In, _Out]
+) -> Transformer[_In, Tuple[_Out, _In]]:
+    return forward[_In]() >> (inner_transformer, forward())
+
+
+def attach(
     inner_transformer: Transformer[_In, _Out]
 ) -> Transformer[_In, Tuple[_Out, _In]]:
     return forward[_In]() >> (inner_transformer, forward())

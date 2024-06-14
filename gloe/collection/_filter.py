@@ -18,7 +18,7 @@ class Filter(Generic[_T], Transformer[Iterable[_T], Iterable[_T]]):
             def is_admin(user: User) -> bool: ...
 
             get_admin_users: Transformer[Group, Iterable[User]] = (
-                get_users >> Filter(get_user_posts)
+                get_users >> Filter(is_admin)
             )
     Args:
         filter_transformer: transformer applied to each item of the input iterable and

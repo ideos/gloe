@@ -1,10 +1,6 @@
 (creating-a-transformer)=
 # Creating a Transformer
 
-```{warning}
-This page assumes that you have already read the brief [Gloe's theory](/theory) page.
-```
-
 As previously said, creating a transformer is easy:
 
 ```python

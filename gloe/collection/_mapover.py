@@ -1,8 +1,6 @@
 from typing import Generic, Iterable, TypeVar
 
-from networkx import DiGraph
 
-from gloe import BaseTransformer
 from gloe.transformers import Transformer
 
 _T = TypeVar("_T")
@@ -19,7 +17,7 @@ class MapOver(Generic[_T, _U], Transformer[_T, Iterable[_U]]):
         super().__init__()
         self.iterable = iterable
         self.mapping_transformer = mapping_transformer
-        self.plotting_settings.invisible = True
+        self.plotting_settings.has_children = True
         self._children = [mapping_transformer]
 
     def transform(self, data: _T) -> Iterable[_U]:
@@ -27,16 +25,3 @@ class MapOver(Generic[_T, _U], Transformer[_T, Iterable[_U]]):
         for item in self.iterable:
             lopping_result.append(self.mapping_transformer((data, item)))
         return lopping_result
-
-    def _add_child_node(
-        self,
-        child: "BaseTransformer",
-        child_net: DiGraph,
-        parent_id: str,
-        next_node: "BaseTransformer",
-    ):
-        child._dag(
-            child_net,
-            next_node,
-            {"parent_id": parent_id, "bounding_box": True, "box_label": "mapping"},
-        )

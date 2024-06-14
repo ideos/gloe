@@ -19,6 +19,7 @@ from tests.lib.transformers import (
     repeat,
     format_currency,
     tuple_concatenate,
+    async_plus1,
 )
 from gloe import (
     Transformer,
@@ -133,6 +134,35 @@ class TestTransformerTypes(unittest.TestCase):
 
         assert_type(
             chained_conditions_graph, Transformer[float, Union[float, str, None]]
+        )
+
+    def test_async_chained_condition_flow_types(self):
+        """
+        Test the most simple transformer typing
+        """
+
+        async_chained_conditions_graph = (
+            if_is_even.Then(async_plus1)
+            .ElseIf(lambda x: x < 10)
+            .Then(to_string)
+            .ElseNone()
+        )
+
+        assert_type(
+            async_chained_conditions_graph,
+            AsyncTransformer[float, Union[float, str, None]],
+        )
+
+        async_chained_conditions_graph = (
+            if_is_even.Then(square)
+            .ElseIf(lambda x: x < 10)
+            .Then(async_plus1)
+            .ElseNone()
+        )
+
+        assert_type(
+            async_chained_conditions_graph,
+            AsyncTransformer[float, Union[float, None]],
         )
 
     def test_partial_transformer(self):

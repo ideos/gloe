@@ -6,7 +6,7 @@ from gloe._plotting_utils import PlottingSettings, NodeType
 _T = TypeVar("_T")
 
 
-class Filter(Generic[_T], AsyncTransformer[Iterable[_T], Iterable[_T]]):
+class FilterAsync(Generic[_T], AsyncTransformer[Iterable[_T], Iterable[_T]]):
     """
     Async transformer used to filter values in an iterable using other async
     transformers instead of functions.

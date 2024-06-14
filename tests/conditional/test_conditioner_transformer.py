@@ -1,5 +1,6 @@
 import unittest
 
+from gloe import UnsupportedTransformerArgException
 from tests.lib.conditioners import if_is_even, if_not_zero
 from tests.lib.transformers import square, square_root, plus1, minus1, to_string
 
@@ -74,3 +75,22 @@ class TestConditionerTransformer(unittest.TestCase):
         """
 
         self.assertEqual(8.0, len(conditioned_graph))
+
+    def test_conditioner_unsupported_argument(self):
+        """
+        Test length property of conditioner transformers
+        """
+
+        def _plus2(num: float) -> float:
+            return num + 2
+
+        with self.assertRaises(UnsupportedTransformerArgException):
+            if_not_zero.Then(_plus2).ElseNone()  # type: ignore
+
+        with self.assertRaises(UnsupportedTransformerArgException):
+            (
+                if_not_zero.Then(plus1)  # type: ignore
+                .ElseIf(lambda x: x > 10)
+                .Then(_plus2)
+                .ElseNone()
+            )

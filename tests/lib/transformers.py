@@ -24,6 +24,12 @@ async def async_plus1(num: float) -> float:
     return num + 1
 
 
+@async_transformer
+async def async_minus1(num: float) -> float:
+    await asyncio.sleep(0.00001)
+    return num - 1
+
+
 @transformer
 def square(num: float) -> float:
     return num * num
@@ -46,6 +52,12 @@ def divide_by_2(num: float) -> float:
 
 @transformer
 def sum_tuple2(num: tuple[float, float]) -> float:
+    return num[0] + num[1]
+
+
+@async_transformer
+async def async_sum_tuple2(num: tuple[float, float]) -> float:
+    await asyncio.sleep(0.01)
     return num[0] + num[1]
 
 

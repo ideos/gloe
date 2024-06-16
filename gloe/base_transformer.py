@@ -347,7 +347,7 @@ class BaseTransformer(Generic[_In, _Out], ABC):
     @cache
     def graph(self, name: str = "") -> GloeGraph:
         net = GloeGraph(name=name)
-        # net.attrs["splines"] = "ortho"
+        net.attrs["splines"] = "ortho"
         net.add_node(f"{name}begin", _label="begin", **dot_props(NodeType.Begin))
 
         begin_node = GloeNode(

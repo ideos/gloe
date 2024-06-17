@@ -9,6 +9,7 @@ partial-transformers
 async-transformers
 ensurers
 conditional-flows
+collection
 utilities
 plotting
 ```

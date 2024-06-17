@@ -45,6 +45,9 @@ send_email = (
 
 send_email_to_user = get_user_by_id >> send_email
 ```
+```{tip}
+You can use the method `.ElseNone()` if you want to return `None` otherwise.
+```
 
 ## Chaining Many Conditions
 
@@ -74,11 +77,15 @@ Take the following transformers and conditions:
 ```python
 condition1: Callable[[In], bool]
 then_transformer1: Transformer[In, Out1]
+
 condition2: Callable[[In], bool]
 then_transformer2: Transformer[In, Out2]
+
 ...
+
 conditionN: Callable[[In], bool]
 then_transformerN: Transformer[In, OutN]
+
 else_transformer: Transformer[In, ElseOut]
 ```
 

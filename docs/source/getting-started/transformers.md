@@ -56,7 +56,7 @@ This doesn't seem useful when comparing to the first example, but maybe you woul
 
 ## Building a Pipeline
 
-You can create a pipeline by combining many transformers into an execution graph. You can do that by using the [right shift operator (>>)](https://docs.python.org/3/library/operator.html#operator.__rshift__). For example, consider the `filter_even` created above, we can create another transformer called `square`:
+You can create a pipeline by composing many transformers into a flow. You can do that by using the [right shift operator (>>)](https://docs.python.org/3/library/operator.html#operator.__rshift__). For example, consider the `filter_even` created above, we can create another transformer called `square`:
 
 ```python
 @transformer
@@ -84,6 +84,12 @@ And you can continue appending transformers to the pipeline, even the ones alrea
 
 ```python
 pipeline = filter_even >> square >> square
+```
+
+You are also able to use this entire pipeline as a step of another flow:
+
+```python
+pipeline2 = pipeline >> my_transformer
 ```
 
 ### Creating branches

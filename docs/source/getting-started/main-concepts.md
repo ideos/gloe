@@ -57,7 +57,7 @@ library](https://docs.python.org/3/library/typing.html).
 
 An important concept adopted by Gloe is immutability. Every time a
 Transformer is instantiated and appended as a next step of an existing
-one, a new Transformer is created, **merging the internal operations of
+one, a new Transformer is created, **composing the internal operations of
 both transformers sequentially**.
 
 ```
@@ -68,9 +68,7 @@ Above graph is in fact this:
 (type A) -> [Transformer 1 and 2] -> (type C)
 ```
 
-This means that every time we talk about a flow, we are also referring to a transformer! A flow represents a transformer that merge the
-operations of its last node with the operations of the previous
-transformer, recursively.
+This means that every time we talk about a flow, we are also referring to a transformer! Flow is the **concept**, and transformers are its implementation.
 
 **Flow is a transformer** (intermediate types were omitted for simplicity):
 ```

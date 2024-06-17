@@ -29,7 +29,7 @@ Yes! Gloe does not change the standard debugging process. The {func}`gloe.utils.
 
 ### Does Gloe have a limit on the number of nodes for the graph?
 
-Yes. Gloe applies transformations recursively. Because of this, the graph size has a limit of about 470 nodes, considering the default value of 1000 for the maximum depth of the Python interpreter stack. We believe this number will be sufficient for most use cases; however, {ref}`we are already working <work-in-progress>` on removing this restriction.
+No. You can compose as many transformers as you want. The only current limit of Gloe is the number os nested ramifications: you can't have more than ~350 nested ramifications (it means, a ramification that one of its branches has another ramification, that has a branch with another ramification, and so on). **This scenario is not feasible and discouraged by Gloe principles.**
 
 ### Does Gloe make my code slower?
 

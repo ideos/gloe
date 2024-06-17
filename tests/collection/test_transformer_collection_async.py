@@ -10,7 +10,7 @@ from tests.lib.transformers import (
 )
 
 
-class TestTransformerAsyncCollections(unittest.IsolatedAsyncioTestCase):
+class TestTransformerCollectionAsync(unittest.IsolatedAsyncioTestCase):
 
     async def test_transformer_async_map(self):
         """

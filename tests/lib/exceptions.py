@@ -23,3 +23,19 @@ class LnOfNegativeNumber(Exception):
         super().__init__(
             f"The natural logarithm of the negative number {num} is not a real number"
         )
+
+
+class HasNotBarKey(Exception):
+    pass
+
+
+class HasNotFooKey(Exception):
+    pass
+
+
+class HasFooKey(Exception):
+    pass
+
+
+class IsNotInt(Exception):
+    pass

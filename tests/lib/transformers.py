@@ -114,6 +114,11 @@ def format_currency(number: float, thousands_separator: str) -> str:
     return f"{number}:{thousands_separator}.2f"
 
 
+@transformer
+def check_is_even(number: float) -> bool:
+    return number % 2 == 0
+
+
 @partial_transformer
 def repeat(content: str, n_times: int, linebreak: bool) -> str:
     repeated = content * n_times

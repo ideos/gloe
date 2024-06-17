@@ -5,7 +5,7 @@ from gloe.collection import Map, MapOver, Filter
 from tests.lib.transformers import square, plus1, sum_tuple2
 
 
-class TestTransformerCollections(unittest.TestCase):
+class TestTransformerCollection(unittest.TestCase):
     def test_transformer_map(self):
         """
         Test the mapping transformer

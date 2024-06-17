@@ -1,8 +1,10 @@
 # Main Concepts
 
-The main idea behind Gloe is constraining the implementation of a specific flow into a formalized and type-safe pipeline (or execution graph). Every piece (or node) of this pipeline is responsible for transforming its input into the input of the next piece, thereby composing a sequential execution process. No code from this flow can be executed outside these pieces, and each node in the graph is called a **Transformer**.
+The main idea behind Gloe is constraining the implementation of a specific processing into a formalized and type-safe **flow** (or execution graph). Every step (or node) of this flow is responsible for transforming its input into the input of the next step, thereby composing a sequential execution process. No code from this flow can be executed outside these steps, and each node in the graph is called a **transformer**.
 
-Basic structure of a Graph:
+Formally, a flow is defined as a DAG (Directed Acyclic Graph) with one source and one sink, meaning it has a beginning and an end. In practice, it is a sequence of steps that transform data from one form to another.
+
+Basic structure of a flow:
 ``` 
 (type A) -> [Transformer 1] -> (type B) -> [Transformer 2] -> ... -> (type X)
 ```
@@ -13,18 +15,18 @@ the graph.
 ```
 
 
-A transformer must have an atomic and well-defined responsibility. As we will see later, implementing a Transformer is an exceptionally straightforward task, so having many of them is not problematic. Keep it simple, hence making it easier to understand, document, and test!
+A transformer must have an atomic and well-defined responsibility. As we will see later, implementing a transformer is an exceptionally straightforward task, so having many of them is not problematic. Keep it simple, hence making it easier to understand, document, and test!
 
 
 ## Lightness
 
 Gloe is a lightweight library, it is not a development environment, an engine, or even a heavy framework; instead, it was built more on the basis of **strong concepts** than on an exhaustive amount of code.
 
-Its dependencies are only other python libraries, nothing external is required.
+Its dependencies are only other python libraries (currently, only [typing-extensions](https://pypi.org/project/typing-extensions/)), nothing external is required.
 
 ## Type-safety
 
-Gloe was implemented to be completely type-safe. This means that when using Gloe, you must provide all the necessary type hints of the created transformers, which can be summed up in its incoming and outcome types. Using these definitions, Gloe can warn about a malformed graph right away in the IDE and make precise inferring of extremely complex types.
+Gloe was implemented to be completely type-safe. This means that when using Gloe, you must provide all the necessary type hints of the created transformers, which can be summed up in its incoming and outcome types. Using these definitions, Gloe can warn about a malformed flow right away in the IDE and make precise inferring of extremely complex types.
 
 For example, consider the below Transformer:
 
@@ -55,8 +57,8 @@ library](https://docs.python.org/3/library/typing.html).
 
 An important concept adopted by Gloe is immutability. Every time a
 Transformer is instantiated and appended as a next step of an existing
-one, a new Transformer is created, merging the internal operations of
-both transformers sequentially.
+one, a new Transformer is created, **merging the internal operations of
+both transformers sequentially**.
 
 ```
 (type A) -> [Transformer 1] -> (type B) -> [Transformer 2] -> (type C)
@@ -66,11 +68,11 @@ Above graph is in fact this:
 (type A) -> [Transformer 1 and 2] -> (type C)
 ```
 
-This means that every time we talk about a graph, we are also referring to a Transformer! A graph represents a Transformer that merge the
+This means that every time we talk about a flow, we are also referring to a transformer! A flow represents a transformer that merge the
 operations of its last node with the operations of the previous
-Transformer, recursively.
+transformer, recursively.
 
-**Graph is a Transformer** (intermediate types were omitted for simplicity):
+**Flow is a transformer** (intermediate types were omitted for simplicity):
 ```
                                  +--------- Transformer [ ... [[1 2] 3] ... N] --------+
                                  |                                                     |
@@ -84,14 +86,13 @@ Transformer, recursively.
 ```
 ```{admonition} Naming things
 :class: seealso
-To make easy our communication in this documentation, we will continue
-to call the sequence of transformers as a **graph** or **pipeline**.
+In other places of this documentation, the term "flow" can be exchange by "graph" or "pipeline".
 ```
 
 ## Non-linearity
 
 The term graph is motivated by the non-linearity characteristic of some
-flows. A Transformer can pass its data to more than one posterior
+flows. A transformer can pass its data to more than one posterior
 transformers:
 
 ```

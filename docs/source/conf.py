@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.abspath("../.."))
 sys.path.insert(0, os.path.abspath("pygments"))
 
 project = "Gloe"
-copyright = "2023, Samir Braga"
+copyright = "2024, Samir Braga"
 author = "Samir Braga"
 version = pkg_resources.get_distribution("gloe").version
 

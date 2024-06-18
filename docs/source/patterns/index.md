@@ -1,0 +1,5 @@
+# Patterns
+
+```{toctree}
+transformer-factory
+```

@@ -29,7 +29,7 @@ Yes! Gloe does not change the standard debugging process. The {func}`gloe.utils.
 
 ### Does Gloe have a limit on the number of nodes for the graph?
 
-No. You can compose as many transformers as you want. The only current limit of Gloe is the number os nested ramifications: you can't have more than ~350 nested ramifications (it means, a ramification that one of its branches has another ramification, that has a branch with another ramification, and so on). **This scenario is not feasible and discouraged by Gloe principles.**
+No. You can compose as many transformers as you want. The only current limitation of Gloe is the number of nested branches: you can't have more than approximately 350 nested branches (i.e., a branch that contains another branch, which in turn contains another branch, and so on). **This scenario is not feasible and is discouraged by Gloe principles.**
 
 ### Does Gloe make my code slower?
 
@@ -75,4 +75,15 @@ It depends (you were expecting that answer, right?). A single transformer can wr
 
 ### Can I call a transformer inside another transformer?
 
-**Definitely no!** As stated in {ref}`this section <flat-is-better-than-nested>` from the philosophy page, Gloe promotes flatness in code. Of course, a transformer can utilize other components in its logic, such as classes and objects, but all these components should work together to implement a single atomic responsibility: the transformer's responsibility. Thus, the code reader/maintainer does not want to find a whole separate graph being called in the middle of a transformer's logic.
+```{note}
+This case refers to the follwing:
+
+```python
+@transformer
+def my_transformer():
+    flow = foo_transformer >> bar_transformer
+    return flow() # nested transformer call
+``` 
+
+
+**Definitely not!** As stated in {ref}`this section <flat-is-better-than-nested>` from the philosophy page, Gloe promotes flatness in code. Of course, a transformer can utilize other components in its logic, such as classes and objects, but all these components should work together to implement a single atomic responsibility: the transformer's responsibility. Thus, the code reader/maintainer does not want to find a whole separated flow being called in the middle of a transformer's logic.

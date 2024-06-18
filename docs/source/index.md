@@ -26,15 +26,14 @@ limitations
 
 
 ```{toctree}
-:caption: 'Examples'
+:caption: 'Learn'
 :maxdepth: 3
 :hidden:
 
 
-examples/gloe-and-fastapi
-examples/gloe-and-pandas
-examples/gloe-and-pytorch
-examples/gloe-and-sqlalchemy
+examples/index
+patterns/index
+advanced/index
 ```
 
 ```{toctree}

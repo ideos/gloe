@@ -7,6 +7,7 @@
 
 gloe <self>
 gloe.collection
+gloe.gateways
 gloe.utils
 gloe.experimental
 ```

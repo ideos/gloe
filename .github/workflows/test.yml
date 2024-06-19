@@ -34,6 +34,12 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Cache coverage
+      id: cache-coverage
+      uses: actions/cache@v3
+      with:
+        path: .coverage
+        key: coverage
     - name: Setup Graphviz
       uses: ts-graphviz/setup-graphviz@v2
     - name: Install dependencies
@@ -46,7 +52,7 @@ jobs:
         python -m unittest
     - name: Run tests and collect coverage
       run: |
-        coverage run -m unittest
+        coverage run -a -m unittest
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v4.0.1
       if: ${{ matrix.python-version == '3.9' }}

@@ -1,6 +1,6 @@
 from typing import TypeVar, Any, Union
 
-from gloe import BaseTransformer
+from gloe.base_transformer import BaseTransformer
 from gloe.async_transformer import AsyncTransformer, _execute_async_flow
 from gloe.gateways._base_gateway import _base_gateway
 from gloe.gateways._gateway_factory import _gateway_factory

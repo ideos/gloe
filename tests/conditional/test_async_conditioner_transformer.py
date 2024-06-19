@@ -13,9 +13,6 @@ from tests.lib.transformers import (
 class TestAsyncConditionerTransformer(unittest.IsolatedAsyncioTestCase):
 
     async def test_conditioner_unsupported_argument(self):
-        """
-        Test length property of conditioner transformers
-        """
 
         def _plus2(num: float) -> float:
             return num + 2
@@ -25,8 +22,11 @@ class TestAsyncConditionerTransformer(unittest.IsolatedAsyncioTestCase):
             await graph(0)
 
     async def test_conditioner_in_graph(self):
-        graph2 = plus1 >> if_not_zero.Then(async_plus1).Else(minus1)
-        self.assertEqual(2, await graph2(0))
+        graph1 = plus1 >> if_not_zero.Then(async_plus1).Else(minus1)
+        self.assertEqual(2, await graph1(0))
+
+        graph2 = plus1 >> if_not_zero.Then(minus1).Else(async_plus1)
+        self.assertEqual(0, await graph2(0))
 
     async def test_async_chained_conditioner(self):
         graph2 = (

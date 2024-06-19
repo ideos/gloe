@@ -3,6 +3,7 @@
 ```{admonition} API Reference
 :class: seealso
 - {func}`gloe.utils.forward`
+- {func}`gloe.utils.attach`
 - {func}`gloe.utils.forward_incoming`
 - {data}`gloe.utils.forget`
 - {func}`gloe.utils.debug`

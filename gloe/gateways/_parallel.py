@@ -1,4 +1,4 @@
-from typing import Any, TypeVar, Sequence, Union
+from typing import Any, TypeVar, Union
 
 from typing_extensions import TypeAlias
 

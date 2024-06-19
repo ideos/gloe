@@ -48,7 +48,7 @@ Gloe (pronounced /ɡloʊ/, like "glow") is a general-purpose library designed to
 
 **Where can I use it?** Anywhere! Gloe is particularly useful for data science and machine learning pipelines, as well as for servers, scripts, or any area where there is a **gap between code and logical business understanding**.
 
-**[Give me examples!]()**
+**[Give me examples!](https://gloe.ideos.com.br/examples/index.html)**
 
 ## Key Features
 
@@ -66,6 +66,12 @@ Gloe (pronounced /ɡloʊ/, like "glow") is a general-purpose library designed to
 <sub style="display: block; margin-top: -0.5rem;">2. This feature is under development.</sub>
 
 ## Installing
+
+Requirements:
+- Python (>= 3.9)
+- typing-extensions (>= 4.7)
+
+You can install Gloe using pip or conda:
 
 ```shell
 # PyPI
@@ -118,7 +124,7 @@ def extract_request_id(req: Request) -> int:
 
 You can connect many transformers using the right shift operator, just like the above example. When the argument of `>>` is a tuple, you are creating branches using the default [parallel gateway](). 
 
-> Learn more about [creating transformers](https://gloe.ideos.com.br/getting-started/transformers.html), [pipelines](https://gloe.ideos.com.br/getting-started/transformers.html#building-a-pipeline), and [gateways]().
+> Learn more about [creating transformers](https://gloe.ideos.com.br/getting-started/transformers.html), [pipelines](https://gloe.ideos.com.br/getting-started/transformers.html#building-a-pipeline), and [gateways](https://gloe.ideos.com.br/getting-started/gateways.html).
 
 ### Maintainance
 

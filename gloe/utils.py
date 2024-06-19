@@ -5,7 +5,7 @@ from typing_extensions import deprecated
 from gloe.functional import transformer
 from gloe.transformers import Transformer
 
-__all__ = ["forget", "debug", "forward", "forward_incoming"]
+__all__ = ["forget", "debug", "forward", "forward_incoming", "attach"]
 
 _In = TypeVar("_In")
 _Out = TypeVar("_Out")

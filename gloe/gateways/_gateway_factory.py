@@ -1,4 +1,4 @@
-from typing import overload, TypeVar
+from typing import overload, TypeVar, Callable, cast
 
 from typing_extensions import Protocol, TypeAlias
 
@@ -354,3 +354,7 @@ class _GatewayFactory(Protocol):
 
     def __call__(self, *args):  # pragma: no cover
         pass
+
+
+def _gateway_factory(func: Callable) -> _GatewayFactory:
+    return cast(_GatewayFactory, func)

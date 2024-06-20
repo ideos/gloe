@@ -75,3 +75,8 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         slug: ideos/gloe
+
+    - name: Delete coverage report artifacts
+      uses: geekyeggo/delete-artifact@v5
+      with:
+          name: coverage-*

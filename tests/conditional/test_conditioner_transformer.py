@@ -88,6 +88,9 @@ class TestConditionerTransformer(unittest.TestCase):
             if_not_zero.Then(_plus2).ElseNone()  # type: ignore
 
         with self.assertRaises(UnsupportedTransformerArgException):
+            if_not_zero.Then(plus1).Else(_plus2)  # type: ignore
+
+        with self.assertRaises(UnsupportedTransformerArgException):
             (
                 if_not_zero.Then(plus1)  # type: ignore
                 .ElseIf(lambda x: x > 10)

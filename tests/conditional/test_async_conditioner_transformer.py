@@ -28,6 +28,13 @@ class TestAsyncConditionerTransformer(unittest.IsolatedAsyncioTestCase):
         graph2 = plus1 >> if_not_zero.Then(minus1).Else(async_plus1)
         self.assertEqual(0, await graph2(0))
 
+    async def test_else_statement(self):
+        graph1 = if_not_zero.Then(async_plus1).Else(minus1)
+        self.assertEqual(-1, await graph1(0))
+
+        graph2 = if_not_zero.Then(minus1).Else(async_plus1)
+        self.assertEqual(1, await graph2(0))
+
     async def test_async_chained_conditioner(self):
         graph2 = (
             If[float](lambda x: x < 0)

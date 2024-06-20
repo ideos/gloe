@@ -15,6 +15,7 @@ from typing import (
     Union,
     Sequence,
     Optional,
+    cast,
 )
 
 from typing_extensions import Self
@@ -57,20 +58,15 @@ class BaseConditioner(
             for impl in self.implications
         ] + [else_signature.return_annotation]
 
+        union_type: type = cast(type, Union)
         if sys.version_info >= (3, 10):
-            new_signature = else_signature.replace(
-                return_annotation=GenericAlias(
-                    UnionType,
-                    tuple(return_signature),
-                )
+            union_type = UnionType
+        new_signature = else_signature.replace(
+            return_annotation=GenericAlias(
+                union_type,
+                tuple(return_signature),
             )
-        else:
-            new_signature = else_signature.replace(
-                return_annotation=GenericAlias(
-                    Union,  # type: ignore
-                    tuple(return_signature),
-                )
-            )
+        )
         return new_signature
 
     def copy(

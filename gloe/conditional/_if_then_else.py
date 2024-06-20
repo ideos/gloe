@@ -92,7 +92,7 @@ class _IfThen(_BaseIfThen[In, ThenOut, PrevThenOut]):
 
             return new_transformer
 
-        raise NotImplementedError()
+        raise UnsupportedTransformerArgException(else_transformer)
 
     def ElseNone(
         self,

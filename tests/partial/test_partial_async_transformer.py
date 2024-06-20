@@ -8,7 +8,7 @@ from gloe.utils import forward
 _DATA = {"foo": "bar"}
 
 
-class TestPartialAsyncTransformer(unittest.TestCase):
+class TestPartialAsyncTransformer(unittest.IsolatedAsyncioTestCase):
 
     async def test_partial_async_transformer(self):
         @partial_async_transformer

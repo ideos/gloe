@@ -153,7 +153,7 @@ class TestAsyncTransformerEnsurer(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(UnsupportedTransformerArgException):
             ensured_delayed_request(0.01) >> next_transformer  # type: ignore
 
-    async def test_async_pipeline_ensurer(self):
+    async def test_async_pipeline_ensurer_error_handling(self):
         def is_not_equal(_in: int, _out: int):
             if _in == _out:
                 raise NumbersEqual()
@@ -184,6 +184,15 @@ class TestAsyncTransformerEnsurer(unittest.IsolatedAsyncioTestCase):
         ensured_pipeline = not_equal_ensurer(minus1 >> async_plus1) >> forward()
         with self.assertRaises(NumbersEqual):
             await ensured_pipeline(2)
+
+    async def test_async_pipeline_ensurer_success(self):
+        outcome_odd_ensurer = ensure(outcome=[is_odd])
+        ensured_pipeline = outcome_odd_ensurer(async_plus1 >> minus1)
+        self.assertEqual(1, await ensured_pipeline(1))
+
+        outcome_odd_ensurer = ensure(outcome=[is_odd])
+        ensured_pipeline = outcome_odd_ensurer(minus1 >> async_plus1)
+        self.assertEqual(1, await ensured_pipeline(1))
 
 
 if __name__ == "__main__":

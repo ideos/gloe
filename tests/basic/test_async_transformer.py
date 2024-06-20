@@ -1,5 +1,6 @@
 import asyncio
 import unittest
+from inspect import Signature
 from typing import TypeVar, Any, cast
 
 from gloe import (
@@ -9,6 +10,7 @@ from gloe import (
     transformer,
     AsyncTransformer,
     TransformerException,
+    BaseTransformer,
 )
 from gloe.async_transformer import _execute_async_flow
 from gloe.functional import partial_async_transformer
@@ -205,9 +207,18 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(async_natural_logarithm, exception_ctx.raiser_transformer)
 
     async def test_execute_async_wrong_flow(self):
+
         flow = [2]
         with self.assertRaises(NotImplementedError):
             await _execute_async_flow(flow, 1)  # type: ignore
+
+        class WrongTransformer(BaseTransformer):
+            def signature(self) -> Signature:
+                return Signature()
+
+        flow2 = [WrongTransformer()]
+        with self.assertRaises(NotImplementedError):
+            await _execute_async_flow(flow2, 1)  # type: ignore
 
     async def test_composition_transform_method(self):
         test3 = forward[float]() >> async_plus1

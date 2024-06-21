@@ -24,6 +24,9 @@ dependencies = [
     'typing_extensions~=4.7',
 ]
 
+[tool.setuptools.dynamic]
+version = {attr = "gloe.__version__"}
+
 [project.urls]
 Homepage = "https://gloe.ideos.com.br"
 Documentation = "https://gloe.ideos.com.br"

@@ -4,7 +4,6 @@ This page contains a list of examples that demonstrate how to use the Gloe with 
 
 ```{toctree}
 gloe-and-fastapi
-gloe-and-scikit-learn
-gloe-and-sqlalchemy
 gloe-and-pytorch
+gloe-and-scikit-learn
 ```

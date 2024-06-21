@@ -119,6 +119,31 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual((_DATA, _DATA), result)
 
+        @async_transformer
+        async def request_foo(url: str) -> str:
+            await asyncio.sleep(0.01)
+            return "foo"
+
+        @async_transformer
+        async def request_bar(url: str) -> str:
+            await asyncio.sleep(0.01)
+            return "bar"
+
+        @async_transformer
+        async def request_baz(url: str) -> str:
+            await asyncio.sleep(0.01)
+            return "baz"
+
+        test_forward2 = forward[str]() >> (
+            request_foo,
+            request_bar,
+            request_baz,
+        )
+
+        result2 = await test_forward2(_URL)
+
+        self.assertEqual(("foo", "bar", "baz"), result2)
+
     async def test_async_transformer_wrong_arg(self):
         def next_transformer():
             pass

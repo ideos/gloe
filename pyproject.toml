@@ -8,7 +8,7 @@ dynamic = ["version"]
 authors = [
   { name="Samir Braga", email="samirchavess@gmail.com" },
 ]
-description = "Gloe (pronounced /ɡloʊ/, like \"glow\") is a general-purpose library made to help developers create, maintain, document, and test both operational and flow-oriented code."
+description = "Gloe is a general-purpose library designed to guide developers in expressing their code as a flow."
 readme = "README.md"
 requires-python = ">=3.9"
 classifiers = [

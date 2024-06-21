@@ -38,7 +38,7 @@
   * [License](#license)
 <!-- TOC -->
 
-# Your Code Like a Flow
+# Your Code like a Flow
 
 Gloe (pronounced /ɡloʊ/, like "glow") is a general-purpose library designed to guide developers in expressing their code as a **flow**. 
 

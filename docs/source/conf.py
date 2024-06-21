@@ -65,7 +65,7 @@ autodoc_type_aliases = {
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_title = "Gloe - Write a Better Python Flow"
+html_title = "Gloe - You Code like a Flow"
 # html_logo = "assets/gloe-logo-small.png"
 html_theme = "furo"
 html_last_updated_fmt = ""

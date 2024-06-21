@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, TypeVar, Union
 
 from typing_extensions import TypeAlias
@@ -27,13 +28,31 @@ class _Parallel(_base_gateway[_In], Transformer[_In, tuple[Any, ...]]):
 
 class _ParallelAsync(_base_gateway[_In], AsyncTransformer[_In, tuple[Any, ...]]):
     async def transform_async(self, data: _In) -> tuple[Any, ...]:
-        results = []
-        for transformer in self._children:
-            if isinstance(transformer, AsyncTransformer):
-                result = await _execute_async_flow(transformer._flow, data)
-            else:
-                result = _execute_flow(transformer._flow, data)
-            results.append(result)
+        results = [None] * len(self._children)
+        indexed_children = list(enumerate(self._children))
+
+        async_children = [
+            (i, child)
+            for i, child in indexed_children
+            if isinstance(child, AsyncTransformer)
+        ]
+        sync_children = [
+            (i, child)
+            for i, child in indexed_children
+            if isinstance(child, Transformer)
+        ]
+
+        async_results = await asyncio.gather(
+            *[_execute_async_flow(child._flow, data) for _, child in async_children]
+        )
+        sync_results = [_execute_flow(child._flow, data) for _, child in sync_children]
+
+        for (i, _), result in zip(async_children, async_results):
+            results[i] = result
+
+        for (i, _), result in zip(sync_children, sync_results):
+            results[i] = result
+
         return tuple(results)
 
 

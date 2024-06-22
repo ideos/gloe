@@ -2,7 +2,7 @@
 # Gloe & PyTorch
 
 
-Let us create an enhanced data pipeline with Gloe and PyTorch. A similar example using Scikit-learn is available {ref}`here <gloe-scikit-learn>`.
+Let us create an enhanced data pipeline with Gloe and [PyTorch](https://pytorch.org/). A similar example using Scikit-learn is available {ref}`here <gloe-scikit-learn>`.
 
 
 ## Introduction

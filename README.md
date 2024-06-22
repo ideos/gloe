@@ -2,8 +2,8 @@
 <div align="center" style="margin-top: 2rem;">
   <img src="https://gloe.ideos.com.br/_static/assets/gloe-logo.png"><br>
 </div>
-
-<p align="center">
+<br/>
+<div align="center">
 <a href="https://github.com/ideos/gloe/actions/workflows/test.yml">
     <img src="https://github.com/ideos/gloe/actions/workflows/test.yml/badge.svg" alt="CI - Test">
 </a>
@@ -16,6 +16,8 @@
 <a href="https://anaconda.org/conda-forge/gloe">
     <img src="https://anaconda.org/conda-forge/gloe/badges/version.svg" alt="Anaconda Latest Release">
 </a>
+</div>
+<div align="center">
 <a href="https://pypi.org/project/gloe">
     <img src="https://img.shields.io/pypi/pyversions/gloe.svg?color=%2334D058" alt="Supported Python versions">
 </a>
@@ -25,7 +27,7 @@
 <a href="https://www.mypy-lang.org/">
     <img src="https://www.mypy-lang.org/static/mypy_badge.svg" alt="Mypy">
 </a>
-</p>
+</div>
 
 
 ***

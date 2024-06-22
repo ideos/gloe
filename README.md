@@ -3,13 +3,30 @@
   <img src="https://gloe.ideos.com.br/_static/assets/gloe-logo.png"><br>
 </div>
 
+<p align="center">
+<a href="https://github.com/ideos/gloe/actions/workflows/test.yml">
+    <img src="https://github.com/ideos/gloe/actions/workflows/test.yml/badge.svg" alt="CI - Test">
+</a>
+<a href="https://codecov.io/gh/ideos/gloe">
+    <img src="https://codecov.io/github/ideos/gloe/coverage.svg?branch=main" alt="Coverage">
+</a>
+<a href="https://pypi.org/project/gloe">
+    <img src="https://img.shields.io/pypi/v/gloe.svg?color=%2334D058" alt="PyPI Latest Release">
+</a>
+<a href="https://anaconda.org/conda-forge/gloe">
+    <img src="https://anaconda.org/conda-forge/gloe/badges/version.svg" alt="Anaconda Latest Release">
+</a>
+<a href="https://pypi.org/project/gloe">
+    <img src="https://img.shields.io/pypi/pyversions/gloe.svg?color=%2334D058" alt="Supported Python versions">
+</a>
+<a href="https://github.com/ideos/gloe/blob/main/LICENSE">
+    <img src="https://img.shields.io/pypi/l/gloe.svg?color=%2304b367" alt="License - Apache 2.0">
+</a>
+<a href="https://www.mypy-lang.org/">
+    <img src="https://www.mypy-lang.org/static/mypy_badge.svg" alt="Mypy">
+</a>
+</p>
 
-| | | 
-| ---:|----|
-| Testing | [![CI - Test](https://github.com/ideos/gloe/actions/workflows/test.yml/badge.svg)](https://github.com/ideos/gloe/actions/workflows/test.yml) [![Coverage](https://codecov.io/github/ideos/gloe/coverage.svg?branch=main)](https://codecov.io/gh/ideos/gloe) |
-| Package | [![PyPI Latest Release](https://img.shields.io/pypi/v/gloe.svg?color=%2334D058)](https://pypi.org/project/gloe) [![Anaconda Latest Release](https://anaconda.org/conda-forge/gloe/badges/version.svg)](https://anaconda.org/conda-forge/gloe) [![Supported Python versions](https://img.shields.io/pypi/pyversions/gloe.svg?color=%2334D058)](https://pypi.org/project/gloe) |
-| Meta | [![License - Apache 2.0](https://img.shields.io/pypi/l/gloe.svg?color=%2304b367)](https://github.com/ideos/gloe/blob/main/LICENSE) |
-| Code | [![Code quality](https://github.com/ideos/gloe/actions/workflows/code-quality.yml/badge.svg)](https://github.com/ideos/gloe/actions/workflows/code-quality.yml) [![Style](https://img.shields.io/badge/style-black-000000.svg)](https://github.com/psf/black) [![Flake8](https://img.shields.io/badge/flake8-checked-7854cc)](https://flake8.pycqa.org/) [![Mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://www.mypy-lang.org/)|
 
 ***
 
@@ -17,26 +34,7 @@
 
 **Souce code**: [github.com/ideos/gloe](https://github.com/ideos/gloe)
 
-**FAQ**: [gloe.ideos.com.br/faq.html](https://gloe.ideos.com.br/faq.html)
-
 ***
-
-### Table of Contents:
-<!-- TOC -->
-  * [Key Features](#key-features)
-  * [Installing](#installing)
-  * [Example](#example)
-    * [Flow Steps: Transformers](#flow-steps-transformers)
-    * [Maintainance](#maintainance)
-    * [Type checking](#type-checking)
-    * [Simple Usage](#simple-usage)
-    * [Quick Documentation](#quick-documentation)
-    * [Integration](#integration-)
-  * [Motivation](#motivation)
-    * [How Can Gloe Help Me?](#how-can-gloe-help-me)
-    * [Gloe is not a workflow orchestrator](#gloe-is-not-a-workflow-orchestrator)
-  * [License](#license)
-<!-- TOC -->
 
 # Your Code like a Flow
 

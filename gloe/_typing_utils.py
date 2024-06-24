@@ -17,9 +17,7 @@ def _format_union(tuple_annotation: tuple, input_annotation) -> str:
 
 
 def _format_generic_alias(return_annotation: GenericAlias, input_annotation) -> str:
-    alias_name = getattr(return_annotation, "__name__", None)
-    if alias_name is None:
-        alias_name = getattr(return_annotation, "_name")
+    alias_name = return_annotation.__name__
     formatted: list[str] = []
     for annotation in return_annotation.__args__:
         formatted.append(_format_return_annotation(annotation, input_annotation))

@@ -23,7 +23,7 @@ class TestTransformerCollectionTypes(MypyTestSuite):
             format_currency(thousands_separator=",")
         )
 
-        assert_type(mapped_logarithm, Transformer[list[float], Iterable[str]])
+        assert_type(mapped_logarithm, Transformer[list[float], list[str]])
 
     def test_transformer_filter(self):
         """
@@ -32,4 +32,4 @@ class TestTransformerCollectionTypes(MypyTestSuite):
 
         mapped_logarithm = forward[list[float]]() >> Filter(check_is_even)
 
-        assert_type(mapped_logarithm, Transformer[list[float], Iterable[float]])
+        assert_type(mapped_logarithm, Transformer[list[float], list[float]])

@@ -1,4 +1,4 @@
-from typing import TypeVar, Iterable
+from typing import TypeVar
 
 from typing_extensions import assert_type
 

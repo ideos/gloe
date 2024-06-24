@@ -43,7 +43,7 @@ class FilterAsync(Generic[_T], AsyncTransformer[Iterable[_T], list[_T]]):
                 of type :code:`_T`.
 
         Returns:
-            The filterd iterable.
+            The filtered iterable.
         """
         filtered_result = []
         for item in data:

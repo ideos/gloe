@@ -8,7 +8,7 @@ _S = TypeVar("_S")
 _U = TypeVar("_U")
 
 
-class MapOver(Generic[_T, _U], Transformer[_T, Iterable[_U]]):
+class MapOver(Generic[_T, _U], Transformer[_T, list[_U]]):
     def __init__(
         self,
         iterable: Iterable[_S],
@@ -20,7 +20,7 @@ class MapOver(Generic[_T, _U], Transformer[_T, Iterable[_U]]):
         self.plotting_settings.has_children = True
         self._children = [mapping_transformer]
 
-    def transform(self, data: _T) -> Iterable[_U]:
+    def transform(self, data: _T) -> list[_U]:
         lopping_result = []
         for item in self.iterable:
             lopping_result.append(self.mapping_transformer((data, item)))

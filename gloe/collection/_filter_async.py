@@ -6,7 +6,7 @@ from gloe._plotting_utils import PlottingSettings, NodeType
 _T = TypeVar("_T")
 
 
-class FilterAsync(Generic[_T], AsyncTransformer[Iterable[_T], Iterable[_T]]):
+class FilterAsync(Generic[_T], AsyncTransformer[Iterable[_T], list[_T]]):
     """
     Async transformer used to filter values in an iterable using other async
     transformers instead of functions.
@@ -17,8 +17,8 @@ class FilterAsync(Generic[_T], AsyncTransformer[Iterable[_T], Iterable[_T]]):
             @async_transformer
             async def check_is_admin(user: User) -> bool: ...
 
-            get_admin_users: AsyncTransformer[Group, Iterable[User]] = (
-                get_users >> Filter(check_is_admin)
+            get_admin_users: AsyncTransformer[Group, list[User]] = (
+                get_users >> FilterAsync(check_is_admin)
             )
     Args:
         filter_transformer: async transformer applied to each item of the input iterable
@@ -36,7 +36,7 @@ class FilterAsync(Generic[_T], AsyncTransformer[Iterable[_T], Iterable[_T]]):
             node_type=NodeType.Transformer,
         )
 
-    async def transform_async(self, data: Iterable[_T]) -> Iterable[_T]:
+    async def transform_async(self, data: Iterable[_T]) -> list[_T]:
         """
         Args:
             data: incoming iterable to be filtered. The items of this iterable must be

@@ -7,7 +7,7 @@ _S = TypeVar("_S")
 _U = TypeVar("_U")
 
 
-class MapOverAsync(Generic[_T, _U], AsyncTransformer[_T, Iterable[_U]]):
+class MapOverAsync(Generic[_T, _U], AsyncTransformer[_T, list[_U]]):
     def __init__(
         self,
         iterable: Iterable[_S],
@@ -19,7 +19,7 @@ class MapOverAsync(Generic[_T, _U], AsyncTransformer[_T, Iterable[_U]]):
         self.plotting_settings.has_children = True
         self._children = [mapping_transformer]
 
-    async def transform_async(self, data: _T) -> Iterable[_U]:
+    async def transform_async(self, data: _T) -> list[_U]:
         lopping_result = []
         for item in self.iterable:
             result = await self.mapping_transformer((data, item))

@@ -6,7 +6,7 @@ _T = TypeVar("_T", contravariant=True)
 _U = TypeVar("_U", covariant=True)
 
 
-class MapAsync(Generic[_T, _U], AsyncTransformer[Iterable[_T], Iterable[_U]]):
+class MapAsync(Generic[_T, _U], AsyncTransformer[Iterable[_T], list[_U]]):
     """
     Transformer used to map values in an iterable using other async transformers instead
     of functions.
@@ -19,7 +19,7 @@ class MapAsync(Generic[_T, _U], AsyncTransformer[Iterable[_T], Iterable[_U]]):
             @async_transformer
             async def get_user_posts(user: User) -> list[Post]: ...
 
-            get_posts_by_group: AsyncTransformer[Group, Iterable[Post]] = (
+            get_posts_by_group: AsyncTransformer[Group, list[Post]] = (
                 get_users_by_group >> MapAsync(get_user_posts) >> flatten
             )
     Args:
@@ -33,7 +33,7 @@ class MapAsync(Generic[_T, _U], AsyncTransformer[Iterable[_T], Iterable[_U]]):
         self.plotting_settings.has_children = True
         self._children = [mapping_transformer]
 
-    async def transform_async(self, data: Iterable[_T]) -> Iterable[_U]:
+    async def transform_async(self, data: Iterable[_T]) -> list[_U]:
         """
         Args:
             data: incoming iterable to be mapped. The items of this iterable must be of

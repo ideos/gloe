@@ -3,10 +3,10 @@ from typing import Generic, TypeVar, Iterable
 from gloe.transformers import Transformer
 
 _T = TypeVar("_T", contravariant=True)
-_U = TypeVar("_U", covariant=True)
+_U = TypeVar("_U", contravariant=True)
 
 
-class Map(Generic[_T, _U], Transformer[Iterable[_T], Iterable[_U]]):
+class Map(Generic[_T, _U], Transformer[Iterable[_T], list[_U]]):
     """
     Transformer used to map values in an iterable using other transformers instead of
     functions.
@@ -19,7 +19,7 @@ class Map(Generic[_T, _U], Transformer[Iterable[_T], Iterable[_U]]):
             @transformer
             def get_user_posts(user: User) -> list[Post]: ...
 
-            get_posts_by_group: Transformer[Group, Iterable[Post]] = (
+            get_posts_by_group: Transformer[Group, list[Post]] = (
                 get_users_by_group >> Map(get_user_posts) >> flatten
             )
     Args:
@@ -33,7 +33,7 @@ class Map(Generic[_T, _U], Transformer[Iterable[_T], Iterable[_U]]):
         self.plotting_settings.has_children = True
         self._children = [mapping_transformer]
 
-    def transform(self, data: Iterable[_T]) -> Iterable[_U]:
+    def transform(self, data: Iterable[_T]) -> list[_U]:
         """
         Args:
             data: incoming iterable to be mapped. The items of this iterable must be of

@@ -3,7 +3,7 @@ from typing import Generic, TypeVar, Iterable
 from gloe.transformers import Transformer
 
 _T = TypeVar("_T", contravariant=True)
-_U = TypeVar("_U", contravariant=True)
+_U = TypeVar("_U", covariant=True)
 
 
 class Map(Generic[_T, _U], Transformer[Iterable[_T], list[_U]]):

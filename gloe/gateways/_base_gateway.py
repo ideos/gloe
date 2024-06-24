@@ -57,7 +57,6 @@ class _base_gateway(Generic[_In], BaseTransformer[_In, Any]):
         )
         net.add_node(
             in_converge_id,
-            _label="gateway_begin",
             **dot_props(NodeType.ParallelGatewayBegin),
         )
 
@@ -81,7 +80,6 @@ class _base_gateway(Generic[_In], BaseTransformer[_In, Any]):
         )
         net.add_node(
             out_converge_id,
-            _label="gateway_end",
             **dot_props(NodeType.ParallelGatewayEnd),
         )
 

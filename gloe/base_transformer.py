@@ -285,8 +285,8 @@ class BaseTransformer(Generic[_In, _Out], ABC):
     def node_id(self) -> str:
         return str(self.instance_id)
 
+    @staticmethod
     def _add_subgraph(
-        self,
         net: GloeGraph,
         prev_node: GloeNode,
         current_node: "BaseTransformer",

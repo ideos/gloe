@@ -43,9 +43,21 @@ def dot_props(node_type: NodeType) -> dict[str, Any]:
             "height": 0.4,
         }
     elif node_type == NodeType.ParallelGatewayBegin:
-        node_props = {"shape": "diamond", "width": 0.4, "height": 0.4, "label": ""}
+        node_props = {
+            "shape": "diamond",
+            "width": 0.4,
+            "height": 0.4,
+            "label": "",
+            "_label": "gateway_begin",
+        }
     elif node_type == NodeType.ParallelGatewayEnd:
-        node_props = {"shape": "diamond", "width": 0.4, "height": 0.4, "label": ""}
+        node_props = {
+            "shape": "diamond",
+            "width": 0.4,
+            "height": 0.4,
+            "label": "",
+            "_label": "gateway_end",
+        }
     elif node_type == NodeType.Begin:
         node_props = {"shape": "circle", "width": 0.3, "height": 0.3, "label": ""}
     elif node_type == NodeType.End:

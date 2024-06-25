@@ -36,6 +36,14 @@ class TestTypeMatching(unittest.TestCase):
         ]
         self.assertEqualTypes(new_generic, _specify_types(expected_type, {}))
 
+        wrong_type = tuple[
+            Iterable[float],
+            tuple[int, Iterable[Transformer[str, dict]], tuple[list, float, None]],
+        ]
+        matched_generic = _match_types(generic, wrong_type)
+
+        self.assertDictEqual(matched_generic, {A: float, B: dict})
+
         self.assertDictEqual(_match_types(tuple[int, str], tuple[int]), {})
 
     def test_format(self):

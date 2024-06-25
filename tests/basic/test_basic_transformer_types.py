@@ -24,7 +24,6 @@ Out = TypeVar("Out")
 
 
 class TestBasicTransformerTypes(MypyTestSuite):
-
     def test_transformer_simple_typing(self):
         """
         Test the most simple transformer typing

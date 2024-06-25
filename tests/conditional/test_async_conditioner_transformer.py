@@ -11,9 +11,7 @@ from tests.lib.transformers import (
 
 
 class TestAsyncConditionerTransformer(unittest.IsolatedAsyncioTestCase):
-
     async def test_conditioner_unsupported_argument(self):
-
         def _plus2(num: float) -> float:
             return num + 2
 

@@ -8,7 +8,6 @@ from tests.lib.transformers import plus1, repeat_list
 
 
 class TestTransformerExport(unittest.TestCase):
-
     foo = repeat_list(10) >> Map(plus1 >> repeat_list(10) >> Map(plus1))
 
     @patch("builtins.__import__", side_effect=ImportError)

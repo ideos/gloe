@@ -13,7 +13,6 @@ Out = TypeVar("Out")
 
 
 class TestTransformerCollectionTypes(MypyTestSuite):
-
     def test_transformer_map(self):
         """
         Test the transformer map collection operation

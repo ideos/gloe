@@ -42,7 +42,6 @@ def _compose_serial(transformer1, _transformer2):
     transformer2 = _transformer2.copy(regenerate_instance_id=True)
 
     signature1: Signature = transformer1.signature()
-    signature2: Signature = transformer2.signature()
 
     input_generic_vars = _match_types(transformer2.input_type, transformer1.output_type)
     output_generic_vars = _match_types(
@@ -122,7 +121,6 @@ def _compose_diverging(
     )
 
     class BaseNewTransformer:
-
         def __len__(self):
             lengths = [len(t) for t in receiving_transformers]
             return sum(lengths) + len(incident_transformer)

@@ -16,7 +16,6 @@ Out = TypeVar("Out")
 
 
 class TestTransformerEnsurerTypes(MypyTestSuite):
-
     def test_transformer_ensurer(self):
         @ensure(incoming=[is_even])
         @transformer

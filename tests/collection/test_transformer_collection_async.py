@@ -11,7 +11,6 @@ from tests.lib.transformers import (
 
 
 class TestTransformerCollectionAsync(unittest.IsolatedAsyncioTestCase):
-
     async def test_transformer_async_map(self):
         """
         Test the mapping transformer

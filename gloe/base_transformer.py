@@ -152,7 +152,6 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         transform_method: str = "transform",
         force: bool = False,
     ) -> Self:
-
         copied: Self = copy.copy(self)
         copied._already_copied = True
 

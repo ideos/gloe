@@ -1,5 +1,6 @@
 import asyncio
 import math
+from typing import Iterable
 
 from tests.lib.exceptions import LnOfNegativeNumber
 from gloe import transformer, partial_transformer, async_transformer
@@ -130,6 +131,11 @@ def repeat(content: str, n_times: int, linebreak: bool) -> str:
 @partial_transformer
 def repeat_list(content: float, n_times: int) -> list[float]:
     return [content] * n_times
+
+
+@transformer
+def sum_all(lt: Iterable[float]) -> float:
+    return sum(lt)
 
 
 @transformer

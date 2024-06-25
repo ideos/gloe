@@ -232,7 +232,6 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(async_natural_logarithm, exception_ctx.raiser_transformer)
 
     async def test_execute_async_wrong_flow(self):
-
         flow = [2]
         with self.assertRaises(NotImplementedError):
             await _execute_async_flow(flow, 1)  # type: ignore

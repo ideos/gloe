@@ -56,9 +56,9 @@ class _IfThen(_BaseIfThen[In, ThenOut, PrevThenOut]):
         super().__init__(implication, name, prev_implications)
         self._implication = implication
         self._prev_implications = prev_implications
-        self._implications: Sequence[
-            _Implication[In, Union[ThenOut, PrevThenOut]]
-        ] = list(self._prev_implications) + [self._implication]
+        self._implications: Sequence[_Implication[In, Union[ThenOut, PrevThenOut]]] = (
+            list(self._prev_implications) + [self._implication]
+        )
 
     @overload
     def Else(
@@ -97,9 +97,9 @@ class _IfThen(_BaseIfThen[In, ThenOut, PrevThenOut]):
     def ElseNone(
         self,
     ) -> Transformer[In, Optional[Union[ThenOut, PrevThenOut]]]:
-        new_transformer: Conditioner[
-            In, Union[ThenOut, PrevThenOut], None
-        ] = Conditioner(self._implications, forget)
+        new_transformer: Conditioner[In, Union[ThenOut, PrevThenOut], None] = (
+            Conditioner(self._implications, forget)
+        )
         new_transformer.__class__.__name__ = self.__class__.__name__
         return new_transformer
 
@@ -117,9 +117,9 @@ class _AsyncIfThen(_BaseIfThen[In, ThenOut, PrevThenOut]):
     def Else(
         self, else_transformer: BaseTransformer[In, ElseOut]
     ) -> AsyncTransformer[In, Union[ThenOut, PrevThenOut, ElseOut]]:
-        new_transformer: AsyncConditioner[
-            In, Union[ThenOut, PrevThenOut], ElseOut
-        ] = AsyncConditioner(self._implications, else_transformer)
+        new_transformer: AsyncConditioner[In, Union[ThenOut, PrevThenOut], ElseOut] = (
+            AsyncConditioner(self._implications, else_transformer)
+        )
 
         new_transformer.__class__.__name__ = self._name
         new_transformer._label = self._name
@@ -129,9 +129,9 @@ class _AsyncIfThen(_BaseIfThen[In, ThenOut, PrevThenOut]):
     def ElseNone(
         self,
     ) -> AsyncTransformer[In, Optional[Union[ThenOut, PrevThenOut]]]:
-        new_transformer: AsyncConditioner[
-            In, Union[ThenOut, PrevThenOut], None
-        ] = AsyncConditioner(self._implications, forget)
+        new_transformer: AsyncConditioner[In, Union[ThenOut, PrevThenOut], None] = (
+            AsyncConditioner(self._implications, forget)
+        )
         new_transformer.__class__.__name__ = self.__class__.__name__
         return new_transformer
 
@@ -154,9 +154,9 @@ class _BaseElseIf(Generic[In, PrevThenOut]):
     ):
         super().__init__()
         self._condition = condition
-        self._prev_implications: Sequence[
-            _BaseImplication[In, PrevThenOut]
-        ] = prev_implications
+        self._prev_implications: Sequence[_BaseImplication[In, PrevThenOut]] = (
+            prev_implications
+        )
         self._name = name
 
 
@@ -168,9 +168,9 @@ class _ElseIf(_BaseElseIf[In, PrevThenOut]):
         name: str,
     ):
         super().__init__(condition, prev_implications, name)
-        self._prev_implications: Sequence[
-            _Implication[In, PrevThenOut]
-        ] = prev_implications
+        self._prev_implications: Sequence[_Implication[In, PrevThenOut]] = (
+            prev_implications
+        )
 
     @overload
     def Then(

@@ -1,5 +1,5 @@
 import unittest
-from typing import TypeVar, Union
+from typing import TypeVar, Union, Optional
 from collections.abc import Iterable
 
 from gloe import Transformer
@@ -17,17 +17,24 @@ class TestTypeMatching(unittest.TestCase):
         self.assertEqual(str(type1), str(type2))
 
     def test_basic_match_case(self):
-        generic = tuple[Iterable[A], tuple[int, Iterable[Transformer[str, B]], C]]
-        specific = tuple[list[float], tuple[int, list[MapOver[str, dict]], list]]
+        generic = tuple[
+            Iterable[A],
+            tuple[int, Iterable[Transformer[str, B]], Union[C, float, None]],
+        ]
+        specific = tuple[
+            list[float],
+            tuple[int, list[MapOver[str, dict]], Optional[Union[list, float]]],
+        ]
 
         matched_types = _match_types(generic, specific)
         self.assertDictEqual(matched_types, {A: float, B: dict, C: list})
 
         new_generic = _specify_types(generic, matched_types)
         expected_type = tuple[
-            Iterable[float], tuple[int, Iterable[Transformer[str, dict]], list]
+            Iterable[float],
+            tuple[int, Iterable[Transformer[str, dict]], Optional[Union[list, float]]],
         ]
-        self.assertEqualTypes(new_generic, expected_type)
+        self.assertEqualTypes(new_generic, _specify_types(expected_type, {}))
 
         self.assertDictEqual(_match_types(tuple[int, str], tuple[int]), {})
 

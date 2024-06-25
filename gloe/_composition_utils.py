@@ -21,11 +21,12 @@ def is_transformer(node):
 
 
 def _resolve_serial_connection_signatures(
-    transformer2: BaseTransformer, generic_vars: dict, signature2: Signature
+    transformer1: BaseTransformer, transformer2: BaseTransformer, generic_vars: dict
 ) -> Signature:
+    signature2 = transformer2.signature()
     first_param = list(signature2.parameters.values())[0]
     new_parameter = first_param.replace(
-        annotation=_specify_types(transformer2.input_type, generic_vars)
+        annotation=_specify_types(transformer1.input_type, generic_vars)
     )
     new_signature = signature2.replace(
         parameters=[new_parameter],
@@ -65,7 +66,9 @@ def _compose_serial(transformer1, _transformer2):
     class BaseNewTransformer:
         def signature(self) -> Signature:
             return _resolve_serial_connection_signatures(
-                transformer2, generic_vars, signature2
+                transformer1,
+                transformer2,
+                generic_vars,
             )
 
         def __len__(self):

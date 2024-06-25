@@ -200,7 +200,7 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
 
         request_and_serialize = request_data >> dict_to_str
         self.assertEqual(
-            repr(request_and_serialize), "dict -> (2 transformers omitted) -> str"
+            "str -> (2 transformers omitted) -> str", repr(request_and_serialize)
         )
 
     async def test_exhausting_large_flow(self):

@@ -1,5 +1,5 @@
 from types import GenericAlias
-from typing import TypeVar, get_origin, _GenericAlias  # type: ignore
+from typing import TypeVar, get_origin, _GenericAlias, Union  # type: ignore
 
 
 def _format_tuple(tuple_annotation: tuple, input_annotation) -> str:
@@ -56,15 +56,19 @@ def _match_types(generic, specific):
     specific_origin = get_origin(specific)
     generic_origin = get_origin(generic)
 
-    if specific_origin is None and generic_origin is None:
+    if specific_origin is None or generic_origin is None:
         return {}
 
     if (
-        specific_origin is None
-        or generic_origin is None
-        or not issubclass(specific_origin, generic_origin)
-    ):
+        specific_origin is Union or generic_origin is Union
+    ) and specific_origin != generic_origin:
         return {}
+
+    if specific_origin is not Union:
+        is_subclass = issubclass(specific_origin, generic_origin)
+
+        if not is_subclass:
+            return {}
 
     generic_args = getattr(generic, "__args__", ())
     specific_args = getattr(specific, "__args__", ())

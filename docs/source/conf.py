@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.abspath("../.."))
 sys.path.insert(0, os.path.abspath("pygments"))
 
 project = "Gloe"
-copyright = "2023, Samir Braga"
+copyright = "2024, Samir Braga"
 author = "Samir Braga"
 version = pkg_resources.get_distribution("gloe").version
 
@@ -49,6 +49,9 @@ ogp_site_url = "https://gloe.ideos.com.br/"
 html_baseurl = "https://gloe.ideos.com.br/"
 sitemap_locales = [None]
 sitemap_url_scheme = "{link}"
+sitemap_excludes = [
+    "theory.html",
+]
 html_extra_path = ["_static/robots.txt"]
 ogp_description_length = 160
 
@@ -62,7 +65,7 @@ autodoc_type_aliases = {
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_title = "Gloe - Write a Better Python Flow"
+html_title = "Gloe - Your Code as a Flow"
 # html_logo = "assets/gloe-logo-small.png"
 html_theme = "furo"
 html_last_updated_fmt = ""

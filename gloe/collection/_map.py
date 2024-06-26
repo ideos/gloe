@@ -1,13 +1,12 @@
 from typing import Generic, TypeVar, Iterable
 
-from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe.transformers import Transformer
 
 _T = TypeVar("_T", contravariant=True)
 _U = TypeVar("_U", covariant=True)
 
 
-class Map(Generic[_T, _U], Transformer[Iterable[_T], Iterable[_U]]):
+class Map(Generic[_T, _U], Transformer[Iterable[_T], list[_U]]):
     """
     Transformer used to map values in an iterable using other transformers instead of
     functions.
@@ -20,7 +19,7 @@ class Map(Generic[_T, _U], Transformer[Iterable[_T], Iterable[_U]]):
             @transformer
             def get_user_posts(user: User) -> list[Post]: ...
 
-            get_posts_by_group: Transformer[Group, Iterable[Post]] = (
+            get_posts_by_group: Transformer[Group, list[Post]] = (
                 get_users_by_group >> Map(get_user_posts) >> flatten
             )
     Args:
@@ -31,15 +30,10 @@ class Map(Generic[_T, _U], Transformer[Iterable[_T], Iterable[_U]]):
     def __init__(self, mapping_transformer: Transformer[_T, _U]):
         super().__init__()
         self.mapping_transformer = mapping_transformer
-        self.plotting_settings.invisible = True
+        self.plotting_settings.has_children = True
         self._children = [mapping_transformer]
 
-        self._plotting_settings: PlottingSettings = PlottingSettings(
-            has_children=True,
-            node_type=NodeType.Transformer,
-        )
-
-    def transform(self, data: Iterable[_T]) -> Iterable[_U]:
+    def transform(self, data: Iterable[_T]) -> list[_U]:
         """
         Args:
             data: incoming iterable to be mapped. The items of this iterable must be of

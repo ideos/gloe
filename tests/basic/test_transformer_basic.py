@@ -2,7 +2,12 @@ import asyncio
 import unittest
 from typing import cast
 
-from gloe.utils import forward
+from gloe import (
+    TransformerException,
+    UnsupportedTransformerArgException,
+    transformer,
+    Transformer,
+)
 from tests.lib.transformers import (
     square,
     square_root,
@@ -11,19 +16,11 @@ from tests.lib.transformers import (
     plus1,
     minus1,
     natural_logarithm,
-    logarithm,
     LnOfNegativeNumber,
 )
-from gloe import (
-    TransformerException,
-    UnsupportedTransformerArgException,
-    transformer,
-    PreviousTransformer,
-    BaseTransformer,
-)
 
 
-class TestFunctionTransformer(unittest.TestCase):
+class TestTransformerBasic(unittest.TestCase):
     def test_transformer_wrong_signature(self):
         with self.assertWarns(RuntimeWarning):
 
@@ -62,53 +59,6 @@ class TestFunctionTransformer(unittest.TestCase):
         ):
             _ = square >> (just_a_normal_function, plus1)  # type: ignore
 
-    def test_previous_property(self):
-        """
-        Test the previous property
-        """
-
-        linear_graph = square >> square_root
-
-        self.assertEqual(linear_graph.previous, square)
-
-        divergent_graph = (
-            square
-            >> square_root
-            >> (square >> (square_root, square_root), square >> square_root >> square)
-        )
-
-        previous: PreviousTransformer[BaseTransformer] = divergent_graph
-        for _ in range(8):
-            if previous is not None:
-                if type(previous) is tuple:
-                    previous = previous[0]
-                elif isinstance(previous, BaseTransformer):
-                    previous = previous.previous
-
-        self.assertIsNone(previous)
-
-    def test_visible_previous_property(self):
-        """
-        Test the previous property
-        """
-
-        linear_graph = square >> forward() >> square_root
-
-        self.assertEqual(linear_graph.visible_previous, square)
-
-        begin = forward[float]()
-        linear_graph2 = begin >> square_root
-
-        self.assertEqual(linear_graph2.visible_previous, begin)
-
-        graph3 = square >> (begin, square) >> forward()
-
-        self.assertEqual(graph3.visible_previous, graph3.previous)
-
-        graph4 = square
-
-        self.assertIsNone(graph4.visible_previous)
-
     def test_divergence_flow(self):
         """
         Test the most simple divergent case
@@ -135,7 +85,7 @@ class TestFunctionTransformer(unittest.TestCase):
 
     def test_divergent_many_branches_flow(self):
         """
-        Test the divergent case with many branches
+        Test the divergent case with many gateways
         """
 
         convergent_graph = square >> (
@@ -169,14 +119,20 @@ class TestFunctionTransformer(unittest.TestCase):
         """
         Test the instantiation of large graph
         """
-        graph = plus1
+        max_iters = 320
 
-        max_iters = 475
+        def ramification(
+            branch: Transformer[float, float]
+        ) -> Transformer[float, float]:
+            return plus1 >> (plus1, branch) >> sum_tuple2
+
+        graph = plus1
         for i in range(max_iters):
-            graph = graph >> plus1
+            graph = ramification(graph)
 
         result = graph(0)
-        self.assertEqual(result, max_iters + 1)
+
+        self.assertEqual(result, 52001)
 
     def test_recursive_flow(self):
         """
@@ -221,6 +177,9 @@ class TestFunctionTransformer(unittest.TestCase):
         self.assertNotEqual(graph, square_root)
         self.assertNotEqual(square, square_root)
 
+        with self.assertRaises(NotImplementedError):
+            self.assertEqual(square, 1)
+
     def test_transformer_pydoc_keeping(self):
         @transformer
         def to_string(num: int) -> str:
@@ -239,28 +198,6 @@ class TestFunctionTransformer(unittest.TestCase):
 
         self.assertEqual(str(signature), "(num: float) -> float")
 
-    # def test_transformer_nodes_retrieve(self):
-    #     graph = square >> square_root >> square >> square_root
-    #     nodes = graph.graph_nodes()
-    #
-    #     expected_nodes = {
-    #         square.id: square,
-    #         square_root.id: square_root
-    #     }
-    #     self.assertDictEqual(expected_nodes, nodes)
-    #
-    #     graph2 = square >> square_root >> (
-    #         square >> square_root,
-    #         square >> square_root
-    #     )
-    #     nodes = graph2.graph_nodes()
-    #
-    #     expected_nodes = {
-    #         square.id: square,
-    #         square_root.id: square_root
-    #     }
-    #     self.assertDictEqual(expected_nodes, nodes)
-
     def test_transformer_error_forward(self):
         """
         Test if an error raised inside a transformer can be caught outside it
@@ -275,21 +212,12 @@ class TestFunctionTransformer(unittest.TestCase):
 
         graph = minus1 >> natural_logarithm
         try:
-            graph(0)
+            graph(-1)
         except LnOfNegativeNumber as exception:
             self.assertEqual(type(exception.__cause__), TransformerException)
 
             exception_ctx = cast(TransformerException, exception.__cause__)
             self.assertEqual(natural_logarithm, exception_ctx.raiser_transformer)
-
-    def test_partial_transformer(self):
-        """
-        Test the curried transformer
-        """
-
-        graph = logarithm(base=2)
-        self.assertEqual(graph(2), 1)
-        self.assertEqual(graph.label, "logarithm")
 
     def test_transformers_on_a_running_event_loop(self):
         async def run_main():
@@ -298,7 +226,3 @@ class TestFunctionTransformer(unittest.TestCase):
 
         loop = asyncio.new_event_loop()
         loop.run_until_complete(run_main())
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -1,10 +1,10 @@
 ```{eval-rst} 
-:og:description: Gloe (pronounced like "glow") is a general-purpose library made to help developers create, maintain, document, and test both operational and flow-oriented code.
+:og:description: Gloe is a general-purpose library designed to guide developers in expressing their code as a flow.
 
-:og:image:alt: Gloe (pronounced like "glow") is a general-purpose library made to help developers create, maintain, document, and test both operational and flow-oriented code.
+:og:image:alt: Gloe is a general-purpose library designed to guide developers in expressing their code as a flow.
 
 .. meta::
-  :description: Gloe (pronounced like "glow") is a general-purpose library made to help developers create, maintain, document, and test both operational and flow-oriented code.
+  :description: Gloe is a general-purpose library designed to guide developers in expressing their code as a flow.
 ```
 
 ```{include} ../../README.md
@@ -17,25 +17,23 @@
 :hidden:
 
 Introduction <self>
-theory
-philosophy
 getting-started/index
 faq
+philosophy
 limitations
 
 ```
 
 
 ```{toctree}
-:caption: 'Examples'
+:caption: 'Learn'
 :maxdepth: 3
 :hidden:
 
 
-examples/gloe-and-fastapi
-examples/gloe-and-pandas
-examples/gloe-and-pytorch
-examples/gloe-and-sqlalchemy
+examples/index
+patterns/index
+advanced/index
 ```
 
 ```{toctree}

@@ -6,7 +6,7 @@ from gloe.transformers import Transformer
 _T = TypeVar("_T")
 
 
-class Filter(Generic[_T], Transformer[Iterable[_T], Iterable[_T]]):
+class Filter(Generic[_T], Transformer[Iterable[_T], list[_T]]):
     """
     Transformer used to filter values in an iterable using other transformers instead of
     functions.
@@ -18,7 +18,7 @@ class Filter(Generic[_T], Transformer[Iterable[_T], Iterable[_T]]):
             def is_admin(user: User) -> bool: ...
 
             get_admin_users: Transformer[Group, Iterable[User]] = (
-                get_users >> Filter(get_user_posts)
+                get_users >> Filter(is_admin)
             )
     Args:
         filter_transformer: transformer applied to each item of the input iterable and
@@ -36,14 +36,14 @@ class Filter(Generic[_T], Transformer[Iterable[_T], Iterable[_T]]):
             node_type=NodeType.Transformer,
         )
 
-    def transform(self, data: Iterable[_T]) -> Iterable[_T]:
+    def transform(self, data: Iterable[_T]) -> list[_T]:
         """
         Args:
             data: incoming iterable to be filtered. The items of this iterable must be
                 of type :code:`_T`.
 
         Returns:
-            The filterd iterable.
+            The filtered iterable.
         """
         filtered_result = []
         for item in data:

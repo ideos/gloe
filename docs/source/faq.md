@@ -29,7 +29,7 @@ Yes! Gloe does not change the standard debugging process. The {func}`gloe.utils.
 
 ### Does Gloe have a limit on the number of nodes for the graph?
 
-Yes. Gloe applies transformations recursively. Because of this, the graph size has a limit of about 470 nodes, considering the default value of 1000 for the maximum depth of the Python interpreter stack. We believe this number will be sufficient for most use cases; however, {ref}`we are already working <work-in-progress>` on removing this restriction.
+No. You can compose as many transformers as you want. The only current limitation of Gloe is the number of nested branches: you can't have more than approximately 350 nested branches (i.e., a branch that contains another branch, which in turn contains another branch, and so on). **This scenario is not feasible and is discouraged by Gloe principles.**
 
 ### Does Gloe make my code slower?
 
@@ -75,4 +75,15 @@ It depends (you were expecting that answer, right?). A single transformer can wr
 
 ### Can I call a transformer inside another transformer?
 
-**Definitely no!** As stated in {ref}`this section <flat-is-better-than-nested>` from the philosophy page, Gloe promotes flatness in code. Of course, a transformer can utilize other components in its logic, such as classes and objects, but all these components should work together to implement a single atomic responsibility: the transformer's responsibility. Thus, the code reader/maintainer does not want to find a whole separate graph being called in the middle of a transformer's logic.
+```{note}
+This case refers to the follwing:
+
+```python
+@transformer
+def my_transformer():
+    flow = foo_transformer >> bar_transformer
+    return flow() # nested transformer call
+``` 
+
+
+**Definitely not!** As stated in {ref}`this section <flat-is-better-than-nested>` from the philosophy page, Gloe promotes flatness in code. Of course, a transformer can utilize other components in its logic, such as classes and objects, but all these components should work together to implement a single atomic responsibility: the transformer's responsibility. Thus, the code reader/maintainer does not want to find a whole separated flow being called in the middle of a transformer's logic.

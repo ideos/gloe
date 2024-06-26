@@ -3,6 +3,7 @@
 ```{admonition} API Reference
 :class: seealso
 - {func}`gloe.utils.forward`
+- {func}`gloe.utils.attach`
 - {func}`gloe.utils.forward_incoming`
 - {data}`gloe.utils.forget`
 - {func}`gloe.utils.debug`
@@ -27,20 +28,25 @@ In this case, we have nothing to do before splitting the groups of users. So, wh
 We have to explicitly define the incoming type of the forward transformer when it is used as the first step, because it is not known at the time of the definition.
 ```
 
-## forward_incoming
+## attach
 
-Suppose you need to extract some statistics from a Pandas DataFrame. However, you still need the use the original data in the next transformers. In that case, you can use `forward_incoming`, which receives a transformer as an argument. The output of the `forward_incoming` is a tuple with the output of the encapsulated transformer and its input.
+Suppose you need to extract some statistics from a Pandas DataFrame. However, you still need the use the original data in the next transformers. In that case, you can use `attach`, which receives a transformer as an argument. The output of the `attach` is a tuple with the output of the encapsulated transformer and its input.
 
 ```python
 get_data: Transformer[str, pd.DataFrame]
 extract_statistics: Transformer[pd.DataFrame, Statistics]
 process_statistics: Transformer[tuple[pd.DataFrame, Statistics], Result]
 
-process_data = get_data >> forward_incoming(extract_statistics) >> process_statistics 
+process_data = get_data >> attach(extract_statistics) >> process_statistics 
 ```
 
 In the example above, both `get_data` and `extract_statistics` outputs are passed on as the input to `process_statistics`.
 
+## forward_incoming
+
+```{warning}
+**Deprecated:** use `attach` instead.
+```
 ## forget
 
 Converts any input data to `None`. Quite useful in addition with {ref}`conditional-flows`.

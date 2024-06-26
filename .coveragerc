@@ -1,7 +1,6 @@
 [report]
 omit =
     tests/*
-    gloe/_typing_utils.py
 exclude_lines =
     pragma: no cover
     @overload

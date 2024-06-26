@@ -1,12 +1,12 @@
 from abc import abstractmethod
 from inspect import Signature
-from typing import TypeVar, overload, cast, Callable, Generic, Optional
+from typing import TypeVar, overload, cast, Callable, Generic, Optional, Any
 
 from typing_extensions import Self
 
 from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe._transformer_utils import catch_transformer_exception
-from gloe.base_transformer import BaseTransformer
+from gloe.base_transformer import BaseTransformer, Flow
 
 __all__ = ["AsyncTransformer"]
 
@@ -20,6 +20,22 @@ _O4 = TypeVar("_O4")
 _O5 = TypeVar("_O5")
 _O6 = TypeVar("_O6")
 _O7 = TypeVar("_O7")
+
+
+async def _execute_async_flow(flow: Flow, arg: Any) -> Any:
+    result = arg
+    for op in flow:
+        if isinstance(op, BaseTransformer):
+            if isinstance(op, AsyncTransformer):
+                result = await op._safe_transform(result)
+            else:
+                if hasattr(op, "_safe_transform"):
+                    result = op._safe_transform(result)
+                else:
+                    raise NotImplementedError()
+        else:
+            raise NotImplementedError()
+    return result
 
 
 class AsyncTransformer(Generic[_In, _Out], BaseTransformer[_In, _Out]):
@@ -48,13 +64,20 @@ class AsyncTransformer(Generic[_In, _Out], BaseTransformer[_In, _Out]):
         return self._signature(AsyncTransformer, "transform_async")
 
     def __repr__(self):
+        if len(self) == 1:
+            return (
+                f"{self.input_annotation}"
+                f" -> ({type(self).__name__})"
+                f" -> {self.output_annotation}"
+            )
+
         return (
             f"{self.input_annotation}"
-            f" -> ({type(self).__name__})"
+            f" -> ({len(self)} transformers omitted)"
             f" -> {self.output_annotation}"
         )
 
-    async def __call__(self, data: _In) -> _Out:
+    async def _safe_transform(self, data: _In) -> _Out:
         transform_exception = None
 
         transformed: Optional[_Out] = None
@@ -71,12 +94,16 @@ class AsyncTransformer(Generic[_In, _Out], BaseTransformer[_In, _Out]):
 
         raise NotImplementedError  # pragma: no cover
 
+    async def __call__(self, data: _In) -> _Out:
+        return await _execute_async_flow(self._flow, data)
+
     def copy(
         self,
         transform: Optional[Callable[[Self, _In], _Out]] = None,
         regenerate_instance_id: bool = False,
+        force: bool = False,
     ) -> Self:
-        return self._copy(transform, regenerate_instance_id, "transform_async")
+        return self._copy(transform, regenerate_instance_id, "transform_async", force)
 
     @overload
     def __rshift__(

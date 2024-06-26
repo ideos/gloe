@@ -13,7 +13,7 @@ from gloe.base_transformer import BaseTransformer, PreviousTransformer
 from gloe.base_transformer import TransformerException
 from gloe.async_transformer import AsyncTransformer
 
-__version__ = "0.6.0-rc1"
+__version__ = "0.6.0"
 
 __all__ = [
     "transformer",

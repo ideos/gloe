@@ -2,10 +2,10 @@ import types
 from inspect import Signature
 from typing import TypeVar, Any, Optional, Union
 
-from gloe.async_transformer import AsyncTransformer
+from gloe.async_transformer import AsyncTransformer, MultiArgsAsyncTransformer
 from gloe.base_transformer import BaseTransformer
 from gloe.gateways._parallel import _Parallel, _ParallelAsync
-from gloe.transformers import Transformer
+from gloe.transformers import Transformer, MultiArgsTransformer
 from gloe._typing_utils import _match_types, _specify_types
 from gloe.exceptions import UnsupportedTransformerArgException
 
@@ -76,27 +76,55 @@ def _compose_serial(transformer1, _transformer2):
     new_transformer: Optional[BaseTransformer] = None
     if is_transformer(transformer1) and is_transformer(transformer2):
 
-        class NewTransformer1(BaseNewTransformer, Transformer[_In, _NextOut]):
-            def __init__(self):
-                super().__init__()
-                self._flow = transformer1._flow + transformer2._flow
+        if isinstance(transformer1, MultiArgsTransformer):
 
-            def transform(self, data):
-                return None
+            class NewMultiArgsTransformer(BaseNewTransformer, MultiArgsTransformer):
+                def __init__(self):
+                    super().__init__()
+                    self._flow = transformer1._flow + transformer2._flow
 
-        new_transformer = NewTransformer1()
+                def transform(self, data):
+                    return None
 
+            new_transformer = NewMultiArgsTransformer()
+
+        else:
+
+            class NewTransformer1(BaseNewTransformer, Transformer[_In, _NextOut]):
+                def __init__(self):
+                    super().__init__()
+                    self._flow = transformer1._flow + transformer2._flow
+
+                def transform(self, data):
+                    return None
+
+            new_transformer = NewTransformer1()
     else:
 
-        class NewTransformer2(BaseNewTransformer, AsyncTransformer[_In, _NextOut]):
-            def __init__(self):
-                super().__init__()
-                self._flow = transformer1._flow + transformer2._flow
+        if isinstance(transformer1, MultiArgsAsyncTransformer):
 
-            async def transform_async(self, data):
-                return None
+            class NewMultiArgsAsyncTransformer(
+                BaseNewTransformer, MultiArgsAsyncTransformer
+            ):
+                def __init__(self):
+                    super().__init__()
+                    self._flow = transformer1._flow + transformer2._flow
 
-        new_transformer = NewTransformer2()
+                async def transform_async(self, data):
+                    return None
+
+            new_transformer = NewMultiArgsAsyncTransformer()
+        else:
+
+            class NewTransformer2(BaseNewTransformer, AsyncTransformer[_In, _NextOut]):
+                def __init__(self):
+                    super().__init__()
+                    self._flow = transformer1._flow + transformer2._flow
+
+                async def transform_async(self, data):
+                    return None
+
+            new_transformer = NewTransformer2()
 
     new_transformer.__class__.__name__ = transformer2.__class__.__name__
     new_transformer._label = transformer2.label
@@ -129,33 +157,67 @@ def _compose_diverging(
 
     if is_transformer(incident_transformer) and is_transformer(receiving_transformers):
 
-        class NewTransformer1(BaseNewTransformer, Transformer[_In, tuple[Any, ...]]):
-            def __init__(self):
-                super().__init__()
-                self._flow = incident_transformer._flow + [
-                    _Parallel(*receiving_transformers)
-                ]
+        if isinstance(incident_transformer, MultiArgsTransformer):
 
-            def transform(self, data):
-                return None
+            class NewMultiArgsTransformer(BaseNewTransformer, MultiArgsTransformer):
+                def __init__(self):
+                    super().__init__()
+                    self._flow = incident_transformer._flow + [
+                        _Parallel(*receiving_transformers)
+                    ]
 
-        new_transformer = NewTransformer1()
+                def transform(self, data):
+                    return None
+
+            new_transformer = NewMultiArgsTransformer()
+        else:
+
+            class NewTransformer1(
+                BaseNewTransformer, Transformer[_In, tuple[Any, ...]]
+            ):
+                def __init__(self):
+                    super().__init__()
+                    self._flow = incident_transformer._flow + [
+                        _Parallel(*receiving_transformers)
+                    ]
+
+                def transform(self, data):
+                    return None
+
+            new_transformer = NewTransformer1()
 
     else:
 
-        class NewTransformer2(
-            BaseNewTransformer, AsyncTransformer[_In, tuple[Any, ...]]
-        ):
-            def __init__(self):
-                super().__init__()
-                self._flow = incident_transformer._flow + [
-                    _ParallelAsync(*receiving_transformers)
-                ]
+        if isinstance(incident_transformer, MultiArgsAsyncTransformer):
 
-            async def transform_async(self, data):
-                return None
+            class NewMultiArgsAsyncTransformer(
+                BaseNewTransformer, MultiArgsAsyncTransformer
+            ):
+                def __init__(self):
+                    super().__init__()
+                    self._flow = incident_transformer._flow + [
+                        _ParallelAsync(*receiving_transformers)
+                    ]
 
-        new_transformer = NewTransformer2()
+                async def transform_async(self, data):
+                    return None
+
+            new_transformer = NewMultiArgsAsyncTransformer()
+        else:
+
+            class NewTransformer2(
+                BaseNewTransformer, AsyncTransformer[_In, tuple[Any, ...]]
+            ):
+                def __init__(self):
+                    super().__init__()
+                    self._flow = incident_transformer._flow + [
+                        _ParallelAsync(*receiving_transformers)
+                    ]
+
+                async def transform_async(self, data):
+                    return None
+
+            new_transformer = NewTransformer2()
 
     # new_transformer._previous = cast(Transformer, receiving_transformers)
     new_transformer.__class__.__name__ = "Converge"

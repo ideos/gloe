@@ -8,12 +8,12 @@ from gloe.functional import (
 from gloe.conditional import If, condition
 from gloe.ensurer import ensure
 from gloe.exceptions import UnsupportedTransformerArgException
-from gloe.transformers import Transformer
+from gloe.transformers import Transformer, MultiArgsTransformer
 from gloe.base_transformer import BaseTransformer, PreviousTransformer
 from gloe.base_transformer import TransformerException
-from gloe.async_transformer import AsyncTransformer
+from gloe.async_transformer import AsyncTransformer, MultiArgsAsyncTransformer
 
-__version__ = "0.6.0"
+__version__ = "0.7.0-rc1"
 
 __all__ = [
     "transformer",
@@ -33,3 +33,5 @@ __all__ = [
 
 setattr(Transformer, "__rshift__", _compose_nodes)
 setattr(AsyncTransformer, "__rshift__", _compose_nodes)
+setattr(MultiArgsTransformer, "__rshift__", _compose_nodes)
+setattr(MultiArgsAsyncTransformer, "__rshift__", _compose_nodes)

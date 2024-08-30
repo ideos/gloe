@@ -173,14 +173,6 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
         result = await pipeline(_URL)
         self.assertEqual(_DATA, result)
 
-    def test_async_transformer_wrong_signature(self):
-        with self.assertWarns(RuntimeWarning):
-
-            @async_transformer  # type: ignore
-            async def many_args(arg1: str, arg2: int):
-                await asyncio.sleep(1)
-                return arg1, arg2
-
     def test_async_transformer_signature_representation(self):
         signature = request_data.signature()
 

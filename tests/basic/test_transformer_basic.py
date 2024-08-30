@@ -21,12 +21,12 @@ from tests.lib.transformers import (
 
 
 class TestTransformerBasic(unittest.TestCase):
-    def test_transformer_wrong_signature(self):
-        with self.assertWarns(RuntimeWarning):
+    def test_transformer_multiple_args(self):
+        @transformer
+        def many_args(arg1: str, arg2: int) -> str:
+            return arg1 + str(arg2)
 
-            @transformer  # type: ignore
-            def many_args(arg1: str, arg2: int):
-                return arg1, arg2
+        self.assertEqual(many_args("hello", 1), "hello1")
 
     def test_transformer_hash(self):
         self.assertEqual(hash(square.id), square.__hash__())

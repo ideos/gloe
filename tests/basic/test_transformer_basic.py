@@ -16,17 +16,41 @@ from tests.lib.transformers import (
     plus1,
     minus1,
     natural_logarithm,
-    LnOfNegativeNumber,
+    LnOfNegativeNumber, times2, tuplicate,
 )
 
 
 class TestTransformerBasic(unittest.TestCase):
-    def test_transformer_multiple_args(self):
+    def test_transformer_multiargs(self):
         @transformer
         def many_args(arg1: str, arg2: int) -> str:
             return arg1 + str(arg2)
 
         self.assertEqual(many_args("hello", 1), "hello1")
+
+        @transformer
+        def many_args2(arg1: str, arg2: str) -> str:
+            return arg1 + arg2
+
+        graph = tuplicate >> many_args2
+        self.assertEqual('hellohello', graph('hello'))
+
+    def test_transformer_multiargs_complex(self):
+        @transformer
+        def many_args(arg1: tuple[float, float], arg2: float) -> float:
+            return sum(arg1) + arg2
+
+        self.assertEqual(many_args((1.0, 2), 3), 6.0)
+
+        graph = plus1 >> (
+            times2 >> plus1 >> (
+                square,
+                minus1
+            ),
+            square
+        ) >> many_args
+
+        self.assertEqual(graph(3), 81 + 8 + 16.0)
 
     def test_transformer_hash(self):
         self.assertEqual(hash(square.id), square.__hash__())

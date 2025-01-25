@@ -6,9 +6,20 @@ from tests.lib.transformers import square, plus1, sum_tuple2
 
 
 class TestTransformerCollection(unittest.TestCase):
+    def test_transformer_multiargs_inside_map(self):
+        @transformer
+        def many_args(arg1: str, arg2: int) -> str:
+            return arg1 + str(arg2)
+
+        mapping = Map(many_args)
+
+        result = list(mapping([("hello", 1), ("world", 2)]))
+
+        self.assertListEqual(result, ["hello1", "world2"])
+
     def test_transformer_map(self):
         """
-        Test the mapping transformer
+        Test the map transformer
         """
 
         mapping1 = Map(square) >> Map(plus1)
@@ -41,7 +52,7 @@ class TestTransformerCollection(unittest.TestCase):
 
     def test_transformer_map_over(self):
         """
-        Test the mapping transformer
+        Test the map over transformer
         """
 
         data = [10.0, 9.0, 3.0, 2.0, -1.0]
@@ -50,3 +61,19 @@ class TestTransformerCollection(unittest.TestCase):
         result = list(mapping(-1.0))
 
         self.assertListEqual(result, data)
+
+    def test_transformer_multiargs_inside_map_over(self):
+        roles: list[str] = ['admin_role', 'member_role', 'manager_role']
+
+        @transformer
+        def format_user(user: str, role: str) -> str:
+            return f'User {user} has the role {role}.'
+
+        format_users = MapOver(roles, format_user)
+
+        self.assertListEqual(
+            format_users('Alice'),
+            ['User Alice has the role admin_role.',
+             'User Alice has the role member_role.',
+             'User Alice has the role manager_role.']
+        )

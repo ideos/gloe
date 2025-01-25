@@ -1,4 +1,5 @@
 import asyncio
+import re
 import unittest
 from typing import cast
 
@@ -208,9 +209,9 @@ class TestTransformerBasic(unittest.TestCase):
             return str(num)
 
         self.assertEqual(
-            to_string.__doc__,
-            """This transformer receives a number as input and return its representation
-            as a string""",
+            re.sub(r"\s+", " ", to_string.__doc__),
+            """This transformer receives a number as input and return its representation """
+            """as a string""",
         )
 
     def test_transformer_signature_representation(self):

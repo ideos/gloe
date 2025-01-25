@@ -211,8 +211,8 @@ class TestTransformerBasic(unittest.TestCase):
         if to_string.__doc__ is not None:
             self.assertEqual(
                 re.sub(r"\s+", " ", to_string.__doc__),
-                """This transformer receives a number as input and return its representation """
-                """as a string""",
+                """This transformer receives a number as input and return its """
+                """representation as a string""",
             )
 
     def test_transformer_signature_representation(self):

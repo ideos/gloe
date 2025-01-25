@@ -110,11 +110,11 @@ class Transformer(BaseTransformer[_I, _O], ABC):
 
     @overload
     def __call__(self: "Transformer[None, _O]") -> _O:
-        return _execute_flow(self._flow, None)
+        pass
 
     @overload
     def __call__(self, data: _I) -> _O:
-        return _execute_flow(self._flow, data)
+        pass
 
     def __call__(self, data=None):
         return _execute_flow(self._flow, data)
@@ -238,6 +238,8 @@ class MultiArgsTransformer(
     def __call__(  # type: ignore[override]
         self: "MultiArgsTransformer[Unpack[Args], _O]", *data: Unpack[Args]
     ) -> _O:
+        if len(data) == 1 and type(data[0]) is tuple: # type: ignore
+            data = data[0] # type: ignore
         return _execute_flow(self._flow, data)
 
     @overload  # type: ignore[override]

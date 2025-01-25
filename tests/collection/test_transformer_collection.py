@@ -63,17 +63,19 @@ class TestTransformerCollection(unittest.TestCase):
         self.assertListEqual(result, data)
 
     def test_transformer_multiargs_inside_map_over(self):
-        roles: list[str] = ['admin_role', 'member_role', 'manager_role']
+        roles: list[str] = ["admin_role", "member_role", "manager_role"]
 
         @transformer
         def format_user(user: str, role: str) -> str:
-            return f'User {user} has the role {role}.'
+            return f"User {user} has the role {role}."
 
         format_users = MapOver(roles, format_user)
 
         self.assertListEqual(
-            format_users('Alice'),
-            ['User Alice has the role admin_role.',
-             'User Alice has the role member_role.',
-             'User Alice has the role manager_role.']
+            format_users("Alice"),
+            [
+                "User Alice has the role admin_role.",
+                "User Alice has the role member_role.",
+                "User Alice has the role manager_role.",
+            ],
         )

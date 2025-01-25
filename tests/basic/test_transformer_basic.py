@@ -16,7 +16,9 @@ from tests.lib.transformers import (
     plus1,
     minus1,
     natural_logarithm,
-    LnOfNegativeNumber, times2, tuplicate,
+    LnOfNegativeNumber,
+    times2,
+    tuplicate,
 )
 
 
@@ -33,7 +35,7 @@ class TestTransformerBasic(unittest.TestCase):
             return arg1 + arg2
 
         graph = tuplicate >> many_args2
-        self.assertEqual('hellohello', graph('hello'))
+        self.assertEqual("hellohello", graph("hello"))
 
     def test_transformer_multiargs_complex(self):
         @transformer
@@ -42,13 +44,7 @@ class TestTransformerBasic(unittest.TestCase):
 
         self.assertEqual(many_args((1.0, 2), 3), 6.0)
 
-        graph = plus1 >> (
-            times2 >> plus1 >> (
-                square,
-                minus1
-            ),
-            square
-        ) >> many_args
+        graph = plus1 >> (times2 >> plus1 >> (square, minus1), square) >> many_args
 
         self.assertEqual(graph(3), 81 + 8 + 16.0)
 

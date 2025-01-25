@@ -238,8 +238,8 @@ class MultiArgsTransformer(
     def __call__(  # type: ignore[override]
         self: "MultiArgsTransformer[Unpack[Args], _O]", *data: Unpack[Args]
     ) -> _O:
-        if len(data) == 1 and type(data[0]) is tuple: # type: ignore
-            data = data[0] # type: ignore
+        if len(data) == 1 and type(data[0]) is tuple:  # type: ignore
+            data = data[0]  # type: ignore
         return _execute_flow(self._flow, data)
 
     @overload  # type: ignore[override]

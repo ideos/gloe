@@ -118,10 +118,9 @@ The fourth transformer creates the final processed order object:
 
 @transformer
 def create_processed_order(
-    data: tuple[Order, User, list[OrderItem]]
+    order: Order, user: User, items: list[OrderItem]
 ) -> ProcessedOrder:
     """Creates the final processed order object."""
-    order, user, items = data
     total_amount = sum(item.price * item.quantity for item in items)
     processed_order = ProcessedOrder(
         order_id=order.id, user=user, items=items, total_amount=total_amount

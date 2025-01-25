@@ -7,7 +7,7 @@
 - {func}`gloe.partial_transformer`
 ```
 
-The single parameter of a transformer represents the input data during the execution and this input will be the return of the previous transformer in the pipeline. That being said, it doesn't make sense to allow transformers to have multiple parameters, because functions can't return multiple things (only a tuple of multiple things). However, sometimes we need some accessory data to perform the desired transformation.
+The parameters of a transformer represents the input data during the execution and this input is the return of the previous transformer in the pipeline. However, sometimes we need some accessory data to perform the desired transformation.
 
 For example, suppose we have a [Pandas](https://pandas.pydata.org/) dataframe of people with a numeric column "age". We want to filter people older than a specific age:
 
@@ -42,6 +42,9 @@ Gloe provides a much easier way to implement this behavior using the `@partial_t
 @partial_transformer
 def filter_older_than(people_df: pd.DataFrame, min_age: int) -> pd.DataFrame:
     return people_df[people_df['age'] >= min_age]
+```
+```{important}
+If the decorator used in the previous example was `@transformer`, the transformer would be created with two parameters: `people_df` and `min_age`, meaning that the previous transformer must return a tuple with these two elements.
 ```
 
 It is possible to instantiate many transformers with different ages as well:

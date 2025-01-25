@@ -161,8 +161,7 @@ The evaluation transformer evaluates the model's performance using same MSE loss
 
 ```python
 @transformer
-def evaluate_model(entry: tuple[SimpleNN, Data]) -> float:
-    model, data = entry
+def evaluate_model(model: SimpleNN, data: Data) -> float:
     X_train, X_test, y_train, y_test = data
     model.eval()
     with torch.no_grad():

@@ -38,7 +38,9 @@ def get_user_network_data(users: User) -> UserNetwork: ...
 
 @transformer
 def get_recommended_items(
-    items: tuple[list[Product], list[Product], UserNetwork]
+    last_seen_items: list[Product],
+    last_ordered_items: list[Product],
+    user_network: UserNetwork
 ) -> list[Product]: ...
 
 @transformer

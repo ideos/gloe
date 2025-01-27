@@ -40,9 +40,9 @@
 
 # Your Code as a Flow
 
-Gloe (pronounced /ɡloʊ/, like "glow") is a general-purpose library designed to guide developers in expressing their code as a **flow**. 
+Gloe (pronounced like "glow") is a general-purpose library designed to guide developers in expressing their code as a **flow**. 
 
-**Why follow this approach?** Because it ensures that Gloe can keep your Python code easy to maintain, document, and test. Gloe guides you to write code in the form of small, safely connected units, rather than relying on scattered functions and classes with no clear relationship.
+**Why follow this approach?** Because it ensures that you can keep your Python code easy to maintain, document, and test. Gloe guides you to write code in the form of small, safely connected units, rather than relying on scattered functions and classes with no clear relationship.
 
 **What is a flow?** Formally, a flow is defined as a DAG (Directed Acyclic Graph) with one source and one sink, meaning it has a beginning and an end. In practice, it is a sequence of steps that transform data from one form to another.
 

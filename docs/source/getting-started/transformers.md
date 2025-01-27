@@ -20,6 +20,7 @@ Transformers work like functions, so you can create a function and then apply th
 - We **strongly recommend** you to type the transformers. Because of Python, it is not mandatory, but Gloe was designed to be used with typed code. Take a look at the [Python typing
 library](https://docs.python.org/3/library/typing.html) to learn more about the Python type notation.
 - Transformers can have multiple parameters, but, under the hoods, they will be treated as a tuple.
+- Transformers can have no parameters.
 - Documentations with pydoc will be preserved in transformers.
 - After applying the `@transformer` decorator to a function, it becomes an instance of the `Transformer` class.
 ```
@@ -123,7 +124,7 @@ send_promotion = get_users >> (
 This example makes it clear how easy it is to understand and refactor the code when using Gloe to express the process as a graph, with each node (transformer) having an atomic and well-defined responsibility.
 
 ```{important}
-You should not assume any **order of execution** between branches.
+You should not assume any **order of execution** between parallel branches.
 ```
 
 The right shift operator can receive a transformer or a tuple of transformers as an argument. In the second case, the transformer returned will be as described bellow (pay attention to the types).

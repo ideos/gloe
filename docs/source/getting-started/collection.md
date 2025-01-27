@@ -109,17 +109,12 @@ from gloe.collection import MapOver
 roles: list[Role] = [admin_role, member_role, manager_role]
 
 @transformer
-def format_user(entry: tuple[User, Role]) -> str:
-    user, role = entry
+def format_user(user: User, role: Role) -> str:
     return f'{user.name} is {role.name}'
 
-format_users = MapOver(roles, format_user)  # Transformer[Iterable[User], Iterable[str]]
+format_user_roles = MapOver(roles, format_user)  # Transformer[User, Iterable[str]]
 
-format_users([
-    User(name='Anny', age=16),
-    User(name='Alice', age=25),
-    User(name='Bob', age=30)
-]) # returns ['Anny is admin', 'Alice is member', 'Bob is manager']
+format_user_roles(User(name='Anny', age=16)) # returns ['Anny is admin', 'Anny is member', 'Anny is manager']
 ```
 
 ## MapOverAsync
@@ -133,9 +128,9 @@ from gloe.collection import MapOverAsync
 roles: list[Role] = [admin_role, member_role, manager_role]
 
 @async_transformer
-async def update_user_role(entry: tuple[User, Role]) -> User:
-    return await UserService.update_role(*entry)
+async def update_user_role(user: User, role: Role) -> User:
+    return await UserService.update_role(user, role)
 
-update_users_roles = MapOverAsync(roles, update_user_role)  # AsyncTransformer[Iterable[User], Iterable[User]]
+update_users_roles = MapOverAsync(roles, update_user_role)  # AsyncTransformer[User, Iterable[User]]
 ```
 

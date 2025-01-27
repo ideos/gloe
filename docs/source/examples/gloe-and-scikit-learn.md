@@ -104,8 +104,7 @@ def train_model(entry: tuple[LogisticRegression, Data], max_iter: int = 100) -> 
 Finally, evaluates the trained model on the test data and returns the accuracy score.
 ```python
 @transformer
-def evaluate_model(entry: tuple[LogisticRegression, Data]) -> float:
-    model, data = entry
+def evaluate_model(model: LogisticRegression, data: Data) -> float:
     X_train, X_test, y_train, y_test = data
     y_pred = model.predict(X_test)
     accuracy = accuracy_score(y_test, y_pred)

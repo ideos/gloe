@@ -89,6 +89,11 @@ def duplicate(string: str) -> str:
 
 
 @transformer
+def tuplicate(string: str) -> tuple[str, str]:
+    return string, string
+
+
+@transformer
 def natural_logarithm(num: float) -> float:
     if num < 0:
         raise LnOfNegativeNumber(num)

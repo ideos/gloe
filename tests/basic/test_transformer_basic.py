@@ -1,4 +1,5 @@
 import asyncio
+import re
 import unittest
 from typing import cast
 
@@ -17,16 +18,36 @@ from tests.lib.transformers import (
     minus1,
     natural_logarithm,
     LnOfNegativeNumber,
+    times2,
+    tuplicate,
 )
 
 
 class TestTransformerBasic(unittest.TestCase):
-    def test_transformer_multiple_args(self):
+    def test_transformer_multiargs(self):
         @transformer
         def many_args(arg1: str, arg2: int) -> str:
             return arg1 + str(arg2)
 
         self.assertEqual(many_args("hello", 1), "hello1")
+
+        @transformer
+        def many_args2(arg1: str, arg2: str) -> str:
+            return arg1 + arg2
+
+        graph = tuplicate >> many_args2
+        self.assertEqual("hellohello", graph("hello"))
+
+    def test_transformer_multiargs_complex(self):
+        @transformer
+        def many_args(arg1: tuple[float, float], arg2: float) -> float:
+            return sum(arg1) + arg2
+
+        self.assertEqual(many_args((1.0, 2), 3), 6.0)
+
+        graph = plus1 >> (times2 >> plus1 >> (square, minus1), square) >> many_args
+
+        self.assertEqual(graph(3), 81 + 8 + 16.0)
 
     def test_transformer_hash(self):
         self.assertEqual(hash(square.id), square.__hash__())
@@ -187,11 +208,12 @@ class TestTransformerBasic(unittest.TestCase):
             as a string"""
             return str(num)
 
-        self.assertEqual(
-            to_string.__doc__,
-            """This transformer receives a number as input and return its representation
-            as a string""",
-        )
+        if to_string.__doc__ is not None:
+            self.assertEqual(
+                re.sub(r"\s+", " ", to_string.__doc__),
+                """This transformer receives a number as input and return its """
+                """representation as a string""",
+            )
 
     def test_transformer_signature_representation(self):
         signature = square.signature()

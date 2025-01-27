@@ -19,7 +19,8 @@ Transformers work like functions, so you can create a function and then apply th
 
 - We **strongly recommend** you to type the transformers. Because of Python, it is not mandatory, but Gloe was designed to be used with typed code. Take a look at the [Python typing
 library](https://docs.python.org/3/library/typing.html) to learn more about the Python type notation.
-- Transformers must have only one parameter. Any complex data you need to use in its code must be passed in a complex structure like a [tuple](https://docs.python.org/3/tutorial/datastructures.html#tuples-and-sequences), a [dict](https://docs.python.org/3/tutorial/datastructures.html#dictionaries), a [TypedDict](https://docs.python.org/3/library/typing.html#typing.TypedDict), a [dataclass](https://docs.python.org/3/library/dataclasses.html), a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple) or any other. We will see later {ref}`why it is necessary <partial-transformers>`.
+- Transformers can have multiple parameters, but, under the hoods, they will be treated as a tuple.
+- Transformers can have no parameters.
 - Documentations with pydoc will be preserved in transformers.
 - After applying the `@transformer` decorator to a function, it becomes an instance of the `Transformer` class.
 ```
@@ -123,7 +124,7 @@ send_promotion = get_users >> (
 This example makes it clear how easy it is to understand and refactor the code when using Gloe to express the process as a graph, with each node (transformer) having an atomic and well-defined responsibility.
 
 ```{important}
-You should not assume any **order of execution** between branches.
+You should not assume any **order of execution** between parallel branches.
 ```
 
 The right shift operator can receive a transformer or a tuple of transformers as an argument. In the second case, the transformer returned will be as described bellow (pay attention to the types).
@@ -167,7 +168,21 @@ graph: Transformer[In, FinalOut] = begin >> (
 We call this last connection **convergent**.
 ```
 
+The `end` transformer can be implemented in two ways. Or using a single argument being a tuple:
+```python
+@transformer
+def end(data: tuple[Out1, Out2, ..., OutN]) -> FinalOut:
+    ...
+```
+
+Either using multiple arguments, one for each branch:
+```python
+@transformer
+def end(arg1: Out1, arg2: Out2, ..., argN: OutN) -> FinalOut:
+    ...
+```
+
 ```{attention}
-Python doesn't provide a generic way to map the outcome type of an arbitrary number of branches on a tuple of arbitrary size. Due to this, the overload of possible sizes was treated one by one until the size 7, it means, considering the typing notation, it is possible to have at most 7 branches currently.
+Python doesn't provide a generic way to map the outcome type of an arbitrary number of branches on a tuple of arbitrary size. Due to this, the overload of possible sizes was treated one by one until the size 7, it means, considering the typing notation, it is possible to have at most 7 branches currently. That's is not supposed to be a problem in practice.
 ```
 

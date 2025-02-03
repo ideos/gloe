@@ -143,7 +143,7 @@ class TestTransformerBasic(unittest.TestCase):
         max_iters = 320
 
         def ramification(
-            branch: Transformer[float, float]
+            branch: Transformer[float, float],
         ) -> Transformer[float, float]:
             return plus1 >> (plus1, branch) >> sum_tuple2
 

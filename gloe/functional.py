@@ -24,7 +24,7 @@ P2 = ParamSpec("P2")
 
 
 def partial_transformer(
-    func: Callable[Concatenate[A, P1], S]
+    func: Callable[Concatenate[A, P1], S],
 ) -> Callable[P1, Transformer[A, S]]:
     """
     This decorator let us create partial transformers, which are transformers that
@@ -85,7 +85,7 @@ def partial_transformer(
 
 
 def partial_async_transformer(
-    func: Callable[Concatenate[A, P1], Awaitable[S]]
+    func: Callable[Concatenate[A, P1], Awaitable[S]],
 ) -> Callable[P1, AsyncTransformer[A, S]]:
     """
     This decorator enables the creation of partial asynchronous transformers, which are
@@ -155,7 +155,7 @@ B = TypeVar("B")
 
 @overload
 def transformer(
-    func: Callable[[A, B, Unpack[Rest]], S]
+    func: Callable[[A, B, Unpack[Rest]], S],
 ) -> MultiArgsTransformer[A, B, Unpack[Rest], S]:
     pass
 
@@ -233,7 +233,7 @@ def transformer(func):
 
 @overload
 def async_transformer(
-    func: Callable[[A, B, Unpack[Rest]], Awaitable[S]]
+    func: Callable[[A, B, Unpack[Rest]], Awaitable[S]],
 ) -> MultiArgsAsyncTransformer[A, B, Unpack[Rest], S]:
     pass
 

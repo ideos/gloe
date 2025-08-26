@@ -96,6 +96,10 @@ Flow = list["BaseTransformer"]
 
 
 class BaseTransformer(Generic[_In, _Out], ABC):
+    @abstractmethod
+    def __rshift__(self, other) -> "BaseTransformer":
+        """Compose this transformer with another one"""
+
     def __init__(self):
         self._children: TransformerChildren = []
         self.id = uuid.uuid4()

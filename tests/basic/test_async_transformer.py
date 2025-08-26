@@ -229,6 +229,9 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
             await _execute_async_flow(flow, 1)  # type: ignore
 
         class WrongTransformer(BaseTransformer):
+            def __rshift__(self, other):
+                return NotImplemented
+
             def signature(self) -> Signature:
                 return Signature()
 

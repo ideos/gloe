@@ -1,4 +1,3 @@
-from gloe._composition_utils import _compose_nodes
 from gloe.functional import (
     transformer,
     partial_transformer,
@@ -31,7 +30,3 @@ __all__ = [
     "AsyncTransformer",
 ]
 
-setattr(Transformer, "__rshift__", _compose_nodes)
-setattr(AsyncTransformer, "__rshift__", _compose_nodes)
-setattr(MultiArgsTransformer, "__rshift__", _compose_nodes)
-setattr(MultiArgsAsyncTransformer, "__rshift__", _compose_nodes)

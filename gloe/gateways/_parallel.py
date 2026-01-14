@@ -1,7 +1,5 @@
 import asyncio
-from typing import Any, TypeVar, Union
-
-from typing_extensions import TypeAlias
+from typing import Any, TypeAlias, TypeVar, Union
 
 from gloe.async_transformer import AsyncTransformer, _execute_async_flow
 from gloe.base_transformer import BaseTransformer

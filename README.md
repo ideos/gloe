@@ -68,7 +68,7 @@ Gloe (pronounced like "glow") is a general-purpose library designed to guide dev
 ## Installing
 
 Requirements:
-- Python (>= 3.9)
+- Python (>= 3.10)
 - typing-extensions (>= 4.7)
 
 You can install Gloe using pip or conda:

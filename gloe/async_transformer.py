@@ -1,8 +1,8 @@
 from abc import abstractmethod
 from inspect import Signature
-from typing import TypeVar, overload, cast, Callable, Optional, Any
+from typing import Any, Callable, Generic, Optional, TypeVar, cast, overload
 
-from typing_extensions import Self, Unpack, Generic, TypeVarTuple, override
+from typing_extensions import Self, Unpack, TypeVarTuple, override
 
 from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe._transformer_utils import catch_transformer_exception

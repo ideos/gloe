@@ -1,5 +1,4 @@
-from typing import TypeVar, Union
-from typing_extensions import TypeAlias
+from typing import TypeAlias, TypeVar, Union
 
 from gloe.base_transformer import BaseTransformer
 from gloe.async_transformer import AsyncTransformer

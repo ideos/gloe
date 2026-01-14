@@ -5,7 +5,7 @@
 
 ### Which Python versions support Gloe?
 
-Gloe can be used in projects running Python 3.9, 3.10, 3.11, and 3.12.
+Gloe can be used in projects running Python 3.10, 3.11, 3.12, and 3.13.
 
 ### Do I need to use type hints in my code?
 

@@ -1,4 +1,3 @@
-import sys
 import uuid
 from inspect import Signature
 from types import GenericAlias
@@ -6,8 +5,6 @@ from types import GenericAlias
 from gloe.base_transformer import BaseTransformer
 from gloe.conditional._implication import _BaseImplication
 
-if sys.version_info >= (3, 10):
-    from types import UnionType
 from typing import (
     Callable,
     Generic,
@@ -58,12 +55,9 @@ class BaseConditioner(
             for impl in self.implications
         ] + [else_signature.return_annotation]
 
-        union_type: type = cast(type, Union)
-        if sys.version_info >= (3, 10):
-            union_type = UnionType
         new_signature = else_signature.replace(
             return_annotation=GenericAlias(
-                union_type,
+                cast(type, Union),
                 tuple(return_signature),
             )
         )

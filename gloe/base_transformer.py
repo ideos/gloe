@@ -12,6 +12,7 @@ from typing import (
     Any,
     Callable,
     Generic,
+    TypeAlias,
     TypeVar,
     Union,
     get_args,
@@ -21,7 +22,7 @@ from typing import (
     cast,
 )
 
-from typing_extensions import Self, TypeAlias, deprecated
+from typing_extensions import Self, deprecated
 
 from gloe._gloe_graph import GloeGraph
 from gloe._plotting_utils import PlottingSettings, NodeType, dot_props

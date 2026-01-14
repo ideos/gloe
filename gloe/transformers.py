@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from inspect import Signature
 
-from typing import TypeVar, overload, cast, Optional, Any
+from typing import Any, Generic, Optional, TypeAlias, TypeVar, cast, overload
 
-from typing_extensions import TypeAlias, Unpack, TypeVarTuple, Generic, override
+from typing_extensions import Unpack, TypeVarTuple, override
 
 from gloe.async_transformer import AsyncTransformer, MultiArgsAsyncTransformer
 from gloe._transformer_utils import catch_transformer_exception

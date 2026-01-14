@@ -1,9 +1,7 @@
 import uuid
 from inspect import Signature, Parameter
 from types import GenericAlias
-from typing import Any, TypeVar
-
-from typing_extensions import Generic
+from typing import Any, Generic, TypeVar
 
 from gloe._gloe_graph import GloeGraph
 from gloe._plotting_utils import dot_props, NodeType

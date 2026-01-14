@@ -1,18 +1,10 @@
 import copy
-import sys
 from dataclasses import dataclass
+from typing import Callable, Generic, TypeVar
 
 from typing_extensions import Self
 
 from gloe.base_transformer import BaseTransformer
-
-if sys.version_info >= (3, 10):
-    pass
-from typing import (
-    Callable,
-    Generic,
-    TypeVar,
-)
 
 from gloe.transformers import Transformer
 

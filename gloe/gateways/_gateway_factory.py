@@ -1,6 +1,6 @@
-from typing import overload, TypeVar, Callable, cast
+from typing import Callable, Protocol, TypeAlias as Ta, TypeVar, cast, overload
 
-from typing_extensions import Protocol, TypeAlias as Ta, Unpack
+from typing_extensions import Unpack
 
 from gloe.async_transformer import AsyncTransformer
 from gloe.base_transformer import BaseTransformer

@@ -1,9 +1,7 @@
 import inspect
 from abc import abstractmethod, ABC
 from types import FunctionType
-from typing import Any, Callable, Generic, Sequence, TypeVar, cast, overload
-
-from typing_extensions import ParamSpec
+from typing import Any, Callable, Generic, ParamSpec, Sequence, TypeVar, cast, overload
 
 from gloe.exceptions import UnsupportedEnsurerArgException
 from gloe.async_transformer import AsyncTransformer

@@ -1,5 +1,6 @@
-from typing import Generic, TypeVar, Iterable
+from typing import Awaitable, Callable, Generic, Iterable, TypeVar
 
+from gloe._node_utils import _coerce_transformer
 from gloe import AsyncTransformer
 
 _T = TypeVar("_T", contravariant=True)
@@ -27,11 +28,16 @@ class MapAsync(Generic[_T, _U], AsyncTransformer[Iterable[_T], list[_U]]):
             input iterable the yield the mapped item of the output iterable.
     """
 
-    def __init__(self, mapping_transformer: AsyncTransformer[_T, _U]):
+    def __init__(
+        self,
+        mapping_transformer: AsyncTransformer[_T, _U]
+        | Callable[[_T], Awaitable[_U]]
+        | Callable[[_T], _U],
+    ):
         super().__init__()
-        self.mapping_transformer = mapping_transformer
+        self.mapping_transformer = _coerce_transformer(mapping_transformer)
         self.plotting_settings.has_children = True
-        self._children = [mapping_transformer]
+        self._children = [self.mapping_transformer]
 
     async def transform_async(self, data: Iterable[_T]) -> list[_U]:
         """
@@ -44,5 +50,9 @@ class MapAsync(Generic[_T, _U], AsyncTransformer[Iterable[_T], list[_U]]):
         """
         mapping_result = []
         for item in data:
-            mapping_result.append(await self.mapping_transformer(item))
+            if isinstance(self.mapping_transformer, AsyncTransformer):
+                result = await self.mapping_transformer(item)
+            else:
+                result = self.mapping_transformer(item)
+            mapping_result.append(result)
         return mapping_result

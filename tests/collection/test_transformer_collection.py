@@ -11,7 +11,7 @@ class TestTransformerCollection(unittest.TestCase):
         def many_args(arg1: str, arg2: int) -> str:
             return arg1 + str(arg2)
 
-        mapping = Map(many_args)
+        mapping: Map[tuple[str, int], str] = Map(many_args)
 
         result = list(mapping([("hello", 1), ("world", 2)]))
 
@@ -33,12 +33,32 @@ class TestTransformerCollection(unittest.TestCase):
         self.assertListEqual(expected, result1)
         self.assertListEqual(expected, result2)
 
+    def test_transformer_map_with_callable(self):
+        def double(num: int) -> int:
+            return num * 2
+
+        mapping = Map(double)
+
+        self.assertListEqual([2, 4, 6], list(mapping([1, 2, 3])))
+
     def test_transformer_filter(self):
         """
         Test the filter transformer
         """
 
         @transformer
+        def is_even(num: int) -> bool:
+            return num % 2 == 0
+
+        _filter = Filter(is_even)
+
+        seq = [10, 9, 3, 2, 1]
+        result = _filter(seq)
+
+        expected = [10, 2]
+        self.assertListEqual(expected, list(result))
+
+    def test_transformer_filter_with_callable(self):
         def is_even(num: int) -> bool:
             return num % 2 == 0
 
@@ -61,6 +81,16 @@ class TestTransformerCollection(unittest.TestCase):
         result = list(mapping(-1.0))
 
         self.assertListEqual(result, data)
+
+    def test_transformer_map_over_with_callable(self):
+        data = [1, 2, 3]
+
+        def add(num: int, inc: int) -> int:
+            return num + inc
+
+        mapping = MapOver(data, add)
+
+        self.assertListEqual([2, 3, 4], mapping(1))
 
     def test_transformer_multiargs_inside_map_over(self):
         roles: list[str] = ["admin_role", "member_role", "manager_role"]

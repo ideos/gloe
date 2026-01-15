@@ -1,23 +1,26 @@
-from gloe.async_transformer import AsyncTransformer
-from gloe.base_transformer import BaseTransformer
-from gloe.exceptions import UnsupportedTransformerArgException
-from gloe.conditional._async_conditioner import AsyncConditioner
-from gloe.conditional._conditioner import Conditioner
-from gloe.conditional._implication import (
-    _Implication,
-    _AsyncImplication,
-    _BaseImplication,
-)
-
 from typing import (
+    Any,
+    Awaitable,
     Callable,
     Generic,
     Optional,
+    Sequence,
     TypeVar,
     Union,
     overload,
-    Sequence,
 )
+
+from gloe.async_transformer import AsyncTransformer
+from gloe.base_transformer import BaseTransformer
+from gloe.conditional._async_conditioner import AsyncConditioner
+from gloe.conditional._conditioner import Conditioner
+from gloe.conditional._implication import (
+    _AsyncImplication,
+    _BaseImplication,
+    _Implication,
+)
+from gloe.exceptions import UnsupportedTransformerArgException
+from gloe._node_utils import _coerce_transformer
 
 from gloe.transformers import Transformer
 from gloe.utils import forget
@@ -61,18 +64,36 @@ class _IfThen(_BaseIfThen[In, ThenOut, PrevThenOut]):
         )
 
     @overload
-    def Else(
+    def Else(  # type: ignore[overload-overlap]
         self, else_transformer: Transformer[In, ElseOut]
     ) -> Transformer[In, Union[ThenOut, PrevThenOut, ElseOut]]:
         pass
 
     @overload
-    def Else(
+    def Else(  # type: ignore[overload-overlap]
         self, else_transformer: AsyncTransformer[In, ElseOut]
     ) -> AsyncTransformer[In, Union[ThenOut, PrevThenOut, ElseOut]]:
         pass
 
-    def Else(self, else_transformer):
+    @overload
+    def Else(  # type: ignore[overload-overlap]
+        self, else_transformer: Callable[[In], Awaitable[ElseOut]]
+    ) -> AsyncTransformer[In, Union[ThenOut, PrevThenOut, ElseOut]]:
+        pass
+
+    @overload
+    def Else(  # type: ignore[overload-overlap]
+        self, else_transformer: Callable[[In], ElseOut]
+    ) -> Transformer[In, Union[ThenOut, PrevThenOut, ElseOut]]:
+        pass
+
+    def Else(
+        self,
+        else_transformer: BaseTransformer[In, Any]
+        | Callable[[In], Any]
+        | Callable[[In], Awaitable[Any]],
+    ):
+        else_transformer = _coerce_transformer(else_transformer)
         if isinstance(else_transformer, AsyncTransformer):
             new_atransformer: AsyncConditioner = AsyncConditioner(
                 self._implications, else_transformer
@@ -114,9 +135,37 @@ class _IfThen(_BaseIfThen[In, ThenOut, PrevThenOut]):
 
 
 class _AsyncIfThen(_BaseIfThen[In, ThenOut, PrevThenOut]):
-    def Else(
-        self, else_transformer: BaseTransformer[In, ElseOut]
+    @overload
+    def Else(  # type: ignore[overload-overlap]
+        self, else_transformer: Transformer[In, ElseOut]
     ) -> AsyncTransformer[In, Union[ThenOut, PrevThenOut, ElseOut]]:
+        pass
+
+    @overload
+    def Else(  # type: ignore[overload-overlap]
+        self, else_transformer: AsyncTransformer[In, ElseOut]
+    ) -> AsyncTransformer[In, Union[ThenOut, PrevThenOut, ElseOut]]:
+        pass
+
+    @overload
+    def Else(  # type: ignore[overload-overlap]
+        self, else_transformer: Callable[[In], Awaitable[ElseOut]]
+    ) -> AsyncTransformer[In, Union[ThenOut, PrevThenOut, ElseOut]]:
+        pass
+
+    @overload
+    def Else(  # type: ignore[overload-overlap]
+        self, else_transformer: Callable[[In], ElseOut]
+    ) -> AsyncTransformer[In, Union[ThenOut, PrevThenOut, ElseOut]]:
+        pass
+
+    def Else(
+        self,
+        else_transformer: BaseTransformer[In, ElseOut]
+        | Callable[[In], ElseOut]
+        | Callable[[In], Awaitable[ElseOut]],
+    ) -> AsyncTransformer[In, Union[ThenOut, PrevThenOut, ElseOut]]:
+        else_transformer = _coerce_transformer(else_transformer)
         new_transformer: AsyncConditioner[In, Union[ThenOut, PrevThenOut], ElseOut] = (
             AsyncConditioner(self._implications, else_transformer)
         )
@@ -173,18 +222,36 @@ class _ElseIf(_BaseElseIf[In, PrevThenOut]):
         )
 
     @overload
-    def Then(
+    def Then(  # type: ignore[overload-overlap]
         self, next_transformer: AsyncTransformer[In, ElseIfOut]
     ) -> _AsyncIfThen[In, ElseIfOut, PrevThenOut]:
         pass
 
     @overload
-    def Then(
+    def Then(  # type: ignore[overload-overlap]
         self, next_transformer: Transformer[In, ElseIfOut]
     ) -> _IfThen[In, ElseIfOut, PrevThenOut]:
         pass
 
-    def Then(self, next_transformer):
+    @overload
+    def Then(  # type: ignore[overload-overlap]
+        self, next_transformer: Callable[[In], Awaitable[ElseIfOut]]
+    ) -> _AsyncIfThen[In, ElseIfOut, PrevThenOut]:
+        pass
+
+    @overload
+    def Then(  # type: ignore[overload-overlap]
+        self, next_transformer: Callable[[In], ElseIfOut]
+    ) -> _IfThen[In, ElseIfOut, PrevThenOut]:
+        pass
+
+    def Then(
+        self,
+        next_transformer: BaseTransformer[In, Any]
+        | Callable[[In], Any]
+        | Callable[[In], Awaitable[Any]],
+    ):
+        next_transformer = _coerce_transformer(next_transformer)
         if isinstance(next_transformer, AsyncTransformer):
             async_implication = _AsyncImplication(self._condition, next_transformer)
             async_if_then = _AsyncIfThen(
@@ -202,8 +269,12 @@ class _ElseIf(_BaseElseIf[In, PrevThenOut]):
 
 class _AsyncElseIf(_BaseElseIf[In, PrevThenOut]):
     def Then(
-        self, next_transformer: BaseTransformer[In, ElseIfOut]
+        self,
+        next_transformer: BaseTransformer[In, ElseIfOut]
+        | Callable[[In], ElseIfOut]
+        | Callable[[In], Awaitable[ElseIfOut]],
     ) -> _AsyncIfThen[In, ElseIfOut, PrevThenOut]:
+        next_transformer = _coerce_transformer(next_transformer)
         async_implication = _AsyncImplication(self._condition, next_transformer)
         async_if_then = _AsyncIfThen(
             async_implication, self._name, self._prev_implications

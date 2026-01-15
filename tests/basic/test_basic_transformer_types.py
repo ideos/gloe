@@ -3,9 +3,10 @@ from typing import TypeVar
 from typing_extensions import assert_type
 
 from gloe import (
+    AsyncTransformer,
     Transformer,
     async_transformer,
-    AsyncTransformer,
+    begin,
 )
 from gloe.experimental import bridge
 from gloe.utils import forward
@@ -40,6 +41,68 @@ class TestBasicTransformerTypes(MypyTestSuite):
         graph = square >> square_root
 
         assert_type(graph, Transformer[float, float])
+
+    def test_plain_function_flow_typing(self):
+        def to_str(num: int) -> str:
+            return str(num)
+
+        graph = begin[int]() >> to_str
+
+        assert_type(graph, Transformer[int, str])
+
+    def test_plain_function_after_transformer_typing(self):
+        def to_str(num: float) -> str:
+            return str(num)
+
+        graph = square >> to_str
+
+        assert_type(graph, Transformer[float, str])
+
+    def test_plain_async_function_typing(self):
+        async def to_str(num: int) -> str:
+            return str(num)
+
+        graph = begin[int]() >> to_str
+
+        assert_type(graph, AsyncTransformer[int, str])
+
+    def test_plain_function_tuple_unpacking_typing(self):
+        def pair(num: int) -> tuple[int, int]:
+            return (num, num + 1)
+
+        def add(num1: int, num2: int) -> int:
+            return num1 + num2
+
+        graph = begin[int]() >> pair >> add
+
+        assert_type(graph, Transformer[int, int])
+
+    def test_plain_async_function_tuple_unpacking_typing(self):
+        async def pair(num: int) -> tuple[int, int]:
+            return (num, num + 1)
+
+        def add(num1: int, num2: int) -> int:
+            return num1 + num2
+
+        graph = begin[int]() >> pair >> add
+
+        assert_type(graph, AsyncTransformer[int, int])
+
+    def test_plain_function_no_args_typing(self):
+        def make_value() -> int:
+            return 4
+
+        graph = forward[None]() >> make_value
+
+        assert_type(graph, Transformer[None, int])
+
+    def test_plain_async_function_no_args_typing(self):
+        async def make_value() -> int:
+            return 4
+
+        graph = forward[None]() >> make_value
+
+        assert_type(graph, AsyncTransformer[None, int])
 
     def test_flow_with_mixed_types(self):
         """

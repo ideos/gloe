@@ -4,6 +4,7 @@ from gloe.base_transformer import BaseTransformer
 from gloe.async_transformer import AsyncTransformer, _execute_async_flow
 from gloe.gateways._base_gateway import _base_gateway
 from gloe.gateways._gateway_factory import _gateway_factory
+from gloe._node_utils import _coerce_transformer
 from gloe.transformers import Transformer, _execute_flow
 
 _In = TypeVar("_In")
@@ -47,6 +48,7 @@ def sequential(*transformers: BaseTransformer) -> Union[Transformer, AsyncTransf
             transformer is also an AsyncTransformer. Otherwise, the returned transformer
             is sync.
     """
-    if any(isinstance(t, AsyncTransformer) for t in transformers):
-        return _SequentialAsync(*transformers)
-    return _Sequential(*transformers)
+    coerced_transformers = tuple(_coerce_transformer(t) for t in transformers)
+    if any(isinstance(t, AsyncTransformer) for t in coerced_transformers):
+        return _SequentialAsync(*coerced_transformers)
+    return _Sequential(*coerced_transformers)

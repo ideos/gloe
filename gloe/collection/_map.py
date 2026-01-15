@@ -1,5 +1,6 @@
-from typing import Generic, TypeVar, Iterable
+from typing import Callable, Generic, Iterable, TypeVar
 
+from gloe._node_utils import _coerce_sync_transformer
 from gloe.transformers import Transformer
 
 _T = TypeVar("_T", contravariant=True)
@@ -27,11 +28,13 @@ class Map(Generic[_T, _U], Transformer[Iterable[_T], list[_U]]):
             input iterable the yield the mapped item of the output iterable.
     """
 
-    def __init__(self, mapping_transformer: Transformer[_T, _U]):
+    def __init__(
+        self, mapping_transformer: Transformer[_T, _U] | Callable[[_T], _U]
+    ):
         super().__init__()
-        self.mapping_transformer = mapping_transformer
+        self.mapping_transformer = _coerce_sync_transformer(mapping_transformer)
         self.plotting_settings.has_children = True
-        self._children = [mapping_transformer]
+        self._children = [self.mapping_transformer]
 
     def transform(self, data: Iterable[_T]) -> list[_U]:
         """

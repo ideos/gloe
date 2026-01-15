@@ -1,6 +1,7 @@
-from typing import Generic, TypeVar, Iterable
+from typing import Callable, Generic, Iterable, TypeVar
 
 from gloe._plotting_utils import PlottingSettings, NodeType
+from gloe._node_utils import _coerce_sync_transformer
 from gloe.transformers import Transformer
 
 _T = TypeVar("_T")
@@ -25,11 +26,13 @@ class Filter(Generic[_T], Transformer[Iterable[_T], list[_T]]):
             check if this item must be dropped or not.
     """
 
-    def __init__(self, filter_transformer: Transformer[_T, bool]):
+    def __init__(
+        self, filter_transformer: Transformer[_T, bool] | Callable[[_T], bool]
+    ):
         super().__init__()
-        self.filter_transformer = filter_transformer
+        self.filter_transformer = _coerce_sync_transformer(filter_transformer)
         self.plotting_settings.invisible = True
-        self._children = [filter_transformer]
+        self._children = [self.filter_transformer]
 
         self._plotting_settings: PlottingSettings = PlottingSettings(
             has_children=True,

@@ -82,3 +82,11 @@ class TestTransformerTypes(MypyTestSuite):
             async_chained_conditions_graph,
             AsyncTransformer[float, Union[float, None]],
         )
+
+    def test_conditioned_flow_with_callable(self):
+        def to_str(num: float) -> str:
+            return str(num)
+
+        conditioned_graph = if_not_zero.Then(to_str).Else(square)
+
+        assert_type(conditioned_graph, Transformer[float, Union[str, float]])

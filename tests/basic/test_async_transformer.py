@@ -5,6 +5,7 @@ from typing import TypeVar, Any, cast
 
 from gloe import (
     async_transformer,
+    begin,
     ensure,
     UnsupportedTransformerArgException,
     transformer,
@@ -102,6 +103,22 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
 
         self.assertDictEqual(_DATA, result)
 
+    async def test_plain_async_function_composition(self):
+        async def add_suffix(url: str) -> str:
+            return f"{url}/"
+
+        graph = forward[str]() >> add_suffix
+
+        self.assertEqual(f"{_URL}/", await graph(_URL))
+
+    async def test_begin_multiargs_with_async_function(self):
+        async def sum2(num1: int, num2: float) -> float:
+            return num1 + num2
+
+        graph = begin[int, float]() >> sum2
+
+        self.assertEqual(3.5, await graph(1, 2.5))
+
     async def test_async_on_divergent_connection(self):
         test_forward = forward[str]() >> (forward[str](), request_data)
 
@@ -145,8 +162,7 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(("foo", "bar", "baz"), result2)
 
     async def test_async_transformer_wrong_arg(self):
-        def next_transformer():
-            pass
+        next_transformer = 123
 
         @ensure(outcome=[has_bar_key])
         @partial_async_transformer

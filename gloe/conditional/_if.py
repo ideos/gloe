@@ -1,15 +1,18 @@
-from gloe.async_transformer import AsyncTransformer
-from gloe.base_transformer import BaseTransformer
-from gloe.exceptions import UnsupportedTransformerArgException
-from gloe.conditional._if_then_else import _IfThen, _AsyncIfThen, _BaseIfThen
-from gloe.conditional._implication import _Implication, _AsyncImplication
 from typing import (
+    Awaitable,
     Callable,
     Generic,
     TypeVar,
     Union,
     overload,
 )
+
+from gloe.async_transformer import AsyncTransformer
+from gloe.base_transformer import BaseTransformer
+from gloe.conditional._if_then_else import _IfThen, _AsyncIfThen, _BaseIfThen
+from gloe.conditional._implication import _Implication, _AsyncImplication
+from gloe.exceptions import UnsupportedTransformerArgException
+from gloe._node_utils import _coerce_transformer
 
 from gloe.transformers import Transformer
 
@@ -42,20 +45,36 @@ class If(Generic[In]):
         self._name: str = name or condition.__name__
 
     @overload
-    def Then(
+    def Then(  # type: ignore[overload-overlap]
         self, next_transformer: Transformer[In, ThenOut]
     ) -> _IfThen[In, ThenOut, ThenOut]:
         pass
 
     @overload
-    def Then(
+    def Then(  # type: ignore[overload-overlap]
         self, next_transformer: AsyncTransformer[In, ThenOut]
     ) -> _AsyncIfThen[In, ThenOut, ThenOut]:
         pass
 
+    @overload
+    def Then(  # type: ignore[overload-overlap]
+        self, next_transformer: Callable[[In], Awaitable[ThenOut]]
+    ) -> _AsyncIfThen[In, ThenOut, ThenOut]:
+        pass
+
+    @overload
+    def Then(  # type: ignore[overload-overlap]
+        self, next_transformer: Callable[[In], ThenOut]
+    ) -> _IfThen[In, ThenOut, ThenOut]:
+        pass
+
     def Then(
-        self, next_transformer: BaseTransformer[In, ThenOut]
+        self,
+        next_transformer: BaseTransformer[In, ThenOut]
+        | Callable[[In], ThenOut]
+        | Callable[[In], Awaitable[ThenOut]],
     ) -> _BaseIfThen[In, ThenOut, ThenOut]:
+        next_transformer = _coerce_transformer(next_transformer)
         if isinstance(next_transformer, AsyncTransformer):
             async_implication = _AsyncImplication[In, ThenOut](
                 self._condition, next_transformer

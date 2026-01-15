@@ -5,6 +5,7 @@ from gloe.functional import (
     partial_async_transformer,
     async_transformer,
 )
+from gloe.begin import begin
 from gloe.conditional import If, condition
 from gloe.ensurer import ensure
 from gloe.exceptions import UnsupportedTransformerArgException
@@ -20,6 +21,7 @@ __all__ = [
     "partial_transformer",
     "partial_async_transformer",
     "async_transformer",
+    "begin",
     "If",
     "condition",
     "ensure",

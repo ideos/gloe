@@ -141,8 +141,7 @@ class TestAsyncTransformerEnsurer(unittest.IsolatedAsyncioTestCase):
         self.assertDictEqual(await pipeline4(_URL), _DATA)
 
     async def test_async_transformer_wrong_arg(self):
-        def next_transformer():
-            pass
+        next_transformer = 123
 
         @ensure(outcome=[has_bar_key])
         @partial_async_transformer

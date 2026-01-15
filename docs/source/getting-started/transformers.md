@@ -14,6 +14,18 @@ def filter_even(numbers: list[int]) -> list[int]:
 
 Transformers work like functions, so you can create a function and then apply the `@transformer` decorator to it. That's it, transformer created!
 
+If you want to skip the decorator for simple steps, you can start a pipeline with
+`begin[...]()` and compose regular functions directly:
+
+```python
+from gloe import begin
+
+def to_str(num: int) -> str:
+    return str(num)
+
+pipeline = begin[int]() >> to_str
+```
+
 ```{admonition} Some important things to notice:
 :class: important
 
@@ -185,4 +197,3 @@ def end(arg1: Out1, arg2: Out2, ..., argN: OutN) -> FinalOut:
 ```{attention}
 Python doesn't provide a generic way to map the outcome type of an arbitrary number of branches on a tuple of arbitrary size. Due to this, the overload of possible sizes was treated one by one until the size 7, it means, considering the typing notation, it is possible to have at most 7 branches currently. That's is not supposed to be a problem in practice.
 ```
-

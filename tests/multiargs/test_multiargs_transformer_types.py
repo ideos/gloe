@@ -3,7 +3,13 @@ from typing import TypeVar
 from gloe.utils import forward
 from typing_extensions import assert_type
 
-from gloe import transformer, MultiArgsTransformer, Transformer
+from gloe import (
+    begin,
+    transformer,
+    MultiArgsTransformer,
+    MultiArgsAsyncTransformer,
+    Transformer,
+)
 from tests.lib.transformers import square
 from tests.type_utils.mypy_test_suite import MypyTestSuite
 
@@ -56,3 +62,41 @@ class TestMultiArgsTransformerTypes(MypyTestSuite):
         pipeline3 = sum2 >> (square, square) >> sum2
 
         assert_type(pipeline3, MultiArgsTransformer[float, float, float])
+
+    def test_begin_multiargs_typing(self):
+        def sum2(num1: int, num2: float) -> float:
+            return num1 + num2
+
+        pipeline = begin[int, float]() >> sum2
+
+        assert_type(pipeline, MultiArgsTransformer[int, float, float])
+
+    def test_begin_multiargs_async_typing(self):
+        async def sum2(num1: int, num2: float) -> float:
+            return num1 + num2
+
+        pipeline = begin[int, float]() >> sum2
+
+        assert_type(pipeline, MultiArgsAsyncTransformer[int, float, float])
+
+    def test_multiargs_tuple_unpacking_typing(self):
+        def swap(num1: int, num2: float) -> tuple[float, int]:
+            return (num2, num1)
+
+        def format_pair(num1: float, num2: int) -> str:
+            return f"{num1}:{num2}"
+
+        pipeline = begin[int, float]() >> swap >> format_pair
+
+        assert_type(pipeline, MultiArgsTransformer[int, float, str])
+
+    def test_multiargs_async_then_sync_typing(self):
+        async def sum2(num1: int, num2: float) -> float:
+            return num1 + num2
+
+        def to_str(num: float) -> str:
+            return str(num)
+
+        pipeline = begin[int, float]() >> sum2 >> to_str
+
+        assert_type(pipeline, MultiArgsAsyncTransformer[int, float, str])

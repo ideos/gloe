@@ -81,19 +81,18 @@ class TestConditionerTransformer(unittest.TestCase):
         Test length property of conditioner transformers
         """
 
-        def _plus2(num: float) -> float:
-            return num + 2
+        invalid = 123
 
         with self.assertRaises(UnsupportedTransformerArgException):
-            if_not_zero.Then(_plus2).ElseNone()  # type: ignore
+            if_not_zero.Then(invalid).ElseNone()  # type: ignore
 
         with self.assertRaises(UnsupportedTransformerArgException):
-            if_not_zero.Then(plus1).Else(_plus2)  # type: ignore
+            if_not_zero.Then(plus1).Else(invalid)  # type: ignore
 
         with self.assertRaises(UnsupportedTransformerArgException):
             (
                 if_not_zero.Then(plus1)  # type: ignore
                 .ElseIf(lambda x: x > 10)
-                .Then(_plus2)
+                .Then(invalid)
                 .ElseNone()
             )

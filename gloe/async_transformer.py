@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from inspect import Signature
-from typing import TypeVar, overload, cast, Callable, Optional, Any
+from typing import Any, Awaitable, Callable, Optional, TypeVar, cast, overload
 
 from typing_extensions import Self, Unpack, Generic, TypeVarTuple, override
 
@@ -22,6 +22,7 @@ _O6 = TypeVar("_O6")
 _O7 = TypeVar("_O7")
 
 Args = TypeVarTuple("Args")
+FnArgs = TypeVarTuple("FnArgs")
 
 
 async def _execute_async_flow(flow: Flow, arg: Any) -> Any:
@@ -193,6 +194,45 @@ class AsyncTransformer(Generic[_In, _Out], BaseTransformer[_In, _Out]):
     ) -> "AsyncTransformer[_In, tuple[_NextOut, _O2, _O3, _O4, _O5, _O6, _O7]]":
         pass
 
+    @overload
+    def __rshift__(
+        self, next_node: Callable[[_Out], Awaitable[_NextOut]]
+    ) -> "AsyncTransformer[_In, _NextOut]":
+        pass
+
+    @overload
+    def __rshift__(
+        self: "AsyncTransformer[_In, None]",
+        next_node: Callable[[], Awaitable[_NextOut]],
+    ) -> "AsyncTransformer[_In, _NextOut]":
+        pass
+
+    @overload
+    def __rshift__(
+        self: "AsyncTransformer[_In, tuple[Unpack[FnArgs]]]",
+        next_node: Callable[[Unpack[FnArgs]], Awaitable[_NextOut]],
+    ) -> "AsyncTransformer[_In, _NextOut]":
+        pass
+
+    @overload
+    def __rshift__(
+        self, next_node: Callable[[_Out], _NextOut]
+    ) -> "AsyncTransformer[_In, _NextOut]":
+        pass
+
+    @overload
+    def __rshift__(
+        self: "AsyncTransformer[_In, None]", next_node: Callable[[], _NextOut]
+    ) -> "AsyncTransformer[_In, _NextOut]":
+        pass
+
+    @overload
+    def __rshift__(
+        self: "AsyncTransformer[_In, tuple[Unpack[FnArgs]]]",
+        next_node: Callable[[Unpack[FnArgs]], _NextOut],
+    ) -> "AsyncTransformer[_In, _NextOut]":
+        pass
+
     def __rshift__(self, next_node):  # pragma: no cover
         pass
 
@@ -204,6 +244,8 @@ class MultiArgsAsyncTransformer(
     async def __call__(  # type: ignore[override]
         self: "MultiArgsAsyncTransformer[Unpack[Args], _Out]", *data: Unpack[Args]
     ) -> _Out:
+        if len(data) == 1 and type(data[0]) is tuple:  # type: ignore
+            data = data[0]  # type: ignore
         return await _execute_async_flow(self._flow, data)
 
     @overload
@@ -286,6 +328,46 @@ class MultiArgsAsyncTransformer(
     ) -> """MultiArgsAsyncTransformer[
         Unpack[Args], tuple[_NextOut, _O2, _O3, _O4, _O5, _O6, _O7]
     ]""":
+        pass
+
+    @overload
+    def __rshift__(
+        self, next_node: Callable[[_Out], Awaitable[_NextOut]]
+    ) -> "MultiArgsAsyncTransformer[Unpack[Args], _NextOut]":
+        pass
+
+    @overload
+    def __rshift__(
+        self: "MultiArgsAsyncTransformer[Unpack[Args], None]",
+        next_node: Callable[[], Awaitable[_NextOut]],
+    ) -> "MultiArgsAsyncTransformer[Unpack[Args], _NextOut]":
+        pass
+
+    @overload
+    def __rshift__(
+        self: "MultiArgsAsyncTransformer[Unpack[Args], tuple[Unpack[FnArgs]]]",
+        next_node: Callable[[Unpack[FnArgs]], Awaitable[_NextOut]],
+    ) -> "MultiArgsAsyncTransformer[Unpack[Args], _NextOut]":
+        pass
+
+    @overload
+    def __rshift__(
+        self, next_node: Callable[[_Out], _NextOut]
+    ) -> "MultiArgsAsyncTransformer[Unpack[Args], _NextOut]":
+        pass
+
+    @overload
+    def __rshift__(
+        self: "MultiArgsAsyncTransformer[Unpack[Args], None]",
+        next_node: Callable[[], _NextOut],
+    ) -> "MultiArgsAsyncTransformer[Unpack[Args], _NextOut]":
+        pass
+
+    @overload
+    def __rshift__(
+        self: "MultiArgsAsyncTransformer[Unpack[Args], tuple[Unpack[FnArgs]]]",
+        next_node: Callable[[Unpack[FnArgs]], _NextOut],
+    ) -> "MultiArgsAsyncTransformer[Unpack[Args], _NextOut]":
         pass
 
     def __rshift__(self, next_node):  # pragma: no cover

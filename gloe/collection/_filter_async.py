@@ -1,7 +1,8 @@
-from typing import Generic, TypeVar, Iterable
+from typing import Awaitable, Callable, Generic, Iterable, TypeVar
 
 from gloe import AsyncTransformer
 from gloe._plotting_utils import PlottingSettings, NodeType
+from gloe._node_utils import _coerce_transformer
 
 _T = TypeVar("_T")
 
@@ -25,11 +26,16 @@ class FilterAsync(Generic[_T], AsyncTransformer[Iterable[_T], list[_T]]):
         and check if this item must be dropped or not.
     """
 
-    def __init__(self, filter_transformer: AsyncTransformer[_T, bool]):
+    def __init__(
+        self,
+        filter_transformer: AsyncTransformer[_T, bool]
+        | Callable[[_T], Awaitable[bool]]
+        | Callable[[_T], bool],
+    ):
         super().__init__()
-        self.filter_transformer = filter_transformer
+        self.filter_transformer = _coerce_transformer(filter_transformer)
         self.plotting_settings.invisible = True
-        self._children = [filter_transformer]
+        self._children = [self.filter_transformer]
 
         self._plotting_settings: PlottingSettings = PlottingSettings(
             has_children=True,
@@ -47,7 +53,10 @@ class FilterAsync(Generic[_T], AsyncTransformer[Iterable[_T], list[_T]]):
         """
         filtered_result = []
         for item in data:
-            result = await self.filter_transformer(item)
+            if isinstance(self.filter_transformer, AsyncTransformer):
+                result = await self.filter_transformer(item)
+            else:
+                result = self.filter_transformer(item)
             if result:
                 filtered_result.append(item)
         return filtered_result

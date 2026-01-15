@@ -65,20 +65,76 @@ class TestTransformerBasic(unittest.TestCase):
         self.assertEqual(integer, result)
 
     def test_unsupported_argument(self):
-        def just_a_normal_function():
-            return None
+        not_a_transformer = 123
 
         with self.assertRaises(
             UnsupportedTransformerArgException,
-            msg=f"Unsupported transformer argument: {just_a_normal_function}",
+            msg=f"Unsupported transformer argument: {not_a_transformer}",
         ):
-            _ = square >> just_a_normal_function  # type: ignore
+            _ = square >> not_a_transformer  # type: ignore
 
         with self.assertRaises(
             UnsupportedTransformerArgException,
-            msg=f"Unsupported transformer argument: {just_a_normal_function}",
+            msg=f"Unsupported transformer argument: {not_a_transformer}",
         ):
-            _ = square >> (just_a_normal_function, plus1)  # type: ignore
+            _ = square >> (not_a_transformer, plus1)  # type: ignore
+
+    def test_plain_function_composition(self):
+        def add_two(num: float) -> float:
+            return num + 2
+
+        graph = square >> add_two
+
+        self.assertEqual(add_two(square(3)), graph(3))
+
+    def test_begin_with_plain_function(self):
+        from gloe import begin
+
+        def to_str(num: int) -> str:
+            return str(num)
+
+        graph = begin[int]() >> to_str
+
+        self.assertEqual("3", graph(3))
+
+    def test_begin_multiargs_with_plain_function(self):
+        from gloe import begin
+
+        def sum2(num1: int, num2: float) -> float:
+            return num1 + num2
+
+        graph = begin[int, float]() >> sum2
+
+        self.assertEqual(3.5, graph(1, 2.5))
+
+    def test_plain_function_divergent_branch(self):
+        def plus2(num: float) -> float:
+            return num + 2
+
+        def times3(num: float) -> float:
+            return num * 3
+
+        graph = square >> (plus2, times3)
+
+        self.assertEqual((11, 27), graph(3))
+
+    def test_plain_function_convergent_multiargs(self):
+        def sum2(num1: float, num2: float) -> float:
+            return num1 + num2
+
+        graph = square >> (square, plus1) >> sum2
+
+        self.assertEqual(91, graph(3))
+
+    def test_plain_function_after_none_output(self):
+        from gloe.utils import forget
+
+        def make_value() -> int:
+            return 7
+
+        graph = forget >> make_value
+
+        self.assertEqual(7, graph("input"))
 
     def test_divergence_flow(self):
         """

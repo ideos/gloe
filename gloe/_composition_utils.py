@@ -4,6 +4,7 @@ from typing import TypeVar, Any, Optional, Union
 
 from gloe.async_transformer import AsyncTransformer, MultiArgsAsyncTransformer
 from gloe.base_transformer import BaseTransformer
+from gloe._node_utils import _coerce_transformer
 from gloe.gateways._parallel import _Parallel, _ParallelAsync
 from gloe.transformers import Transformer, MultiArgsTransformer
 from gloe._typing_utils import _match_types, _specify_types
@@ -101,7 +102,7 @@ def _compose_serial(transformer1, _transformer2):
             new_transformer = NewTransformer1()
     else:
 
-        if isinstance(transformer1, MultiArgsAsyncTransformer):
+        if isinstance(transformer1, (MultiArgsTransformer, MultiArgsAsyncTransformer)):
 
             class NewMultiArgsAsyncTransformer(
                 BaseNewTransformer, MultiArgsAsyncTransformer
@@ -230,22 +231,12 @@ def _compose_nodes(
     current: BaseTransformer,
     next_node: Union[tuple, BaseTransformer],
 ):
-    if issubclass(type(current), BaseTransformer):
-        if issubclass(type(next_node), BaseTransformer):
-            return _compose_serial(current, next_node)
-        elif type(next_node) is tuple:
-            is_all_base_transformers = all(
-                issubclass(type(next_transformer), BaseTransformer)
-                for next_transformer in next_node
-            )
-            if is_all_base_transformers:
-                return _compose_diverging(current, *next_node)
-
-            unsupported_elem = [
-                elem for elem in next_node if not isinstance(elem, BaseTransformer)
-            ]
-            raise UnsupportedTransformerArgException(unsupported_elem[0])
-        else:
-            raise UnsupportedTransformerArgException(next_node)
-    else:
+    if not isinstance(current, BaseTransformer):
         raise UnsupportedTransformerArgException(next_node)  # pragma: no cover
+
+    if isinstance(next_node, tuple):
+        next_transformers = tuple(_coerce_transformer(node) for node in next_node)
+        return _compose_diverging(current, *next_transformers)
+
+    next_transformer = _coerce_transformer(next_node)
+    return _compose_serial(current, next_transformer)

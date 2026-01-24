@@ -5,9 +5,9 @@ from typing import Callable, TypeVar, cast, Awaitable, overload
 
 from typing_extensions import Concatenate, TypeVarTuple, Unpack, ParamSpec
 
-from gloe.async_transformer import AsyncTransformer, MultiArgsAsyncTransformer
+from gloe.async_transformer import AsyncTransformer
 from gloe.exceptions import TransformerRequiresMultiArgs
-from gloe.transformers import Transformer, MultiArgsTransformer
+from gloe.transformers import Transformer
 
 __all__ = [
     "transformer",
@@ -156,7 +156,7 @@ B = TypeVar("B")
 @overload
 def transformer(
     func: Callable[[A, B, Unpack[Rest]], S],
-) -> MultiArgsTransformer[A, B, Unpack[Rest], S]:
+) -> Transformer[A, B, Unpack[Rest], S]:
     pass
 
 
@@ -194,7 +194,7 @@ def transformer(func):
 
     if len(func_signature.parameters) > 1:
 
-        class LambdaMultiArgsTransformer(MultiArgsTransformer):
+        class LambdaMultiArgsTransformer(Transformer):
             __doc__ = func.__doc__
             __annotations__ = cast(FunctionType, func).__annotations__
 
@@ -209,9 +209,10 @@ def transformer(func):
                 raise NotImplementedError()  # pragma: no cover
 
         lambda_transformer1 = LambdaMultiArgsTransformer()
+        lambda_transformer1._multi_args = True
         lambda_transformer1.__class__.__name__ = func.__name__
         lambda_transformer1._label = func.__name__
-        return lambda_transformer1
+        return cast(Transformer, lambda_transformer1)
 
     class LambdaTransformer(Transformer):
         __doc__ = func.__doc__
@@ -234,7 +235,7 @@ def transformer(func):
 @overload
 def async_transformer(
     func: Callable[[A, B, Unpack[Rest]], Awaitable[S]],
-) -> MultiArgsAsyncTransformer[A, B, Unpack[Rest], S]:
+) -> AsyncTransformer[A, B, Unpack[Rest], S]:
     pass
 
 
@@ -274,7 +275,7 @@ def async_transformer(func):
 
     if len(func_signature.parameters) > 1:
 
-        class LambdaMultiArgsTransformer(MultiArgsAsyncTransformer):
+        class LambdaMultiArgsTransformer(AsyncTransformer):
             __doc__ = func.__doc__
             __annotations__ = cast(FunctionType, func).__annotations__
 
@@ -289,9 +290,10 @@ def async_transformer(func):
                 raise NotImplementedError()  # pragma: no cover
 
         lambda_transformer1 = LambdaMultiArgsTransformer()
+        lambda_transformer1._multi_args = True
         lambda_transformer1.__class__.__name__ = func.__name__
         lambda_transformer1._label = func.__name__
-        return lambda_transformer1
+        return cast(AsyncTransformer, lambda_transformer1)
 
     class LambdaAsyncTransformer(AsyncTransformer):
         __doc__ = func.__doc__

@@ -6,6 +6,12 @@ from unittest.mock import MagicMock, patch
 from gloe.collection import Map
 from tests.lib.transformers import plus1, repeat_list
 
+try:
+    import pygraphviz  # noqa: F401
+    _HAS_PYGRAPHVIZ = True
+except ImportError:
+    _HAS_PYGRAPHVIZ = False
+
 
 class TestTransformerExport(unittest.TestCase):
     foo = repeat_list(10) >> Map(plus1 >> repeat_list(10) >> Map(plus1))
@@ -16,6 +22,7 @@ class TestTransformerExport(unittest.TestCase):
             with tempfile.NamedTemporaryFile(suffix=".dot", delete=False) as temp:
                 self.foo.to_dot(temp.name)
 
+    @unittest.skipUnless(_HAS_PYGRAPHVIZ, "pygraphviz is required")
     def test_export_no_errors(self):
         with tempfile.NamedTemporaryFile(suffix=".dot", delete=False) as temp:
             self.foo.to_dot(temp.name, with_edge_labels=False)
@@ -23,6 +30,7 @@ class TestTransformerExport(unittest.TestCase):
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp:
             self.foo.to_image(temp.name)
 
+    @unittest.skipUnless(_HAS_PYGRAPHVIZ, "pygraphviz is required")
     def test_export_deprecated(self):
         with self.assertWarns(DeprecationWarning):
             import tempfile

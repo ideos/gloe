@@ -1,13 +1,14 @@
 from abc import ABC, abstractmethod
 from inspect import Signature
 
-from typing import TypeVar, overload, cast, Optional, Any
+from typing import TypeVar, overload, cast, Optional, Any, get_args, get_origin, Iterable
 
-from typing_extensions import TypeAlias, Unpack, TypeVarTuple, Generic, override
+from typing_extensions import Generic, TypeAlias, Unpack, TypeVarTuple
 
-from gloe.async_transformer import AsyncTransformer, MultiArgsAsyncTransformer
+from gloe.async_transformer import AsyncTransformer
 from gloe._transformer_utils import catch_transformer_exception
 from gloe.base_transformer import BaseTransformer, Flow
+from gloe.exceptions import TransformerRequiresMultiArgs
 
 from gloe._generic_types import (
     AsyncNext2,
@@ -20,7 +21,6 @@ from gloe._generic_types import (
 
 __all__ = ["Transformer"]
 
-_I = TypeVar("_I", contravariant=True)
 _O = TypeVar("_O", covariant=True)
 
 Tr: TypeAlias = "Transformer"
@@ -36,6 +36,7 @@ O7 = TypeVar("O7")
 To = TypeVar("To", bound=BaseTransformer)
 
 Args = TypeVarTuple("Args")
+NextArgs = TypeVarTuple("NextArgs")
 
 
 def _execute_flow(flow: Flow, arg: Any) -> Any:
@@ -48,7 +49,7 @@ def _execute_flow(flow: Flow, arg: Any) -> Any:
     return result
 
 
-class Transformer(BaseTransformer[_I, _O], ABC):
+class Transformer(BaseTransformer[Any, _O], Generic[Unpack[Args], _O], ABC):
     """
     A Transformer is the generic block with the responsibility to take an input of type
     `T` and transform it to an output of type `S`.
@@ -67,9 +68,15 @@ class Transformer(BaseTransformer[_I, _O], ABC):
     def __init__(self):
         super().__init__()
         self.__class__.__annotations__ = self.transform.__annotations__
+        orig_bases = getattr(self, "__orig_bases__", [])
+        transformer_args = [
+            get_args(base) for base in orig_bases if get_origin(base) == Transformer
+        ]
+        if transformer_args and len(transformer_args[0]) > 2:
+            self._multi_args = True
 
     @abstractmethod
-    def transform(self, data: _I) -> _O:
+    def transform(self, data: Any) -> _O:
         """
         Main method to be implemented and responsible to perform the transformer logic
         """
@@ -91,7 +98,7 @@ class Transformer(BaseTransformer[_I, _O], ABC):
             f" -> {self.output_annotation}"
         )
 
-    def _safe_transform(self, data: _I) -> _O:
+    def _safe_transform(self, data: Any) -> _O:
         transform_exception = None
 
         transformed: Optional[_O] = None
@@ -113,178 +120,90 @@ class Transformer(BaseTransformer[_I, _O], ABC):
         pass
 
     @overload
-    def __call__(self, data: _I) -> _O:
-        pass
-
-    def __call__(self, data=None):
-        return _execute_flow(self._flow, data)
-
-    @overload
-    def __rshift__(self, next_node: "Transformer[_O, O1]") -> "Transformer[_I, O1]":
-        pass
-
-    @overload
-    def __rshift__(
-        self,
-        next_node: tuple["Tr[_O, O1]", "Tr[_O, O2]"],
-    ) -> "Transformer[_I, tuple[O1, O2]]":
-        pass
-
-    @overload
-    def __rshift__(
-        self,
-        next_node: tuple["Tr[_O, O1]", "Tr[_O, O2]", "Tr[_O, O3]"],
-    ) -> "Transformer[_I, tuple[O1, O2, O3]]":
-        pass
-
-    @overload
-    def __rshift__(
-        self,
-        next_node: tuple["Tr[_O, O1]", "Tr[_O, O2]", "Tr[_O, O3]", "Tr[_O, O4]"],
-    ) -> "Transformer[_I, tuple[O1, O2, O3, O4]]":
-        pass
-
-    @overload
-    def __rshift__(
-        self,
-        next_node: tuple[
-            "Tr[_O, O1]", "Tr[_O, O2]", "Tr[_O, O3]", "Tr[_O, O4]", "Tr[_O, O5]"
-        ],
-    ) -> "Transformer[_I, tuple[O1, O2, O3, O4, O5]]":
-        pass
-
-    @overload
-    def __rshift__(
-        self,
-        next_node: tuple[
-            "Tr[_O, O1]",
-            "Tr[_O, O2]",
-            "Tr[_O, O3]",
-            "Tr[_O, O4]",
-            "Tr[_O, O5]",
-            "Tr[_O, O6]",
-        ],
-    ) -> "Transformer[_I, tuple[O1, O2, O3, O4, O5, O6]]":
-        pass
-
-    @overload
-    def __rshift__(
-        self,
-        next_node: tuple[
-            "Tr[_O, O1]",
-            "Tr[_O, O2]",
-            "Tr[_O, O3]",
-            "Tr[_O, O4]",
-            "Tr[_O, O5]",
-            "Tr[_O, O6]",
-            "Tr[_O, O7]",
-        ],
-    ) -> "Transformer[_I, tuple[O1, O2, O3, O4, O5, O6, O7]]":
-        pass
-
-    @overload
-    def __rshift__(
-        self, next_node: AsyncTransformer[_O, O1]
-    ) -> AsyncTransformer[_I, O1]:
-        pass
-
-    @overload
-    def __rshift__(
-        self, next_node: AsyncNext2[_O, O1, O2]
-    ) -> AsyncTransformer[_I, tuple[O1, O2]]:
-        pass
-
-    @overload
-    def __rshift__(
-        self, next_node: AsyncNext3[_O, O1, O2, O3]
-    ) -> AsyncTransformer[_I, tuple[O1, O2, O3]]:
-        pass
-
-    @overload
-    def __rshift__(
-        self, next_node: AsyncNext4[_O, O1, O2, O3, O4]
-    ) -> AsyncTransformer[_I, tuple[O1, O2, O3, O4]]:
-        pass
-
-    @overload
-    def __rshift__(
-        self, next_node: AsyncNext5[_O, O1, O2, O3, O4, O5]
-    ) -> AsyncTransformer[_I, tuple[O1, O2, O3, O4, O5]]:
-        pass
-
-    @overload
-    def __rshift__(
-        self, next_node: AsyncNext6[_O, O1, O2, O3, O4, O5, O6]
-    ) -> AsyncTransformer[_I, tuple[O1, O2, O3, O4, O5, O6]]:
-        pass
-
-    @overload
-    def __rshift__(
-        self, next_node: AsyncNext7[_O, O1, O2, O3, O4, O5, O6, O7]
-    ) -> AsyncTransformer[_I, tuple[O1, O2, O3, O4, O5, O6, O7]]:
-        pass
-
-    def __rshift__(self, next_node):  # pragma: no cover
-        pass
-
-
-class MultiArgsTransformer(
-    Generic[Unpack[Args], _O], Transformer[tuple[Unpack[Args]], _O]
-):
-    # The below ignored override errors are recommended by the documentation itself,
-    # "if you decide that type safety is not necessary", which is clearly the case.
-    # https://mypy.readthedocs.io/en/stable/common_issues.html#incompatible-overrides
-    @override
-    def __call__(  # type: ignore[override]
-        self: "MultiArgsTransformer[Unpack[Args], _O]", *data: Unpack[Args]
+    def __call__(
+        self: "Transformer[Unpack[Args], _O]", *data: Unpack[Args]
     ) -> _O:
-        if len(data) == 1 and type(data[0]) is tuple:  # type: ignore
-            data = data[0]  # type: ignore
-        return _execute_flow(self._flow, data)
+        pass
 
-    @overload  # type: ignore[override]
-    @override
+    def __call__(self, *data):
+        if self._multi_args:
+            if len(data) == 1 and type(data[0]) is tuple:
+                data = data[0]
+            elif len(data) == 1:
+                raise TransformerRequiresMultiArgs()
+            return _execute_flow(self._flow, data)
+
+        if len(data) == 0:
+            return _execute_flow(self._flow, None)
+        if len(data) == 1:
+            return _execute_flow(self._flow, data[0])
+        raise TypeError("Transformer expected a single argument")
+
+    @overload
+    def __rshift__(
+        self: "Transformer[Unpack[Args], tuple[Unpack[NextArgs]]]",
+        next_node: "Transformer[Unpack[NextArgs], O1]",
+    ) -> "Transformer[Unpack[Args], O1]":
+        pass
+
+    @overload
+    def __rshift__(
+        self: "Transformer[Unpack[Args], tuple[Unpack[NextArgs]]]",
+        next_node: AsyncTransformer[Unpack[NextArgs], O1],
+    ) -> AsyncTransformer[Unpack[Args], O1]:
+        pass
+
+    @overload
+    def __rshift__(
+        self: "Transformer[Unpack[Args], list[Item]]",
+        next_node: "Transformer[Iterable[Item], O1]",
+    ) -> "Transformer[Unpack[Args], O1]":
+        pass
+
+    @overload
+    def __rshift__(
+        self: "Transformer[Unpack[Args], list[Item]]",
+        next_node: AsyncTransformer[Iterable[Item], O1],
+    ) -> AsyncTransformer[Unpack[Args], O1]:
+        pass
+
+    @overload
     def __rshift__(
         self, next_node: "Transformer[_O, O1]"
-    ) -> "MultiArgsTransformer[Unpack[Args], O1]":
+    ) -> "Transformer[Unpack[Args], O1]":
         pass
 
     @overload
-    @override
     def __rshift__(
         self,
         next_node: tuple["Tr[_O, O1]", "Tr[_O, O2]"],
-    ) -> "MultiArgsTransformer[Unpack[Args], tuple[O1, O2]]":
+    ) -> "Transformer[Unpack[Args], tuple[O1, O2]]":
         pass
 
     @overload
-    @override
     def __rshift__(
         self,
         next_node: tuple["Tr[_O, O1]", "Tr[_O, O2]", "Tr[_O, O3]"],
-    ) -> "MultiArgsTransformer[Unpack[Args], tuple[O1, O2, O3]]":
+    ) -> "Transformer[Unpack[Args], tuple[O1, O2, O3]]":
         pass
 
     @overload
-    @override
     def __rshift__(
         self,
         next_node: tuple["Tr[_O, O1]", "Tr[_O, O2]", "Tr[_O, O3]", "Tr[_O, O4]"],
-    ) -> "MultiArgsTransformer[Unpack[Args], tuple[O1, O2, O3, O4]]":
+    ) -> "Transformer[Unpack[Args], tuple[O1, O2, O3, O4]]":
         pass
 
     @overload
-    @override
     def __rshift__(
         self,
         next_node: tuple[
             "Tr[_O, O1]", "Tr[_O, O2]", "Tr[_O, O3]", "Tr[_O, O4]", "Tr[_O, O5]"
         ],
-    ) -> "MultiArgsTransformer[Unpack[Args], tuple[O1, O2, O3, O4, O5]]":
+    ) -> "Transformer[Unpack[Args], tuple[O1, O2, O3, O4, O5]]":
         pass
 
     @overload
-    @override
     def __rshift__(
         self,
         next_node: tuple[
@@ -295,11 +214,10 @@ class MultiArgsTransformer(
             "Tr[_O, O5]",
             "Tr[_O, O6]",
         ],
-    ) -> "MultiArgsTransformer[Unpack[Args], tuple[O1, O2, O3, O4, O5, O6]]":
+    ) -> "Transformer[Unpack[Args], tuple[O1, O2, O3, O4, O5, O6]]":
         pass
 
     @overload
-    @override
     def __rshift__(
         self,
         next_node: tuple[
@@ -311,58 +229,50 @@ class MultiArgsTransformer(
             "Tr[_O, O6]",
             "Tr[_O, O7]",
         ],
-    ) -> "MultiArgsTransformer[Unpack[Args], tuple[O1, O2, O3, O4, O5, O6, O7]]":
+    ) -> "Transformer[Unpack[Args], tuple[O1, O2, O3, O4, O5, O6, O7]]":
         pass
 
     @overload
-    @override
     def __rshift__(
         self, next_node: AsyncTransformer[_O, O1]
-    ) -> MultiArgsAsyncTransformer[_I, O1]:
+    ) -> AsyncTransformer[Unpack[Args], O1]:
         pass
 
     @overload
-    @override
     def __rshift__(
         self, next_node: AsyncNext2[_O, O1, O2]
-    ) -> MultiArgsAsyncTransformer[_I, tuple[O1, O2]]:
+    ) -> AsyncTransformer[Unpack[Args], tuple[O1, O2]]:
         pass
 
     @overload
-    @override
     def __rshift__(
         self, next_node: AsyncNext3[_O, O1, O2, O3]
-    ) -> MultiArgsAsyncTransformer[_I, tuple[O1, O2, O3]]:
+    ) -> AsyncTransformer[Unpack[Args], tuple[O1, O2, O3]]:
         pass
 
     @overload
-    @override
     def __rshift__(
         self, next_node: AsyncNext4[_O, O1, O2, O3, O4]
-    ) -> MultiArgsAsyncTransformer[_I, tuple[O1, O2, O3, O4]]:
+    ) -> AsyncTransformer[Unpack[Args], tuple[O1, O2, O3, O4]]:
         pass
 
     @overload
-    @override
     def __rshift__(
         self, next_node: AsyncNext5[_O, O1, O2, O3, O4, O5]
-    ) -> MultiArgsAsyncTransformer[_I, tuple[O1, O2, O3, O4, O5]]:
+    ) -> AsyncTransformer[Unpack[Args], tuple[O1, O2, O3, O4, O5]]:
         pass
 
     @overload
-    @override
     def __rshift__(
         self, next_node: AsyncNext6[_O, O1, O2, O3, O4, O5, O6]
-    ) -> MultiArgsAsyncTransformer[_I, tuple[O1, O2, O3, O4, O5, O6]]:
+    ) -> AsyncTransformer[Unpack[Args], tuple[O1, O2, O3, O4, O5, O6]]:
         pass
 
     @overload
-    @override
     def __rshift__(
         self, next_node: AsyncNext7[_O, O1, O2, O3, O4, O5, O6, O7]
-    ) -> MultiArgsAsyncTransformer[_I, tuple[O1, O2, O3, O4, O5, O6, O7]]:
+    ) -> AsyncTransformer[Unpack[Args], tuple[O1, O2, O3, O4, O5, O6, O7]]:
         pass
 
-    @override
     def __rshift__(self, next_node):  # pragma: no cover
         pass

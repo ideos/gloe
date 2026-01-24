@@ -1,8 +1,9 @@
+from typing import reveal_type
 import asyncio
 import unittest
 from typing_extensions import assert_type
 
-from gloe import partial_async_transformer, AsyncTransformer, Transformer
+from gloe import partial_async_transformer, AsyncTransformer, Transformer, async_transformer, transformer
 from gloe.utils import forward
 from tests.lib.transformers import logarithm, repeat, format_currency
 from tests.type_utils.mypy_test_suite import MypyTestSuite

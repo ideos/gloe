@@ -101,6 +101,7 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         self.id = uuid.uuid4()
         self.instance_id = uuid.uuid4()
         self.is_atomic = False
+        self._multi_args = False
         self._label = self.__class__.__name__
         self._already_copied = False
         self._plotting_settings: PlottingSettings = PlottingSettings(

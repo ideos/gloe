@@ -21,11 +21,12 @@ from typing import (
     cast,
 )
 
-from typing_extensions import Self, TypeAlias, deprecated
+from typing_extensions import Self, TypeAlias, TypeVarTuple, Unpack, deprecated
 
 from gloe._gloe_graph import GloeGraph
 from gloe._plotting_utils import PlottingSettings, NodeType, dot_props
-from gloe._typing_utils import _format_return_annotation
+from gloe._typing_utils import _format_return_annotation, _specify_types
+from gloe.exceptions import TransformerRequiresMultiArgs
 
 __all__ = ["BaseTransformer", "TransformerException", "PreviousTransformer"]
 
@@ -39,6 +40,7 @@ _Out5 = TypeVar("_Out5")
 _Out6 = TypeVar("_Out6")
 _Out7 = TypeVar("_Out7")
 
+Args = TypeVarTuple("Args")
 
 PreviousTransformer: TypeAlias = Union[
     None,
@@ -52,6 +54,8 @@ PreviousTransformer: TypeAlias = Union[
 ]
 
 TransformerChildren: TypeAlias = list["BaseTransformer"]
+
+_NO_ARGS = object()
 
 
 class TransformerException(Exception):
@@ -87,23 +91,21 @@ class GloeNode:
             output_annotation=transformer.output_annotation,
         )
 
-
-_In = TypeVar("_In", contravariant=True)
 _Out = TypeVar("_Out", covariant=True)
 
 
 Flow = list["BaseTransformer"]
 
 
-class BaseTransformer(Generic[_In, _Out], ABC):
+class BaseTransformer(Generic[Unpack[Args], _Out], ABC):
     def __init__(self):
         self._children: TransformerChildren = []
         self.id = uuid.uuid4()
         self.instance_id = uuid.uuid4()
         self.is_atomic = False
-        self._multi_args = False
         self._label = self.__class__.__name__
         self._already_copied = False
+        self._signature_override: Optional[Signature] = None
         self._plotting_settings: PlottingSettings = PlottingSettings(
             invisible=False,
             node_type=NodeType.Transformer,
@@ -148,7 +150,7 @@ class BaseTransformer(Generic[_In, _Out], ABC):
 
     def _copy(
         self: Self,
-        transform: Optional[Callable[[Self, _In], _Out]] = None,
+        transform: Optional[Callable[[Self, Unpack[Args]], _Out]] = None,
         regenerate_instance_id: bool = False,
         transform_method: str = "transform",
         force: bool = False,
@@ -157,6 +159,7 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         copied._already_copied = True
 
         if transform is not None:
+            copied._signature_override = self.signature()
             setattr(copied, transform_method, types.MethodType(transform, copied))
 
         old_instance_id = self.instance_id
@@ -190,7 +193,7 @@ class BaseTransformer(Generic[_In, _Out], ABC):
 
     def copy(
         self: Self,
-        transform: Optional[Callable[[Self, _In], _Out]] = None,
+        transform: Optional[Callable[[Self, Unpack[Args]], _Out]] = None,
         regenerate_instance_id: bool = False,
         force: bool = False,
     ) -> Self:
@@ -201,6 +204,9 @@ class BaseTransformer(Generic[_In, _Out], ABC):
         """Transformer function-like signature"""
 
     def _signature(self, klass: Type, transform_method: str = "transform") -> Signature:
+        if self._signature_override is not None:
+            return self._signature_override
+
         orig_bases = getattr(self, "__orig_bases__", [])
         transformer_args = [
             get_args(base) for base in orig_bases if get_origin(base) == klass
@@ -226,21 +232,51 @@ class BaseTransformer(Generic[_In, _Out], ABC):
             }
 
         signature = inspect.signature(getattr(self, transform_method))
-        new_return_annotation = specific_args.get(
-            signature.return_annotation, signature.return_annotation
-        )
-        parameters = list(signature.parameters.values())
-        if len(parameters) > 0:
-            parameter = parameters[0]
-            parameter = parameter.replace(
-                annotation=specific_args.get(parameter.annotation, parameter.annotation)
+        parameters = [
+            parameter.replace(
+                annotation=_specify_types(parameter.annotation, specific_args)
             )
-            parameters = [parameter]
+            for parameter in signature.parameters.values()
+        ]
 
         return signature.replace(
-            return_annotation=new_return_annotation,
+            return_annotation=_specify_types(signature.return_annotation, specific_args),
             parameters=parameters,
         )
+
+    def _pack_call_args(self, args: tuple[object, ...]) -> object:
+        try:
+            param_count = len(self.signature().parameters)
+        except Exception:
+            param_count = 1
+        if param_count <= 1:
+            if len(args) == 0:
+                return _NO_ARGS
+            if len(args) == 1:
+                return args[0]
+            raise TypeError("Transformer expected a single argument")
+        if len(args) == 0:
+            return ()
+        if len(args) == 1 and isinstance(args[0], tuple):
+            return args[0]
+        if len(args) == 1:
+            raise TransformerRequiresMultiArgs()
+        return args
+
+    def _unpack_call_args(self, data: object) -> tuple[object, ...]:
+        try:
+            param_count = len(self.signature().parameters)
+        except Exception:
+            param_count = 1
+        if param_count == 0:
+            return ()
+        if data is _NO_ARGS:
+            raise TypeError("Transformer expected a single argument")
+        if param_count == 1:
+            return (data,)
+        if isinstance(data, tuple):
+            return data
+        raise TransformerRequiresMultiArgs()
 
     @property
     def output_type(self) -> Any:
@@ -256,10 +292,13 @@ class BaseTransformer(Generic[_In, _Out], ABC):
 
     @property
     def input_type(self) -> Any:
-        parameters = list(self.signature().parameters.items())
-        if len(parameters) > 0:
-            parameter_type = parameters[0][1].annotation
-            return parameter_type
+        parameters = list(self.signature().parameters.values())
+        if len(parameters) == 0:
+            return None
+        annotations = [parameter.annotation for parameter in parameters]
+        if len(annotations) == 1:
+            return annotations[0]
+        return types.GenericAlias(tuple, tuple(annotations))
 
     @property
     def input_annotation(self) -> str:

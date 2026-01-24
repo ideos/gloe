@@ -28,7 +28,7 @@ class _Parallel(_base_gateway[_In], Transformer[_In, tuple[Any, ...]]):
 
 class _ParallelAsync(_base_gateway[_In], AsyncTransformer[_In, tuple[Any, ...]]):
     async def transform_async(self, data: _In) -> tuple[Any, ...]:
-        results = [None] * len(self._children)
+        results: list[object] = [None] * len(self._children)
         indexed_children = list(enumerate(self._children))
 
         async_children = [

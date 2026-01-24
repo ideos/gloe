@@ -20,23 +20,18 @@ def is_transformer(node):
     return isinstance(node, Transformer)
 
 
-def _is_multi_args(transformer: BaseTransformer) -> bool:
-    return getattr(transformer, "_multi_args", False)
-
-
 def _resolve_serial_connection_signatures(
     transformer1: BaseTransformer, transformer2: BaseTransformer, generic_vars: dict
 ) -> Signature:
-    signature2 = transformer2.signature()
-    first_param = list(signature2.parameters.values())[0]
-    new_parameter = first_param.replace(
-        annotation=_specify_types(transformer1.input_type, generic_vars)
-    )
-    new_signature = signature2.replace(
-        parameters=[new_parameter],
+    signature1 = transformer1.signature()
+    parameters = [
+        parameter.replace(annotation=_specify_types(parameter.annotation, generic_vars))
+        for parameter in signature1.parameters.values()
+    ]
+    return signature1.replace(
+        parameters=parameters,
         return_annotation=_specify_types(transformer2.output_type, generic_vars),
     )
-    return new_signature
 
 
 def _compose_serial(transformer1, _transformer2):
@@ -54,8 +49,15 @@ def _compose_serial(transformer1, _transformer2):
     generic_vars = {**input_generic_vars, **output_generic_vars}
 
     def transformer1_signature(_) -> Signature:
+        parameters = [
+            parameter.replace(
+                annotation=_specify_types(parameter.annotation, generic_vars)
+            )
+            for parameter in signature1.parameters.values()
+        ]
         return signature1.replace(
-            return_annotation=_specify_types(signature1.return_annotation, generic_vars)
+            parameters=parameters,
+            return_annotation=_specify_types(signature1.return_annotation, generic_vars),
         )
 
     setattr(
@@ -85,11 +87,10 @@ def _compose_serial(transformer1, _transformer2):
                 super().__init__()
                 self._flow = transformer1._flow + transformer2._flow
 
-            def transform(self, data):
+            def transform(self, *data):
                 return None
 
         new_transformer = NewTransformer1()
-        new_transformer._multi_args = _is_multi_args(transformer1)
     else:
 
         class NewTransformer2(BaseNewTransformer, AsyncTransformer[_In, _NextOut]):
@@ -97,11 +98,10 @@ def _compose_serial(transformer1, _transformer2):
                 super().__init__()
                 self._flow = transformer1._flow + transformer2._flow
 
-            async def transform_async(self, data):
+            async def transform_async(self, *data):
                 return None
 
         new_transformer = NewTransformer2()
-        new_transformer._multi_args = _is_multi_args(transformer1)
 
     new_transformer.__class__.__name__ = transformer2.__class__.__name__
     new_transformer._label = transformer2.label
@@ -126,6 +126,41 @@ def _compose_diverging(
     )
 
     class BaseNewTransformer:
+        def signature(self) -> Signature:
+            incident_signature = incident_transformer.signature()
+            generic_vars: dict = {}
+            for receiving_transformer in receiving_transformers:
+                generic_vars.update(
+                    _match_types(
+                        receiving_transformer.input_type,
+                        incident_transformer.output_type,
+                    )
+                )
+                generic_vars.update(
+                    _match_types(
+                        incident_transformer.output_type,
+                        receiving_transformer.input_type,
+                    )
+                )
+
+            parameters = [
+                parameter.replace(
+                    annotation=_specify_types(parameter.annotation, generic_vars)
+                )
+                for parameter in incident_signature.parameters.values()
+            ]
+            return_types = [
+                _specify_types(
+                    receiving_transformer.signature().return_annotation,
+                    generic_vars,
+                )
+                for receiving_transformer in receiving_transformers
+            ]
+            return incident_signature.replace(
+                parameters=parameters,
+                return_annotation=types.GenericAlias(tuple, tuple(return_types)),
+            )
+
         def __len__(self):
             lengths = [len(t) for t in receiving_transformers]
             return sum(lengths) + len(incident_transformer)
@@ -141,11 +176,10 @@ def _compose_diverging(
                     _Parallel(*receiving_transformers)
                 ]
 
-            def transform(self, data):
+            def transform(self, *data):
                 return None
 
         new_transformer = NewTransformer1()
-        new_transformer._multi_args = _is_multi_args(incident_transformer)
 
     else:
 
@@ -158,11 +192,10 @@ def _compose_diverging(
                     _ParallelAsync(*receiving_transformers)
                 ]
 
-            async def transform_async(self, data):
+            async def transform_async(self, *data):
                 return None
 
         new_transformer = NewTransformer2()
-        new_transformer._multi_args = _is_multi_args(incident_transformer)
 
     # new_transformer._previous = cast(Transformer, receiving_transformers)
     new_transformer.__class__.__name__ = "Converge"

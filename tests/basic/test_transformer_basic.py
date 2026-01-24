@@ -1,6 +1,7 @@
 import asyncio
 import re
 import unittest
+from abc import ABC, abstractmethod
 from typing import cast
 
 from gloe import (
@@ -48,6 +49,22 @@ class TestTransformerBasic(unittest.TestCase):
         graph = plus1 >> (times2 >> plus1 >> (square, minus1), square) >> many_args
 
         self.assertEqual(graph(3), 81 + 8 + 16.0)
+
+    def test_transformer_accepts_subclass_input(self):
+        class Animal(ABC):
+            @abstractmethod
+            def sound(self) -> str:
+                raise NotImplementedError()
+
+        class Dog(Animal):
+            def sound(self) -> str:
+                return "woof"
+
+        @transformer
+        def speak(animal: Animal) -> str:
+            return animal.sound()
+
+        self.assertEqual(speak(Dog()), "woof")
 
     def test_transformer_hash(self):
         self.assertEqual(hash(square.id), square.__hash__())

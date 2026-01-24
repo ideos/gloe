@@ -1,9 +1,11 @@
 from typing import TypeVar
+from abc import ABC, abstractmethod
 
 from typing_extensions import assert_type
 
 from gloe import (
     Transformer,
+    transformer,
     async_transformer,
     AsyncTransformer,
 )
@@ -111,3 +113,21 @@ class TestBasicTransformerTypes(MypyTestSuite):
         assert_type(async_pipeline3, AsyncTransformer[int, tuple[float, str]])
         assert_type(async_pipeline4, AsyncTransformer[int, tuple[str, float]])
         assert_type(async_pipeline5, AsyncTransformer[int, str])
+
+    def test_abstract_input_accepts_subclass(self):
+        class Animal(ABC):
+            @abstractmethod
+            def sound(self) -> str:
+                raise NotImplementedError()
+
+        class Dog(Animal):
+            def sound(self) -> str:
+                return "woof"
+
+        @transformer
+        def speak(animal: Animal) -> str:
+            return animal.sound()
+
+        dog = Dog()
+        speak(dog)
+        assert_type(speak, Transformer[Animal, str])

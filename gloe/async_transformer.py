@@ -1,16 +1,16 @@
 from abc import abstractmethod
 from inspect import Signature
-from typing import TypeVar, overload, cast, Callable, Optional, Any, get_args, get_origin, TYPE_CHECKING
+from typing import TypeVar, overload, cast, Callable, Optional, TYPE_CHECKING, Iterable
 
-from typing_extensions import Self, Unpack, Generic, TypeVarTuple
+from typing_extensions import Self, Unpack, Generic, TypeVarTuple, Never
 
 from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe._transformer_utils import catch_transformer_exception
 from gloe.base_transformer import BaseTransformer, Flow
-from gloe.exceptions import TransformerRequiresMultiArgs
 
 if TYPE_CHECKING:
     from gloe.transformers import Transformer
+    from gloe.utils import forward as Forward
 
 __all__ = ["AsyncTransformer"]
 
@@ -23,12 +23,13 @@ _O4 = TypeVar("_O4")
 _O5 = TypeVar("_O5")
 _O6 = TypeVar("_O6")
 _O7 = TypeVar("_O7")
+Item = TypeVar("Item")
 
 Args = TypeVarTuple("Args")
 NextArgs = TypeVarTuple("NextArgs")
 
 
-async def _execute_async_flow(flow: Flow, arg: Any) -> Any:
+async def _execute_async_flow(flow: Flow, arg: object) -> object:
     result = arg
     for op in flow:
         if isinstance(op, BaseTransformer):
@@ -44,7 +45,7 @@ async def _execute_async_flow(flow: Flow, arg: Any) -> Any:
     return result
 
 
-class AsyncTransformer(Generic[Unpack[Args], _Out], BaseTransformer[Any, _Out]):
+class AsyncTransformer(Generic[Unpack[Args], _Out], BaseTransformer[Unpack[Args], _Out]):
     def __init__(self):
         super().__init__()
 
@@ -52,15 +53,9 @@ class AsyncTransformer(Generic[Unpack[Args], _Out], BaseTransformer[Any, _Out]):
             node_type=NodeType.Transformer, is_async=True
         )
         self.__class__.__annotations__ = self.transform_async.__annotations__
-        orig_bases = getattr(self, "__orig_bases__", [])
-        transformer_args = [
-            get_args(base) for base in orig_bases if get_origin(base) == AsyncTransformer
-        ]
-        if transformer_args and len(transformer_args[0]) > 2:
-            self._multi_args = True
 
     @abstractmethod
-    async def transform_async(self, data: Any) -> _Out:
+    async def transform_async(self, *data: Unpack[Args]) -> _Out:
         """
         Method to perform the transformation asynchronously.
 
@@ -89,12 +84,13 @@ class AsyncTransformer(Generic[Unpack[Args], _Out], BaseTransformer[Any, _Out]):
             f" -> {self.output_annotation}"
         )
 
-    async def _safe_transform(self, data: Any) -> _Out:
+    async def _safe_transform(self, data: object) -> _Out:
         transform_exception = None
 
         transformed: Optional[_Out] = None
         try:
-            transformed = await self.transform_async(data)
+            args = cast(tuple[Unpack[Args]], self._unpack_call_args(data))
+            transformed = await self.transform_async(*args)
         except Exception as exception:
             transform_exception = catch_transformer_exception(exception, self)
 
@@ -108,7 +104,7 @@ class AsyncTransformer(Generic[Unpack[Args], _Out], BaseTransformer[Any, _Out]):
 
     def copy(
         self,
-        transform: Optional[Callable[[Self, Any], _Out]] = None,
+        transform: Optional[Callable[[Self, Unpack[Args]], _Out]] = None,
         regenerate_instance_id: bool = False,
         force: bool = False,
     ) -> Self:
@@ -116,27 +112,17 @@ class AsyncTransformer(Generic[Unpack[Args], _Out], BaseTransformer[Any, _Out]):
 
     @overload
     async def __call__(self: "AsyncTransformer[None, _Out]") -> _Out:
-        return await _execute_async_flow(self._flow, None)
+        ...
 
     @overload
     async def __call__(
         self: "AsyncTransformer[Unpack[Args], _Out]", *data: Unpack[Args]
     ) -> _Out:
-        return await _execute_async_flow(self._flow, data)
+        ...
 
     async def __call__(self, *data):
-        if self._multi_args:
-            if len(data) == 1 and type(data[0]) is tuple:
-                data = data[0]
-            elif len(data) == 1:
-                raise TransformerRequiresMultiArgs()
-            return await _execute_async_flow(self._flow, data)
-
-        if len(data) == 0:
-            return await _execute_async_flow(self._flow, None)
-        if len(data) == 1:
-            return await _execute_async_flow(self._flow, data[0])
-        raise TypeError("Transformer expected a single argument")
+        packed = self._pack_call_args(data)
+        return cast(_Out, await _execute_async_flow(self._flow, packed))
 
     @overload
     def __rshift__(
@@ -150,6 +136,26 @@ class AsyncTransformer(Generic[Unpack[Args], _Out], BaseTransformer[Any, _Out]):
         self: "AsyncTransformer[Unpack[Args], tuple[Unpack[NextArgs]]]",
         next_node: "AsyncTransformer[Unpack[NextArgs], _NextOut]",
     ) -> "AsyncTransformer[Unpack[Args], _NextOut]":
+        pass
+
+    @overload
+    def __rshift__(
+        self: "AsyncTransformer[Unpack[Args], list[Item]]",
+        next_node: "Transformer[Iterable[Item], _NextOut]",
+    ) -> "AsyncTransformer[Unpack[Args], _NextOut]":
+        pass
+
+    @overload
+    def __rshift__(
+        self: "AsyncTransformer[Unpack[Args], list[Item]]",
+        next_node: "AsyncTransformer[Iterable[Item], _NextOut]",
+    ) -> "AsyncTransformer[Unpack[Args], _NextOut]":
+        pass
+
+    @overload
+    def __rshift__(
+        self, next_node: "Forward[Never]"
+    ) -> "AsyncTransformer[Unpack[Args], _Out]":
         pass
 
     @overload

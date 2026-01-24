@@ -41,12 +41,12 @@ class TestMultiArgsAsyncTransformer(unittest.IsolatedAsyncioTestCase):
     async def test_composition_transform_method(self):
         test1 = sum2 >> async_plus1
 
-        result = await test1.transform_async((5, 3))
+        result = await test1.transform_async(5, 3)
         self.assertIsNone(result)
 
         test2 = sum2 >> (async_plus1, async_plus1)
 
-        result2 = await test2.transform_async((5, 3))
+        result2 = await test2.transform_async(5, 3)
         self.assertIsNone(result2)
 
     async def test_noargs_basic_call(self):

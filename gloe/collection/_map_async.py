@@ -1,9 +1,12 @@
-from typing import Generic, TypeVar, Iterable
+from typing import Generic, TypeVar, Iterable, overload, cast
+
+from typing_extensions import TypeVarTuple, Unpack
 
 from gloe import AsyncTransformer
 
 _T = TypeVar("_T", contravariant=True)
 _U = TypeVar("_U", covariant=True)
+Args = TypeVarTuple("Args")
 
 
 class MapAsync(Generic[_T, _U], AsyncTransformer[Iterable[_T], list[_U]]):
@@ -27,9 +30,26 @@ class MapAsync(Generic[_T, _U], AsyncTransformer[Iterable[_T], list[_U]]):
             input iterable the yield the mapped item of the output iterable.
     """
 
-    def __init__(self, mapping_transformer: AsyncTransformer[_T, _U]):
+    @overload
+    def __init__(
+        self: "MapAsync[_T, _U]", mapping_transformer: AsyncTransformer[_T, _U]
+    ) -> None:
+        pass
+
+    @overload
+    def __init__(
+        self: "MapAsync[tuple[Unpack[Args]], _U]",
+        mapping_transformer: AsyncTransformer[Unpack[Args], _U],
+    ) -> None:
+        pass
+
+    def __init__(
+        self,
+        mapping_transformer: AsyncTransformer[_T, _U]
+        | AsyncTransformer[Unpack[Args], _U],
+    ):
         super().__init__()
-        self.mapping_transformer = mapping_transformer
+        self.mapping_transformer = cast(AsyncTransformer[_T, _U], mapping_transformer)
         self.plotting_settings.has_children = True
         self._children = [mapping_transformer]
 

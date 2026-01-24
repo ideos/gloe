@@ -134,7 +134,7 @@ class TestTransformerGraph(unittest.TestCase):
         divergent = (
             square
             >> (
-                plus1 >> if_is_even.Then(square_root).Else(forward()),
+                plus1 >> if_is_even.Then(square_root).Else(forward[float]()),
                 minus1 >> natural_logarithm,
                 times2 >> divide_by_2,
             )
@@ -195,7 +195,9 @@ class TestTransformerGraph(unittest.TestCase):
         self._assert_graph_has_edges(graph, expected_edges)
 
     def test_simple_conditional_case(self):
-        conditional = square_root >> if_is_even.Then(plus1).Else(forward()) >> minus1
+        conditional = (
+            square_root >> if_is_even.Then(plus1).Else(forward[float]()) >> minus1
+        )
 
         graph: GloeGraph = conditional.graph()
 
@@ -214,7 +216,9 @@ class TestTransformerGraph(unittest.TestCase):
     def test_complex_conditional_case(self):
         then_graph = plus1 >> square >> (times2, divide_by_2) >> sum_tuple2
         conditional = (
-            square_root >> if_is_even.Then(then_graph).Else(forward()) >> minus1
+            square_root
+            >> if_is_even.Then(then_graph).Else(forward[float]())
+            >> minus1
         )
 
         graph: GloeGraph = conditional.graph()
@@ -298,7 +302,9 @@ class TestTransformerGraph(unittest.TestCase):
     def test_nodes_properties_case(self):
         then_graph = plus1 >> square >> (times2, divide_by_2) >> sum_tuple2
         conditional = (
-            square_root >> if_is_even.Then(then_graph).Else(forward()) >> minus1
+            square_root
+            >> if_is_even.Then(then_graph).Else(forward[float]())
+            >> minus1
         )
 
         graph = conditional.graph()
@@ -348,7 +354,7 @@ class TestTransformerGraph(unittest.TestCase):
         self._assert_edge_properties(graph, expected_edge_props)
 
     def test_subgraphs(self):
-        nested_transformer = forward[list[int]]() >> Map(square >> square_root)
+        nested_transformer = forward[list[float]]() >> Map(square >> square_root)
         nested_graph = nested_transformer.graph()
         subgraphs = nested_graph.subgraphs
         self.assertEqual(len(subgraphs), 1)

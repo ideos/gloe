@@ -1,14 +1,13 @@
 from abc import ABC, abstractmethod
 from inspect import Signature
 
-from typing import TypeVar, overload, cast, Optional, Any, get_args, get_origin, Iterable
+from typing import TypeVar, overload, cast, Optional, Iterable, TYPE_CHECKING
 
-from typing_extensions import Generic, TypeAlias, Unpack, TypeVarTuple
+from typing_extensions import Generic, TypeAlias, Unpack, TypeVarTuple, Never
 
 from gloe.async_transformer import AsyncTransformer
 from gloe._transformer_utils import catch_transformer_exception
 from gloe.base_transformer import BaseTransformer, Flow
-from gloe.exceptions import TransformerRequiresMultiArgs
 
 from gloe._generic_types import (
     AsyncNext2,
@@ -18,6 +17,9 @@ from gloe._generic_types import (
     AsyncNext6,
     AsyncNext7,
 )
+
+if TYPE_CHECKING:
+    from gloe.utils import forward as Forward
 
 __all__ = ["Transformer"]
 
@@ -39,7 +41,7 @@ Args = TypeVarTuple("Args")
 NextArgs = TypeVarTuple("NextArgs")
 
 
-def _execute_flow(flow: Flow, arg: Any) -> Any:
+def _execute_flow(flow: Flow, arg: object) -> object:
     result = arg
     for op in flow:
         if isinstance(op, Transformer):
@@ -49,7 +51,7 @@ def _execute_flow(flow: Flow, arg: Any) -> Any:
     return result
 
 
-class Transformer(BaseTransformer[Any, _O], Generic[Unpack[Args], _O], ABC):
+class Transformer(BaseTransformer[Unpack[Args], _O], Generic[Unpack[Args], _O], ABC):
     """
     A Transformer is the generic block with the responsibility to take an input of type
     `T` and transform it to an output of type `S`.
@@ -68,15 +70,9 @@ class Transformer(BaseTransformer[Any, _O], Generic[Unpack[Args], _O], ABC):
     def __init__(self):
         super().__init__()
         self.__class__.__annotations__ = self.transform.__annotations__
-        orig_bases = getattr(self, "__orig_bases__", [])
-        transformer_args = [
-            get_args(base) for base in orig_bases if get_origin(base) == Transformer
-        ]
-        if transformer_args and len(transformer_args[0]) > 2:
-            self._multi_args = True
 
     @abstractmethod
-    def transform(self, data: Any) -> _O:
+    def transform(self, *data: Unpack[Args]) -> _O:
         """
         Main method to be implemented and responsible to perform the transformer logic
         """
@@ -98,12 +94,13 @@ class Transformer(BaseTransformer[Any, _O], Generic[Unpack[Args], _O], ABC):
             f" -> {self.output_annotation}"
         )
 
-    def _safe_transform(self, data: Any) -> _O:
+    def _safe_transform(self, data: object) -> _O:
         transform_exception = None
 
         transformed: Optional[_O] = None
         try:
-            transformed = self.transform(data)
+            args = cast(tuple[Unpack[Args]], self._unpack_call_args(data))
+            transformed = self.transform(*args)
         except Exception as exception:
             transform_exception = catch_transformer_exception(exception, self)
 
@@ -126,18 +123,8 @@ class Transformer(BaseTransformer[Any, _O], Generic[Unpack[Args], _O], ABC):
         pass
 
     def __call__(self, *data):
-        if self._multi_args:
-            if len(data) == 1 and type(data[0]) is tuple:
-                data = data[0]
-            elif len(data) == 1:
-                raise TransformerRequiresMultiArgs()
-            return _execute_flow(self._flow, data)
-
-        if len(data) == 0:
-            return _execute_flow(self._flow, None)
-        if len(data) == 1:
-            return _execute_flow(self._flow, data[0])
-        raise TypeError("Transformer expected a single argument")
+        packed = self._pack_call_args(data)
+        return cast(_O, _execute_flow(self._flow, packed))
 
     @overload
     def __rshift__(
@@ -165,6 +152,12 @@ class Transformer(BaseTransformer[Any, _O], Generic[Unpack[Args], _O], ABC):
         self: "Transformer[Unpack[Args], list[Item]]",
         next_node: AsyncTransformer[Iterable[Item], O1],
     ) -> AsyncTransformer[Unpack[Args], O1]:
+        pass
+
+    @overload
+    def __rshift__(
+        self, next_node: "Forward[Never]"
+    ) -> "Transformer[Unpack[Args], _O]":
         pass
 
     @overload

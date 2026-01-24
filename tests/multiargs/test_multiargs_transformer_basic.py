@@ -43,12 +43,12 @@ class TestMultiArgsTransformer(unittest.TestCase):
     def test_composition_transform_method(self):
         test1 = sum2 >> plus1
 
-        result = test1.transform((5, 3))
+        result = test1.transform(5, 3)
         self.assertIsNone(result)
 
         test2 = sum2 >> (plus1, plus1)
 
-        result2 = test2.transform((5, 3))
+        result2 = test2.transform(5, 3)
         self.assertIsNone(result2)
 
     def test_single_arg_exception(self):

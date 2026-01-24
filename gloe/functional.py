@@ -6,7 +6,6 @@ from typing import Callable, TypeVar, cast, Awaitable, overload
 from typing_extensions import Concatenate, TypeVarTuple, Unpack, ParamSpec
 
 from gloe.async_transformer import AsyncTransformer
-from gloe.exceptions import TransformerRequiresMultiArgs
 from gloe.transformers import Transformer
 
 __all__ = [
@@ -65,13 +64,17 @@ def partial_transformer(
 
     def partial(*args: P1.args, **kwargs: P1.kwargs) -> Transformer[A, S]:
         func_signature = inspect.signature(func)
+        parameters = list(func_signature.parameters.values())
+        partial_signature = func_signature.replace(
+            parameters=parameters[:1],
+        )
 
         class LambdaTransformer(Transformer[A, S]):
             __doc__ = func.__doc__
             __annotations__ = cast(FunctionType, func).__annotations__
 
             def signature(self) -> Signature:
-                return func_signature
+                return partial_signature
 
             def transform(self, data: A) -> S:
                 return func(data, *args, **kwargs)
@@ -128,13 +131,17 @@ def partial_async_transformer(
 
     def partial(*args: P1.args, **kwargs: P1.kwargs) -> AsyncTransformer[A, S]:
         func_signature = inspect.signature(func)
+        parameters = list(func_signature.parameters.values())
+        partial_signature = func_signature.replace(
+            parameters=parameters[:1],
+        )
 
         class LambdaTransformer(AsyncTransformer[A, S]):
             __doc__ = func.__doc__
             __annotations__ = cast(FunctionType, func).__annotations__
 
             def signature(self) -> Signature:
-                return func_signature
+                return partial_signature
 
             async def transform_async(self, data: A) -> S:
                 return await func(data, *args, **kwargs)
@@ -192,28 +199,6 @@ def transformer(func):
     """
     func_signature = inspect.signature(func)
 
-    if len(func_signature.parameters) > 1:
-
-        class LambdaMultiArgsTransformer(Transformer):
-            __doc__ = func.__doc__
-            __annotations__ = cast(FunctionType, func).__annotations__
-
-            def signature(self) -> Signature:
-                return func_signature
-
-            def transform(self, data):
-                if type(data) is tuple:
-                    if len(data) == 1:
-                        raise TransformerRequiresMultiArgs()
-                    return func(*data)
-                raise NotImplementedError()  # pragma: no cover
-
-        lambda_transformer1 = LambdaMultiArgsTransformer()
-        lambda_transformer1._multi_args = True
-        lambda_transformer1.__class__.__name__ = func.__name__
-        lambda_transformer1._label = func.__name__
-        return cast(Transformer, lambda_transformer1)
-
     class LambdaTransformer(Transformer):
         __doc__ = func.__doc__
         __annotations__ = cast(FunctionType, func).__annotations__
@@ -221,10 +206,10 @@ def transformer(func):
         def signature(self) -> Signature:
             return func_signature
 
-        def transform(self, data=None):
+        def transform(self, *data):
             if len(func_signature.parameters) == 0:
                 return func()
-            return func(data)
+            return func(*data)
 
     lambda_transformer2 = LambdaTransformer()
     lambda_transformer2.__class__.__name__ = func.__name__
@@ -273,28 +258,6 @@ def async_transformer(func):
     """
     func_signature = inspect.signature(func)
 
-    if len(func_signature.parameters) > 1:
-
-        class LambdaMultiArgsTransformer(AsyncTransformer):
-            __doc__ = func.__doc__
-            __annotations__ = cast(FunctionType, func).__annotations__
-
-            def signature(self) -> Signature:
-                return func_signature
-
-            async def transform_async(self, data):
-                if type(data) is tuple:
-                    if len(data) == 1:
-                        raise TransformerRequiresMultiArgs()
-                    return await func(*data)
-                raise NotImplementedError()  # pragma: no cover
-
-        lambda_transformer1 = LambdaMultiArgsTransformer()
-        lambda_transformer1._multi_args = True
-        lambda_transformer1.__class__.__name__ = func.__name__
-        lambda_transformer1._label = func.__name__
-        return cast(AsyncTransformer, lambda_transformer1)
-
     class LambdaAsyncTransformer(AsyncTransformer):
         __doc__ = func.__doc__
         __annotations__ = cast(FunctionType, func).__annotations__
@@ -302,10 +265,10 @@ def async_transformer(func):
         def signature(self) -> Signature:
             return func_signature
 
-        async def transform_async(self, data):
+        async def transform_async(self, *data):
             if len(func_signature.parameters) == 0:
                 return await func()
-            return await func(data)
+            return await func(*data)
 
     lambda_transformer = LambdaAsyncTransformer()
     lambda_transformer.__class__.__name__ = func.__name__

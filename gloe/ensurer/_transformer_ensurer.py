@@ -1,7 +1,7 @@
 import inspect
 from abc import abstractmethod, ABC
 from types import FunctionType
-from typing import Any, Callable, Generic, Sequence, TypeVar, cast, overload
+from typing import Any, Callable, Generic, Optional, Sequence, TypeVar, cast, overload
 
 from typing_extensions import ParamSpec
 
@@ -72,6 +72,14 @@ class _ensure_base:
         self.output_ensurers_instances = []
         self._input_data = None
 
+    @staticmethod
+    def _normalize_input(data: tuple[object, ...]) -> Optional[object]:
+        if len(data) == 0:
+            return None
+        if len(data) == 1:
+            return data[0]
+        return data
+
     @overload
     def __call__(self, transformer: Transformer[_U, _S]) -> Transformer[_U, _S]:
         pass
@@ -122,12 +130,13 @@ class _ensure_base:
 
         if isinstance(first_node, Transformer) and len(transformer) == 1:
 
-            def transform(_, data):
+            def transform(_, *data):
+                incoming = self._normalize_input(data)
                 for ensurer in self.input_ensurers_instances:
-                    ensurer.validate_input(data)
-                output = transformer.transform(data)
+                    ensurer.validate_input(incoming)
+                output = transformer.transform(*data)
                 for ensurer in self.output_ensurers_instances:
-                    ensurer.validate_output(data, output)
+                    ensurer.validate_output(incoming, output)
                 return output
 
             return transformer.copy(transform)
@@ -137,11 +146,12 @@ class _ensure_base:
             or len(self.output_ensurers_instances) > 0
         ):
 
-            def transform(_, data):
+            def transform(_, *data):
+                incoming = self._normalize_input(data)
                 for ensurer in self.input_ensurers_instances:
-                    ensurer.validate_input(data)
-                output = first_node.transform(data)
-                self._input_data = data
+                    ensurer.validate_input(incoming)
+                output = first_node.transform(*data)
+                self._input_data = incoming
                 return output
 
             transformer._flow[0] = first_node.copy(transform)
@@ -151,8 +161,8 @@ class _ensure_base:
             and len(self.output_ensurers_instances) > 0
         ):
 
-            def transform(_, data):
-                output = last_node.transform(data)
+            def transform(_, *data):
+                output = last_node.transform(*data)
                 for ensurer in self.output_ensurers_instances:
                     ensurer.validate_output(self._input_data, output)
                 return output
@@ -170,12 +180,13 @@ class _ensure_base:
 
         if isinstance(first_node, AsyncTransformer) and len(_flow) == 1:
 
-            async def transform_async(_, data):
+            async def transform_async(_, *data):
+                incoming = self._normalize_input(data)
                 for ensurer in self.input_ensurers_instances:
-                    ensurer.validate_input(data)
-                output = await transformer.transform_async(data)
+                    ensurer.validate_input(incoming)
+                output = await transformer.transform_async(*data)
                 for ensurer in self.output_ensurers_instances:
-                    ensurer.validate_output(data, output)
+                    ensurer.validate_output(incoming, output)
                 return output
 
             return transformer.copy(transform_async)
@@ -186,21 +197,23 @@ class _ensure_base:
         ):
             if isinstance(first_node, AsyncTransformer):
 
-                async def transform_async(_, data):
+                async def transform_async(_, *data):
+                    incoming = self._normalize_input(data)
                     for ensurer in self.input_ensurers_instances:
-                        ensurer.validate_input(data)
-                    output = await first_node.transform_async(data)
-                    self._input_data = data
+                        ensurer.validate_input(incoming)
+                    output = await first_node.transform_async(*data)
+                    self._input_data = incoming
                     return output
 
                 transformer._flow[0] = first_node.copy(transform_async)
             elif isinstance(first_node, Transformer):
 
-                def transform(_, data):
+                def transform(_, *data):
+                    incoming = self._normalize_input(data)
                     for ensurer in self.input_ensurers_instances:
-                        ensurer.validate_input(data)
-                    output = first_node.transform(data)
-                    self._input_data = data
+                        ensurer.validate_input(incoming)
+                    output = first_node.transform(*data)
+                    self._input_data = incoming
                     return output
 
                 transformer._flow[0] = first_node.copy(transform)
@@ -208,8 +221,8 @@ class _ensure_base:
         if len(self.output_ensurers_instances) > 0:
             if isinstance(last_node, AsyncTransformer):
 
-                async def transform_async(_, data):
-                    output = await last_node.transform_async(data)
+                async def transform_async(_, *data):
+                    output = await last_node.transform_async(*data)
                     for ensurer in self.output_ensurers_instances:
                         ensurer.validate_output(self._input_data, output)
                     return output
@@ -218,8 +231,8 @@ class _ensure_base:
 
             elif isinstance(last_node, Transformer):
 
-                def transform(_, data):
-                    output = last_node.transform(data)
+                def transform(_, *data):
+                    output = last_node.transform(*data)
                     for ensurer in self.output_ensurers_instances:
                         ensurer.validate_output(self._input_data, output)
                     return output

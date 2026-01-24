@@ -208,9 +208,16 @@ class BaseTransformer(Generic[Unpack[Args], _Out], ABC):
             return self._signature_override
 
         orig_bases = getattr(self, "__orig_bases__", [])
-        transformer_args = [
-            get_args(base) for base in orig_bases if get_origin(base) == klass
-        ]
+        transformer_args = []
+        for base in orig_bases:
+            origin = get_origin(base)
+            if origin is None:
+                continue
+            try:
+                if issubclass(origin, klass):
+                    transformer_args.append(get_args(base))
+            except TypeError:
+                continue
         generic_args = [
             get_args(base) for base in orig_bases if get_origin(base) == Generic
         ]

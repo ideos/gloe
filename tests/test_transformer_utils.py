@@ -1,7 +1,7 @@
 import unittest
 from typing import Union
 
-from gloe import transformer, Transformer
+from gloe import transformer
 from gloe.transformers import _execute_flow
 from gloe.utils import forward, forward_incoming, debug, attach
 from tests.lib.transformers import sum_tuple2, square_root, square
@@ -42,8 +42,7 @@ class TestTransformerUtils(unittest.TestCase):
         )
 
     def test_debug(self):
-        base: Transformer[int, int] = forward[int]()
-        test_debug: Transformer[int, int] = base >> debug[int]()
+        test_debug = forward[int]() >> debug()
 
         result = test_debug(5)
         self.assertEqual(result, 5)

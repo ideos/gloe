@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from inspect import Signature
 
-from typing import TypeVar, overload, cast, Optional, Iterable, TYPE_CHECKING
+from typing import TypeVar, overload, cast, Optional, Iterable
 
-from typing_extensions import Generic, TypeAlias, Unpack, TypeVarTuple, Never
+from typing_extensions import Generic, TypeAlias, Unpack, TypeVarTuple
 
 from gloe.async_transformer import AsyncTransformer
 from gloe._transformer_utils import catch_transformer_exception
@@ -17,9 +17,6 @@ from gloe._generic_types import (
     AsyncNext6,
     AsyncNext7,
 )
-
-if TYPE_CHECKING:
-    from gloe.utils import forward as Forward
 
 __all__ = ["Transformer"]
 
@@ -156,7 +153,8 @@ class Transformer(BaseTransformer[Unpack[Args], _O], Generic[Unpack[Args], _O], 
 
     @overload
     def __rshift__(
-        self, next_node: "Forward[Never]"
+        self: "Transformer[Unpack[Args], _O]",
+        next_node: "Transformer[_O, _O]",
     ) -> "Transformer[Unpack[Args], _O]":
         pass
 

@@ -85,9 +85,6 @@ class AsyncTransformer(Generic[Unpack[Args], _Out], BaseTransformer[Unpack[Args]
         )
 
     async def _safe_transform(self, data: object) -> _Out:
-        transform_exception = None
-
-        transformed: Optional[_Out] = None
         try:
             args = cast(tuple[Unpack[Args]], self._unpack_call_args(data))
         except TransformerRequiresMultiArgs as exception:
@@ -97,17 +94,9 @@ class AsyncTransformer(Generic[Unpack[Args], _Out], BaseTransformer[Unpack[Args]
                 raise TypeError(self._param_mismatch_message(data)) from exception
             raise
         try:
-            transformed = await self.transform_async(*args)
+            return await self.transform_async(*args)
         except Exception as exception:
-            transform_exception = catch_transformer_exception(exception, self)
-
-        if transform_exception is not None:
-            raise transform_exception.internal_exception
-
-        if type(transformed) is not None:
-            return cast(_Out, transformed)
-
-        raise NotImplementedError  # pragma: no cover
+            raise catch_transformer_exception(exception, self).internal_exception
 
     def copy(
         self,

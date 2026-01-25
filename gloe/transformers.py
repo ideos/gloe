@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from inspect import Signature
 
-from typing import TypeVar, overload, cast, Optional, Iterable
+from typing import TypeVar, overload, cast, Iterable
 
-from typing_extensions import Generic, TypeAlias, Unpack, TypeVarTuple
+from typing_extensions import Generic, Unpack, TypeVarTuple
 
 from gloe.async_transformer import AsyncTransformer
 from gloe._transformer_utils import catch_transformer_exception
@@ -22,8 +22,6 @@ from gloe._generic_types import (
 __all__ = ["Transformer"]
 
 _O = TypeVar("_O", covariant=True)
-
-Tr: TypeAlias = "Transformer"
 
 Item = TypeVar("Item")
 O1 = TypeVar("O1")
@@ -93,9 +91,6 @@ class Transformer(BaseTransformer[Unpack[Args], _O], Generic[Unpack[Args], _O], 
         )
 
     def _safe_transform(self, data: object) -> _O:
-        transform_exception = None
-
-        transformed: Optional[_O] = None
         try:
             args = cast(tuple[Unpack[Args]], self._unpack_call_args(data))
         except TransformerRequiresMultiArgs as exception:
@@ -107,15 +102,8 @@ class Transformer(BaseTransformer[Unpack[Args], _O], Generic[Unpack[Args], _O], 
         try:
             transformed = self.transform(*args)
         except Exception as exception:
-            transform_exception = catch_transformer_exception(exception, self)
-
-        if transform_exception is not None:
-            raise transform_exception.internal_exception
-
-        if type(transformed) is not None:
-            return cast(_O, transformed)
-
-        raise NotImplementedError()  # pragma: no cover
+            raise catch_transformer_exception(exception, self).internal_exception
+        return cast(_O, transformed)
 
     def __call__(self, *data: Unpack[Args]) -> _O:
         packed = self._pack_call_args(data)
@@ -165,21 +153,26 @@ class Transformer(BaseTransformer[Unpack[Args], _O], Generic[Unpack[Args], _O], 
     @overload
     def __rshift__(
         self,
-        next_node: tuple["Tr[_O, O1]", "Tr[_O, O2]"],
+        next_node: tuple["Transformer[_O, O1]", "Transformer[_O, O2]"],
     ) -> "Transformer[Unpack[Args], tuple[O1, O2]]":
         pass
 
     @overload
     def __rshift__(
         self,
-        next_node: tuple["Tr[_O, O1]", "Tr[_O, O2]", "Tr[_O, O3]"],
+        next_node: tuple["Transformer[_O, O1]", "Transformer[_O, O2]", "Transformer[_O, O3]"],
     ) -> "Transformer[Unpack[Args], tuple[O1, O2, O3]]":
         pass
 
     @overload
     def __rshift__(
         self,
-        next_node: tuple["Tr[_O, O1]", "Tr[_O, O2]", "Tr[_O, O3]", "Tr[_O, O4]"],
+        next_node: tuple[
+            "Transformer[_O, O1]",
+            "Transformer[_O, O2]",
+            "Transformer[_O, O3]",
+            "Transformer[_O, O4]",
+        ],
     ) -> "Transformer[Unpack[Args], tuple[O1, O2, O3, O4]]":
         pass
 
@@ -187,7 +180,11 @@ class Transformer(BaseTransformer[Unpack[Args], _O], Generic[Unpack[Args], _O], 
     def __rshift__(
         self,
         next_node: tuple[
-            "Tr[_O, O1]", "Tr[_O, O2]", "Tr[_O, O3]", "Tr[_O, O4]", "Tr[_O, O5]"
+            "Transformer[_O, O1]",
+            "Transformer[_O, O2]",
+            "Transformer[_O, O3]",
+            "Transformer[_O, O4]",
+            "Transformer[_O, O5]",
         ],
     ) -> "Transformer[Unpack[Args], tuple[O1, O2, O3, O4, O5]]":
         pass
@@ -196,12 +193,12 @@ class Transformer(BaseTransformer[Unpack[Args], _O], Generic[Unpack[Args], _O], 
     def __rshift__(
         self,
         next_node: tuple[
-            "Tr[_O, O1]",
-            "Tr[_O, O2]",
-            "Tr[_O, O3]",
-            "Tr[_O, O4]",
-            "Tr[_O, O5]",
-            "Tr[_O, O6]",
+            "Transformer[_O, O1]",
+            "Transformer[_O, O2]",
+            "Transformer[_O, O3]",
+            "Transformer[_O, O4]",
+            "Transformer[_O, O5]",
+            "Transformer[_O, O6]",
         ],
     ) -> "Transformer[Unpack[Args], tuple[O1, O2, O3, O4, O5, O6]]":
         pass
@@ -210,13 +207,13 @@ class Transformer(BaseTransformer[Unpack[Args], _O], Generic[Unpack[Args], _O], 
     def __rshift__(
         self,
         next_node: tuple[
-            "Tr[_O, O1]",
-            "Tr[_O, O2]",
-            "Tr[_O, O3]",
-            "Tr[_O, O4]",
-            "Tr[_O, O5]",
-            "Tr[_O, O6]",
-            "Tr[_O, O7]",
+            "Transformer[_O, O1]",
+            "Transformer[_O, O2]",
+            "Transformer[_O, O3]",
+            "Transformer[_O, O4]",
+            "Transformer[_O, O5]",
+            "Transformer[_O, O6]",
+            "Transformer[_O, O7]",
         ],
     ) -> "Transformer[Unpack[Args], tuple[O1, O2, O3, O4, O5, O6, O7]]":
         pass

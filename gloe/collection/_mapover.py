@@ -4,6 +4,7 @@ from typing_extensions import TypeVarTuple, Unpack
 
 
 from gloe.transformers import Transformer
+from gloe.collection._mapover_utils import validate_mapover_signature
 
 Args = TypeVarTuple("Args")
 _Head = TypeVar("_Head")
@@ -37,39 +38,15 @@ class MapOver(Generic[Unpack[Args], _U], Transformer[Unpack[Args], list[_U]]):
         | Transformer[_Head, Unpack[_Tail], _S, _U],
     ):
         super().__init__()
-        self._validate_mapping_transformer(mapping_transformer)
+        validate_mapover_signature(
+            mapping_transformer.signature(), "MapOver", "Map"
+        )
         self.iterable = iterable
         self.mapping_transformer = cast(
             Transformer[tuple[object, ...], _U], mapping_transformer
         )
         self.plotting_settings.has_children = True
         self._children = [mapping_transformer]
-
-    def _validate_mapping_transformer(
-        self,
-        mapping_transformer: Transformer[tuple[_T, _S], _U]
-        | Transformer[_Head, Unpack[_Tail], _S, _U],
-    ) -> None:
-        mapping_signature = mapping_transformer.signature()
-        params = list(mapping_signature.parameters.values())
-        if len(params) == 0:
-            raise TypeError(
-                "MapOver mapping transformer must accept extra arguments plus the item."
-            )
-        if len(params) == 1:
-            annotation = params[0].annotation
-            origin = get_origin(annotation)
-            args = get_args(annotation)
-            if origin is not tuple:
-                raise TypeError(
-                    "MapOver mapping transformer must accept a tuple of (extra, item). "
-                    "Use Map for single-argument mapping."
-                )
-            if len(args) == 1 and args[0] is not ...:
-                raise TypeError(
-                    "MapOver mapping transformer tuple must include the extra argument "
-                    "and the item."
-                )
 
     def signature(self) -> Signature:
         mapping_signature = self.mapping_transformer.signature()

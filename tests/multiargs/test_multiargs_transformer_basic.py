@@ -65,7 +65,7 @@ class TestMultiArgsTransformer(unittest.TestCase):
             return 6
 
         with self.assertRaises(TypeError):
-            randint(1)  # type: ignore[call-overload]
+            randint(1)  # type: ignore[call-arg]
 
     def test_noargs_basic_call(self):
         @transformer

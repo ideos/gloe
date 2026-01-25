@@ -117,17 +117,7 @@ class AsyncTransformer(Generic[Unpack[Args], _Out], BaseTransformer[Unpack[Args]
     ) -> Self:
         return self._copy(transform, regenerate_instance_id, "transform_async", force)
 
-    @overload
-    async def __call__(self: "AsyncTransformer[_Out]") -> _Out:
-        ...
-
-    @overload
-    async def __call__(
-        self: "AsyncTransformer[Unpack[Args], _Out]", *data: Unpack[Args]
-    ) -> _Out:
-        ...
-
-    async def __call__(self, *data):
+    async def __call__(self, *data: Unpack[Args]) -> _Out:
         packed = self._pack_call_args(data)
         return cast(_Out, await _execute_async_flow(self._flow, packed))
 

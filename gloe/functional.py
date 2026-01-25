@@ -17,9 +17,8 @@ __all__ = [
 
 A = TypeVar("A")
 S = TypeVar("S")
-S2 = TypeVar("S2")
 P1 = ParamSpec("P1")
-P2 = ParamSpec("P2")
+Args = TypeVarTuple("Args")
 
 
 def partial_transformer(
@@ -154,30 +153,9 @@ def partial_async_transformer(
     return partial
 
 
-Rest = TypeVarTuple("Rest")
-
-
-B = TypeVar("B")
-
-
-@overload
 def transformer(
-    func: Callable[[A, B, Unpack[Rest]], S],
-) -> Transformer[A, B, Unpack[Rest], S]:
-    pass
-
-
-@overload
-def transformer(func: Callable[[], S]) -> Transformer[S]:
-    pass
-
-
-@overload
-def transformer(func: Callable[[A], S]) -> Transformer[A, S]:
-    pass
-
-
-def transformer(func):
+    func: Callable[[Unpack[Args]], S],
+) -> Transformer[Unpack[Args], S]:
     """
     Convert a callable to an instance of the Transformer class.
 
@@ -208,7 +186,7 @@ def transformer(func):
 
         def transform(self, *data):
             if len(func_signature.parameters) == 0:
-                return func()
+                return cast(Callable[[], S], func)()
             return func(*data)
 
     lambda_transformer2 = LambdaTransformer()
@@ -217,24 +195,9 @@ def transformer(func):
     return lambda_transformer2
 
 
-@overload
 def async_transformer(
-    func: Callable[[A, B, Unpack[Rest]], Awaitable[S]],
-) -> AsyncTransformer[A, B, Unpack[Rest], S]:
-    pass
-
-
-@overload
-def async_transformer(func: Callable[[], Awaitable[S]]) -> AsyncTransformer[S]:
-    pass
-
-
-@overload
-def async_transformer(func: Callable[[A], Awaitable[S]]) -> AsyncTransformer[A, S]:
-    pass
-
-
-def async_transformer(func):
+    func: Callable[[Unpack[Args]], Awaitable[S]],
+) -> AsyncTransformer[Unpack[Args], S]:
     """
     Convert a callable to an instance of the AsyncTransformer class.
 
@@ -267,7 +230,7 @@ def async_transformer(func):
 
         async def transform_async(self, *data):
             if len(func_signature.parameters) == 0:
-                return await func()
+                return await cast(Callable[[], Awaitable[S]], func)()
             return await func(*data)
 
     lambda_transformer = LambdaAsyncTransformer()

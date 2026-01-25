@@ -58,5 +58,5 @@ class TestTypeErrors(unittest.TestCase):
         )
 
         self.assertIn(
-            'No overload variant of "__call__" of "Transformer"', output
+            'Too many arguments for "__call__" of "Transformer"', output
         )

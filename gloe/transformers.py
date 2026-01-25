@@ -117,17 +117,7 @@ class Transformer(BaseTransformer[Unpack[Args], _O], Generic[Unpack[Args], _O], 
 
         raise NotImplementedError()  # pragma: no cover
 
-    @overload
-    def __call__(self: "Transformer[_O]") -> _O:
-        pass
-
-    @overload
-    def __call__(
-        self: "Transformer[Unpack[Args], _O]", *data: Unpack[Args]
-    ) -> _O:
-        pass
-
-    def __call__(self, *data):
+    def __call__(self, *data: Unpack[Args]) -> _O:
         packed = self._pack_call_args(data)
         return cast(_O, _execute_flow(self._flow, packed))
 

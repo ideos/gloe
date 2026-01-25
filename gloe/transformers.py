@@ -7,7 +7,8 @@ from typing_extensions import Generic, TypeAlias, Unpack, TypeVarTuple
 
 from gloe.async_transformer import AsyncTransformer
 from gloe._transformer_utils import catch_transformer_exception
-from gloe.base_transformer import BaseTransformer, Flow
+from gloe.base_transformer import BaseTransformer, Flow, _NO_ARGS
+from gloe.exceptions import TransformerRequiresMultiArgs
 
 from gloe._generic_types import (
     AsyncNext2,
@@ -97,6 +98,13 @@ class Transformer(BaseTransformer[Unpack[Args], _O], Generic[Unpack[Args], _O], 
         transformed: Optional[_O] = None
         try:
             args = cast(tuple[Unpack[Args]], self._unpack_call_args(data))
+        except TransformerRequiresMultiArgs as exception:
+            raise TypeError(self._param_mismatch_message(data)) from exception
+        except TypeError as exception:
+            if data is _NO_ARGS:
+                raise TypeError(self._param_mismatch_message(data)) from exception
+            raise
+        try:
             transformed = self.transform(*args)
         except Exception as exception:
             transform_exception = catch_transformer_exception(exception, self)
@@ -110,7 +118,7 @@ class Transformer(BaseTransformer[Unpack[Args], _O], Generic[Unpack[Args], _O], 
         raise NotImplementedError()  # pragma: no cover
 
     @overload
-    def __call__(self: "Transformer[None, _O]") -> _O:
+    def __call__(self: "Transformer[_O]") -> _O:
         pass
 
     @overload

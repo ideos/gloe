@@ -256,7 +256,11 @@ class BaseTransformer(Generic[Unpack[Args], _Out], ABC):
             param_count = len(self.signature().parameters)
         except Exception:
             param_count = 1
-        if param_count <= 1:
+        if param_count == 0:
+            if len(args) == 0:
+                return _NO_ARGS
+            raise TypeError("Transformer expected no arguments")
+        if param_count == 1:
             if len(args) == 0:
                 return _NO_ARGS
             if len(args) == 1:
@@ -280,10 +284,39 @@ class BaseTransformer(Generic[Unpack[Args], _Out], ABC):
         if data is _NO_ARGS:
             raise TypeError("Transformer expected a single argument")
         if param_count == 1:
+            try:
+                params = list(self.signature().parameters.values())
+            except Exception:
+                return (data,)
+            annotation = params[0].annotation if params else None
+            origin = get_origin(annotation)
+            args = get_args(annotation)
+            if origin is tuple:
+                if not isinstance(data, tuple):
+                    raise TypeError(self._param_mismatch_message(data))
+                if args and args[-1] is not Ellipsis and len(args) != len(data):
+                    raise TypeError(self._param_mismatch_message(data))
             return (data,)
         if isinstance(data, tuple):
             return data
         raise TransformerRequiresMultiArgs()
+
+    def _param_mismatch_message(self, data: object) -> str:
+        try:
+            param_count = len(self.signature().parameters)
+        except Exception:
+            param_count = 1
+        if data is _NO_ARGS:
+            got = "no arguments"
+        elif isinstance(data, tuple):
+            got = f"{len(data)} arguments"
+        else:
+            got = "1 argument"
+        expected = self.input_annotation
+        return (
+            f"Transformer parameter mismatch for {type(self).__name__}: "
+            f"expected {param_count} arguments ({expected}), got {got}."
+        )
 
     @property
     def output_type(self) -> Any:

@@ -168,7 +168,7 @@ def transformer(
 
 
 @overload
-def transformer(func: Callable[[], S]) -> Transformer[None, S]:
+def transformer(func: Callable[[], S]) -> Transformer[S]:
     pass
 
 
@@ -225,7 +225,7 @@ def async_transformer(
 
 
 @overload
-def async_transformer(func: Callable[[], Awaitable[S]]) -> AsyncTransformer[None, S]:
+def async_transformer(func: Callable[[], Awaitable[S]]) -> AsyncTransformer[S]:
     pass
 
 

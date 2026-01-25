@@ -59,6 +59,14 @@ class TestMultiArgsTransformer(unittest.TestCase):
         with self.assertRaises(TransformerRequiresMultiArgs):
             concat("test")  # type: ignore[call-arg]
 
+    def test_noargs_with_args_exception(self):
+        @transformer
+        def randint() -> int:
+            return 6
+
+        with self.assertRaises(TypeError):
+            randint(1)  # type: ignore[call-overload]
+
     def test_noargs_basic_call(self):
         @transformer
         def randint() -> int:
@@ -74,3 +82,15 @@ class TestMultiArgsTransformer(unittest.TestCase):
         pipeline = randfloat >> (square, square) >> sum_tuple2
 
         self.assertEqual(pipeline(), 72.0)
+
+    def test_composition_param_mismatch(self):
+        @transformer
+        def randint() -> int:
+            return 6
+
+        pipeline = randint >> sum_tuple2  # type: ignore[operator]
+
+        with self.assertRaises(TypeError) as ctx:
+            pipeline()
+
+        self.assertIn("parameter mismatch", str(ctx.exception))

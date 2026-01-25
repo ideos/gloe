@@ -38,7 +38,7 @@ class TestMultiArgsTransformerTypes(MypyTestSuite):
         def randint() -> int:
             return 6
 
-        assert_type(randint, Transformer[None, int])
+        assert_type(randint, Transformer[int])
 
     def test_composition(self):
         @transformer

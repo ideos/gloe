@@ -6,7 +6,8 @@ from typing_extensions import Self, Unpack, Generic, TypeVarTuple
 
 from gloe._plotting_utils import PlottingSettings, NodeType
 from gloe._transformer_utils import catch_transformer_exception
-from gloe.base_transformer import BaseTransformer, Flow
+from gloe.base_transformer import BaseTransformer, Flow, _NO_ARGS
+from gloe.exceptions import TransformerRequiresMultiArgs
 
 if TYPE_CHECKING:
     from gloe.transformers import Transformer
@@ -89,6 +90,13 @@ class AsyncTransformer(Generic[Unpack[Args], _Out], BaseTransformer[Unpack[Args]
         transformed: Optional[_Out] = None
         try:
             args = cast(tuple[Unpack[Args]], self._unpack_call_args(data))
+        except TransformerRequiresMultiArgs as exception:
+            raise TypeError(self._param_mismatch_message(data)) from exception
+        except TypeError as exception:
+            if data is _NO_ARGS:
+                raise TypeError(self._param_mismatch_message(data)) from exception
+            raise
+        try:
             transformed = await self.transform_async(*args)
         except Exception as exception:
             transform_exception = catch_transformer_exception(exception, self)
@@ -110,7 +118,7 @@ class AsyncTransformer(Generic[Unpack[Args], _Out], BaseTransformer[Unpack[Args]
         return self._copy(transform, regenerate_instance_id, "transform_async", force)
 
     @overload
-    async def __call__(self: "AsyncTransformer[None, _Out]") -> _Out:
+    async def __call__(self: "AsyncTransformer[_Out]") -> _Out:
         ...
 
     @overload

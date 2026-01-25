@@ -36,6 +36,7 @@ class MapOverAsync(Generic[Unpack[Args], _U], AsyncTransformer[Unpack[Args], lis
         | AsyncTransformer[_Head, Unpack[_Tail], _S, _U],
     ):
         super().__init__()
+        self._validate_mapping_transformer(mapping_transformer)
         self.iterable = iterable
         self.mapping_transformer = cast(
             AsyncTransformer[tuple[object, ...], _U], mapping_transformer
@@ -66,6 +67,32 @@ class MapOverAsync(Generic[Unpack[Args], _U], AsyncTransformer[Unpack[Args], lis
             return Signature(parameters=[param], return_annotation=return_annotation)
 
         return Signature(parameters=params[:-1], return_annotation=return_annotation)
+
+    def _validate_mapping_transformer(
+        self,
+        mapping_transformer: AsyncTransformer[tuple[_T, _S], _U]
+        | AsyncTransformer[_Head, Unpack[_Tail], _S, _U],
+    ) -> None:
+        mapping_signature = mapping_transformer.signature()
+        params = list(mapping_signature.parameters.values())
+        if len(params) == 0:
+            raise TypeError(
+                "MapOverAsync mapping transformer must accept extra arguments plus the item."
+            )
+        if len(params) == 1:
+            annotation = params[0].annotation
+            origin = get_origin(annotation)
+            args = get_args(annotation)
+            if origin is not tuple:
+                raise TypeError(
+                    "MapOverAsync mapping transformer must accept a tuple of (extra, item). "
+                    "Use MapAsync for single-argument mapping."
+                )
+            if len(args) == 1 and args[0] is not ...:
+                raise TypeError(
+                    "MapOverAsync mapping transformer tuple must include the extra argument "
+                    "and the item."
+                )
 
     async def transform_async(self, *data: Unpack[Args]) -> list[_U]:
         lopping_result = []

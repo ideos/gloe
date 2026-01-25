@@ -56,3 +56,22 @@ class TestTransformerCollectionAsync(unittest.IsolatedAsyncioTestCase):
         result = list(await mapping(-1.0))
 
         self.assertListEqual(result, data)
+
+    async def test_transformer_async_map_over_multiargs(self):
+        data = [1.0, 2.0, 3.0]
+
+        @async_transformer
+        async def scale_add(scale: float, offset: float, item: float) -> float:
+            return scale * item + offset
+
+        mapping = MapOverAsync(data, scale_add)
+
+        result = await mapping(2.0, 1.0)
+
+        self.assertListEqual(result, [3.0, 5.0, 7.0])
+
+    async def test_transformer_async_map_over_item_only_raises(self):
+        with self.assertRaises(TypeError) as ctx:
+            MapOverAsync([1.0, 2.0], async_plus1)  # type: ignore[arg-type]
+
+        self.assertIn("MapOverAsync", str(ctx.exception))

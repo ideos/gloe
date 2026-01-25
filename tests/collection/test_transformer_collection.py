@@ -17,6 +17,13 @@ class TestTransformerCollection(unittest.TestCase):
 
         self.assertListEqual(result, ["hello1", "world2"])
 
+    def test_transformer_map_tuple_items(self):
+        mapping = Map(sum_tuple2)
+
+        result = list(mapping([(1.0, 2.0), (3.0, 4.0)]))
+
+        self.assertListEqual(result, [3.0, 7.0])
+
     def test_transformer_map(self):
         """
         Test the map transformer
@@ -79,3 +86,20 @@ class TestTransformerCollection(unittest.TestCase):
                 "User Alice has the role manager_role.",
             ],
         )
+
+    def test_transformer_map_over_multiargs(self):
+        data = [1.0, 2.0, 3.0]
+
+        @transformer
+        def scale_add(scale: float, offset: float, item: float) -> float:
+            return scale * item + offset
+
+        mapping = MapOver(data, scale_add)
+
+        self.assertListEqual(mapping(2.0, 1.0), [3.0, 5.0, 7.0])
+
+    def test_transformer_map_over_item_only_raises(self):
+        with self.assertRaises(TypeError) as ctx:
+            MapOver([1.0, 2.0], square)  # type: ignore[arg-type]
+
+        self.assertIn("MapOver", str(ctx.exception))

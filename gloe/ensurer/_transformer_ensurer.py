@@ -6,7 +6,6 @@ from typing import Any, Callable, Generic, Sequence, TypeVar, cast, overload
 from typing_extensions import ParamSpec
 
 from gloe.exceptions import UnsupportedEnsurerArgException
-from gloe.async_transformer import AsyncTransformer
 from gloe.transformers import Transformer
 
 _T = TypeVar("_T")
@@ -78,27 +77,13 @@ class _ensure_base:
 
     @overload
     def __call__(
-        self, transformer: AsyncTransformer[_U, _S]
-    ) -> AsyncTransformer[_U, _S]:
-        pass
-
-    @overload
-    def __call__(
         self, partial_transformer: Callable[_P1, Transformer[_T, _U]]
     ) -> Callable[_P1, Transformer[_T, _U]]:
-        pass
-
-    @overload
-    def __call__(
-        self, partial_transformer: Callable[_P1, AsyncTransformer[_T, _U]]
-    ) -> Callable[_P1, AsyncTransformer[_T, _U]]:
         pass
 
     def __call__(self, arg):
         if isinstance(arg, Transformer):
             return self._generate_new_transformer(arg)
-        if isinstance(arg, AsyncTransformer):
-            return self._generate_new_async_transformer(arg)
         if callable(arg):
             partial_transformer = arg
 
@@ -106,8 +91,6 @@ class _ensure_base:
                 transformer = partial_transformer(*args, **kwargs)
                 if isinstance(transformer, Transformer):
                     return self._generate_new_transformer(transformer)
-                if isinstance(transformer, AsyncTransformer):
-                    return self._generate_new_async_transformer(transformer)
 
                 raise UnsupportedEnsurerArgException(transformer)
 
@@ -126,6 +109,17 @@ class _ensure_base:
                 for ensurer in self.input_ensurers_instances:
                     ensurer.validate_input(data)
                 output = transformer.transform(data)
+                if len(self.output_ensurers_instances) == 0:
+                    return output
+                if inspect.isawaitable(output):
+
+                    async def _await_output():
+                        result = await output
+                        for ensurer in self.output_ensurers_instances:
+                            ensurer.validate_output(data, result)
+                        return result
+
+                    return _await_output()
                 for ensurer in self.output_ensurers_instances:
                     ensurer.validate_output(data, output)
                 return output
@@ -153,78 +147,20 @@ class _ensure_base:
 
             def transform(_, data):
                 output = last_node.transform(data)
+                if inspect.isawaitable(output):
+
+                    async def _await_output():
+                        result = await output
+                        for ensurer in self.output_ensurers_instances:
+                            ensurer.validate_output(self._input_data, result)
+                        return result
+
+                    return _await_output()
                 for ensurer in self.output_ensurers_instances:
                     ensurer.validate_output(self._input_data, output)
                 return output
 
             transformer._flow[-1] = last_node.copy(transform)
-
-        return transformer
-
-    def _generate_new_async_transformer(
-        self, transformer: AsyncTransformer
-    ) -> AsyncTransformer:
-        _flow = transformer._flow
-        first_node = _flow[0]
-        last_node = _flow[-1]
-
-        if isinstance(first_node, AsyncTransformer) and len(_flow) == 1:
-
-            async def transform_async(_, data):
-                for ensurer in self.input_ensurers_instances:
-                    ensurer.validate_input(data)
-                output = await transformer.transform_async(data)
-                for ensurer in self.output_ensurers_instances:
-                    ensurer.validate_output(data, output)
-                return output
-
-            return transformer.copy(transform_async)
-
-        if (
-            len(self.input_ensurers_instances) > 0
-            or len(self.output_ensurers_instances) > 0
-        ):
-            if isinstance(first_node, AsyncTransformer):
-
-                async def transform_async(_, data):
-                    for ensurer in self.input_ensurers_instances:
-                        ensurer.validate_input(data)
-                    output = await first_node.transform_async(data)
-                    self._input_data = data
-                    return output
-
-                transformer._flow[0] = first_node.copy(transform_async)
-            elif isinstance(first_node, Transformer):
-
-                def transform(_, data):
-                    for ensurer in self.input_ensurers_instances:
-                        ensurer.validate_input(data)
-                    output = first_node.transform(data)
-                    self._input_data = data
-                    return output
-
-                transformer._flow[0] = first_node.copy(transform)
-
-        if len(self.output_ensurers_instances) > 0:
-            if isinstance(last_node, AsyncTransformer):
-
-                async def transform_async(_, data):
-                    output = await last_node.transform_async(data)
-                    for ensurer in self.output_ensurers_instances:
-                        ensurer.validate_output(self._input_data, output)
-                    return output
-
-                transformer._flow[-1] = last_node.copy(transform_async)
-
-            elif isinstance(last_node, Transformer):
-
-                def transform(_, data):
-                    output = last_node.transform(data)
-                    for ensurer in self.output_ensurers_instances:
-                        ensurer.validate_output(self._input_data, output)
-                    return output
-
-                transformer._flow[-1] = last_node.copy(transform)
 
         return transformer
 

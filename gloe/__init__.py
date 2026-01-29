@@ -1,4 +1,5 @@
 from gloe._composition_utils import _compose_nodes
+from gloe.async_transformer import AsyncTransformer
 from gloe.functional import (
     transformer,
     partial_transformer,
@@ -11,7 +12,6 @@ from gloe.exceptions import UnsupportedTransformerArgException
 from gloe.transformers import Transformer
 from gloe.base_transformer import BaseTransformer, PreviousTransformer
 from gloe.base_transformer import TransformerException
-from gloe.async_transformer import AsyncTransformer
 
 __version__ = "0.7.0"
 
@@ -27,9 +27,8 @@ __all__ = [
     "BaseTransformer",
     "PreviousTransformer",
     "Transformer",
-    "TransformerException",
     "AsyncTransformer",
+    "TransformerException",
 ]
 
 setattr(Transformer, "__rshift__", _compose_nodes)
-setattr(AsyncTransformer, "__rshift__", _compose_nodes)

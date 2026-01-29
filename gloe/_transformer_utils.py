@@ -35,9 +35,10 @@ def catch_transformer_exception(
         )
         return transform_exception
 
-    raise NotImplementedError(
-        "This exception was not raised by a transformer"
-    )  # pragma: no cover
+    return TransformerException(
+        internal_exception=exception,
+        raiser_transformer=raiser_transformer,
+    )
 
 
 def _diverging_signatures(

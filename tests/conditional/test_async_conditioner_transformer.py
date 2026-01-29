@@ -1,6 +1,6 @@
 import unittest
 
-from gloe import If
+from gloe import If, UnsupportedTransformerArgException
 from tests.lib.conditioners import if_not_zero
 from tests.lib.transformers import (
     square,
@@ -15,9 +15,8 @@ class TestAsyncConditionerTransformer(unittest.IsolatedAsyncioTestCase):
         def _plus2(num: float) -> float:
             return num + 2
 
-        graph = if_not_zero.Then(async_plus1).Else(_plus2)  # type: ignore
-        with self.assertRaises(NotImplementedError):
-            await graph(0)
+        with self.assertRaises(UnsupportedTransformerArgException):
+            if_not_zero.Then(async_plus1).Else(_plus2)  # type: ignore
 
     async def test_conditioner_in_graph(self):
         graph1 = plus1 >> if_not_zero.Then(async_plus1).Else(minus1)

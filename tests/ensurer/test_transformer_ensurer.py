@@ -124,7 +124,7 @@ class TestTransformerEnsurer(unittest.TestCase):
     def test_function_ensure(self):
         even_ensurer = ensure(incoming=[is_even])
 
-        def build_divide_by_2_pipeline() -> Transformer[int, float]:
+        def build_divide_by_2_pipeline() -> Transformer[float, float]:
             return divide_by_2
 
         ensured_is_even_pipeline = even_ensurer(build_divide_by_2_pipeline)
@@ -196,7 +196,7 @@ class TestTransformerEnsurer(unittest.TestCase):
             incoming=[is_even], outcome=[is_greater_than_10]
         )
 
-        def build_multiply_by_2_pipeline() -> Transformer[int, float]:
+        def build_multiply_by_2_pipeline() -> Transformer[float, float]:
             return times2
 
         ensured_even_and_greater_than_10_pipeline = even_and_greater_than_10_ensurer(

@@ -348,7 +348,7 @@ class TestTransformerGraph(unittest.TestCase):
         self._assert_edge_properties(graph, expected_edge_props)
 
     def test_subgraphs(self):
-        nested_transformer = forward[list[int]]() >> Map(square >> square_root)
+        nested_transformer = forward[list[float]]() >> Map(square >> square_root)
         nested_graph = nested_transformer.graph()
         subgraphs = nested_graph.subgraphs
         self.assertEqual(len(subgraphs), 1)

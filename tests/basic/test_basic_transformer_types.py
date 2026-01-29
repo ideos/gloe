@@ -1,11 +1,11 @@
 from typing import TypeVar
+from collections.abc import Awaitable
 
 from typing_extensions import assert_type
 
 from gloe import (
     Transformer,
     async_transformer,
-    AsyncTransformer,
 )
 from gloe.experimental import bridge
 from gloe.utils import forward
@@ -105,9 +105,9 @@ class TestBasicTransformerTypes(MypyTestSuite):
         async_pipeline4 = _square >> (to_string, forward[float]())
         async_pipeline5 = _square >> (to_string, forward[float]()) >> tuple_concatenate
 
-        assert_type(_square, AsyncTransformer[int, float])
-        assert_type(async_pipeline, AsyncTransformer[int, str])
-        assert_type(async_pipeline2, AsyncTransformer[int, str])
-        assert_type(async_pipeline3, AsyncTransformer[int, tuple[float, str]])
-        assert_type(async_pipeline4, AsyncTransformer[int, tuple[str, float]])
-        assert_type(async_pipeline5, AsyncTransformer[int, str])
+        assert_type(_square, Transformer[int, Awaitable[float]])
+        assert_type(async_pipeline, Transformer[int, Awaitable[str]])
+        assert_type(async_pipeline2, Transformer[int, Awaitable[str]])
+        assert_type(async_pipeline3, Transformer[int, Awaitable[tuple[float, str]]])
+        assert_type(async_pipeline4, Transformer[int, Awaitable[tuple[str, float]]])
+        assert_type(async_pipeline5, Transformer[int, Awaitable[str]])

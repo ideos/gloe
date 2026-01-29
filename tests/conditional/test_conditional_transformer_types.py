@@ -1,10 +1,10 @@
 from typing import TypeVar, Union
+from collections.abc import Awaitable
 
 from typing_extensions import assert_type
 
 from gloe import (
     Transformer,
-    AsyncTransformer,
 )
 from tests.lib.conditioners import if_not_zero, if_is_even
 from tests.lib.transformers import (
@@ -68,10 +68,10 @@ class TestTransformerTypes(MypyTestSuite):
 
         assert_type(
             async_chained_conditions_graph,
-            AsyncTransformer[float, Union[float, str, None]],
+            Transformer[float, Awaitable[Union[float, str, None]]],
         )
 
-        async_chained_conditions_graph = (
+        async_chained_conditions_graph2 = (
             if_is_even.Then(square)
             .ElseIf(lambda x: x < 10)
             .Then(async_plus1)
@@ -79,6 +79,6 @@ class TestTransformerTypes(MypyTestSuite):
         )
 
         assert_type(
-            async_chained_conditions_graph,
-            AsyncTransformer[float, Union[float, None]],
+            async_chained_conditions_graph2,
+            Transformer[float, Awaitable[Union[float, None]]],
         )

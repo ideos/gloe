@@ -30,10 +30,11 @@ ThenOut = TypeVar("ThenOut", covariant=True)
 ElseOut = TypeVar("ElseOut")
 ElseIfOut = TypeVar("ElseIfOut")
 PrevThenOut = TypeVar("PrevThenOut")
+Out = TypeVar("Out", covariant=True)
 
 
 class BaseConditioner(
-    Generic[In, ThenOut, ElseOut], BaseTransformer[In, Union[ThenOut, ElseOut]]
+    Generic[In, ThenOut, ElseOut, Out], BaseTransformer[In, Out]
 ):
     def __init__(
         self,
@@ -71,7 +72,7 @@ class BaseConditioner(
 
     def copy(
         self,
-        transform: Optional[Callable[[Self, In], Union[ThenOut, ElseOut]]] = None,
+        transform: Optional[Callable[[Self, In], Out]] = None,
         regenerate_instance_id: bool = False,
         force: bool = False,
     ) -> Self:

@@ -1,7 +1,10 @@
-from gloe.async_transformer import AsyncTransformer
-from gloe.base_transformer import BaseTransformer
 from gloe.exceptions import UnsupportedTransformerArgException
-from gloe.conditional._if_then_else import _IfThen, _AsyncIfThen, _BaseIfThen
+from gloe.conditional._if_then_else import (
+    _IfThenSync,
+    _IfThenAsync,
+    _as_async_transformer,
+    _returns_awaitable,
+)
 from gloe.conditional._implication import _Implication, _AsyncImplication
 from typing import (
     Callable,
@@ -10,6 +13,7 @@ from typing import (
     Union,
     overload,
 )
+from typing import Awaitable
 
 from gloe.transformers import Transformer
 
@@ -41,34 +45,27 @@ class If(Generic[In]):
         self._condition = condition
         self._name: str = name or condition.__name__
 
-    @overload
-    def Then(
+    @overload  # type: ignore[overload-overlap]
+    def Then(  # type: ignore[overload-overlap]
+        self, next_transformer: Transformer[In, Awaitable[ThenOut]]
+    ) -> _IfThenAsync[In, ThenOut, ThenOut]:
+        pass
+
+    @overload  # type: ignore[overload-overlap]
+    def Then(  # type: ignore[overload-overlap]
         self, next_transformer: Transformer[In, ThenOut]
-    ) -> _IfThen[In, ThenOut, ThenOut]:
+    ) -> _IfThenSync[In, ThenOut, ThenOut]:
         pass
 
-    @overload
-    def Then(
-        self, next_transformer: AsyncTransformer[In, ThenOut]
-    ) -> _AsyncIfThen[In, ThenOut, ThenOut]:
-        pass
-
-    def Then(
-        self, next_transformer: BaseTransformer[In, ThenOut]
-    ) -> _BaseIfThen[In, ThenOut, ThenOut]:
-        if isinstance(next_transformer, AsyncTransformer):
-            async_implication = _AsyncImplication[In, ThenOut](
-                self._condition, next_transformer
-            )
-            async_if_then = _AsyncIfThen[In, ThenOut, ThenOut](
-                async_implication, name=self._name
-            )
-            return async_if_then
-
+    def Then(self, next_transformer: Transformer[In, ThenOut]):
         if isinstance(next_transformer, Transformer):
-            implication = _Implication[In, ThenOut](self._condition, next_transformer)
-            if_then = _IfThen[In, ThenOut, ThenOut](implication, name=self._name)
-            return if_then
+            if _returns_awaitable(next_transformer):
+                async_transformer = _as_async_transformer(next_transformer)
+                async_implication = _AsyncImplication(self._condition, async_transformer)
+                return _IfThenAsync(async_implication, name=self._name)
+
+            sync_implication = _Implication(self._condition, next_transformer)
+            return _IfThenSync(sync_implication, name=self._name)
 
         raise UnsupportedTransformerArgException(next_transformer)
 

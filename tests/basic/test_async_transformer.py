@@ -176,10 +176,13 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
     def test_async_transformer_signature_representation(self):
         signature = request_data.signature()
 
-        self.assertEqual(str(signature), "(url: str) -> dict[str, str]")
+        self.assertEqual(str(signature), "(url: str) -> Awaitable[dict[str, str]]")
 
     def test_async_transformer_representation(self):
-        self.assertEqual(repr(request_data), "str -> (request_data) -> dict[str, str]")
+        self.assertEqual(
+            repr(request_data),
+            "str -> (request_data) -> Awaitable[dict[str, str]]",
+        )
 
         class_request_data = RequestData()
         self.assertEqual(

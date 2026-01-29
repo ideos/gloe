@@ -26,7 +26,7 @@ class _pick(Generic[T], Transformer[T, T]):
         return data
 
 
-class _drop(Generic[B, T], Transformer[B, tuple[B, T]]):
+class _drop(Generic[T], Transformer[object, tuple[object, T]]):
     def __init__(self, variable: ContextVar[T]):
         super().__init__()
         self.plotting_settings.invisible = True
@@ -48,6 +48,5 @@ class bridge(Generic[T]):
     def pick(self) -> Transformer[T, T]:
         return _pick(self._variable)
 
-    def drop(self) -> Transformer[B, tuple[B, T]]:
-        drop: _drop[B, T] = _drop(self._variable)
-        return drop
+    def drop(self) -> _drop[T]:
+        return _drop(self._variable)

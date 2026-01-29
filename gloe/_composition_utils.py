@@ -1,10 +1,10 @@
 import types
 from inspect import Signature
-from typing import TypeVar, Any, Optional, Union
+from typing import TypeVar, Any, Optional, Union, get_origin, get_args
+from collections.abc import Awaitable
 
-from gloe.async_transformer import AsyncTransformer
 from gloe.base_transformer import BaseTransformer
-from gloe.gateways._parallel import _Parallel, _ParallelAsync
+from gloe.gateways._parallel import _Parallel
 from gloe.transformers import Transformer
 from gloe._typing_utils import _match_types, _specify_types
 from gloe.exceptions import UnsupportedTransformerArgException
@@ -37,6 +37,26 @@ def _resolve_serial_connection_signatures(
         return_annotation=_specify_types(transformer2.output_type, generic_vars),
     )
     return new_signature
+
+
+def _type_contains_awaitable(annotation: Any) -> bool:
+    if get_origin(annotation) is Awaitable:
+        return True
+    return any(_type_contains_awaitable(arg) for arg in get_args(annotation))
+
+
+def _flow_returns_awaitable(flow: list[BaseTransformer]) -> bool:
+    for op in flow:
+        if _type_contains_awaitable(op.output_type):
+            return True
+    return False
+
+
+def _await_none() -> Awaitable[None]:
+    async def _inner() -> None:
+        return None
+
+    return _inner()
 
 
 def _compose_serial(transformer1, _transformer2):
@@ -77,31 +97,18 @@ def _compose_serial(transformer1, _transformer2):
         def __len__(self):
             return new_len
 
-    new_transformer: Optional[BaseTransformer] = None
-    if is_transformer(transformer1) and is_transformer(transformer2):
+    class NewTransformer(BaseNewTransformer, Transformer[_In, _NextOut]):
+        def __init__(self):
+            super().__init__()
+            self._flow = transformer1._flow + transformer2._flow
 
-        class NewTransformer1(BaseNewTransformer, Transformer[_In, _NextOut]):
-            def __init__(self):
-                super().__init__()
-                self._flow = transformer1._flow + transformer2._flow
+        def transform(self, data):
+            if _flow_returns_awaitable(self._flow):
+                return _await_none()
+            return None
 
-            def transform(self, data):
-                return None
-
-        new_transformer = NewTransformer1()
-        new_transformer._multi_args = _is_multi_args(transformer1)
-    else:
-
-        class NewTransformer2(BaseNewTransformer, AsyncTransformer[_In, _NextOut]):
-            def __init__(self):
-                super().__init__()
-                self._flow = transformer1._flow + transformer2._flow
-
-            async def transform_async(self, data):
-                return None
-
-        new_transformer = NewTransformer2()
-        new_transformer._multi_args = _is_multi_args(transformer1)
+    new_transformer: BaseTransformer = NewTransformer()
+    new_transformer._multi_args = _is_multi_args(transformer1)
 
     new_transformer.__class__.__name__ = transformer2.__class__.__name__
     new_transformer._label = transformer2.label
@@ -130,39 +137,20 @@ def _compose_diverging(
             lengths = [len(t) for t in receiving_transformers]
             return sum(lengths) + len(incident_transformer)
 
-    new_transformer: Optional[BaseTransformer] = None
+    class NewTransformer(BaseNewTransformer, Transformer[_In, tuple[Any, ...]]):
+        def __init__(self):
+            super().__init__()
+            self._flow = incident_transformer._flow + [
+                _Parallel(*receiving_transformers)
+            ]
 
-    if is_transformer(incident_transformer) and is_transformer(receiving_transformers):
+        def transform(self, data):
+            if _flow_returns_awaitable(self._flow):
+                return _await_none()
+            return None
 
-        class NewTransformer1(BaseNewTransformer, Transformer[_In, tuple[Any, ...]]):
-            def __init__(self):
-                super().__init__()
-                self._flow = incident_transformer._flow + [
-                    _Parallel(*receiving_transformers)
-                ]
-
-            def transform(self, data):
-                return None
-
-        new_transformer = NewTransformer1()
-        new_transformer._multi_args = _is_multi_args(incident_transformer)
-
-    else:
-
-        class NewTransformer2(
-            BaseNewTransformer, AsyncTransformer[_In, tuple[Any, ...]]
-        ):
-            def __init__(self):
-                super().__init__()
-                self._flow = incident_transformer._flow + [
-                    _ParallelAsync(*receiving_transformers)
-                ]
-
-            async def transform_async(self, data):
-                return None
-
-        new_transformer = NewTransformer2()
-        new_transformer._multi_args = _is_multi_args(incident_transformer)
+    new_transformer: BaseTransformer = NewTransformer()
+    new_transformer._multi_args = _is_multi_args(incident_transformer)
 
     # new_transformer._previous = cast(Transformer, receiving_transformers)
     new_transformer.__class__.__name__ = "Converge"

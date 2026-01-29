@@ -1,9 +1,10 @@
 from typing import reveal_type
+from collections.abc import Awaitable
 import asyncio
 import unittest
 from typing_extensions import assert_type
 
-from gloe import partial_async_transformer, AsyncTransformer, Transformer, async_transformer, transformer
+from gloe import partial_async_transformer, Transformer, async_transformer, transformer
 from gloe.utils import forward
 from tests.lib.transformers import logarithm, repeat, format_currency
 from tests.type_utils.mypy_test_suite import MypyTestSuite
@@ -18,7 +19,9 @@ class TestPartialTransformerTypes(unittest.IsolatedAsyncioTestCase, MypyTestSuit
 
         pipeline = sleep_and_forward(1) >> forward()
 
-        assert_type(pipeline, AsyncTransformer[dict[str, str], dict[str, str]])
+        assert_type(
+            pipeline, Transformer[dict[str, str], Awaitable[dict[str, str]]]
+        )
 
     def test_partial_transformer(self):
         """

@@ -3,9 +3,8 @@ from inspect import Signature
 from types import FunctionType
 from typing import Callable, TypeVar, cast, Awaitable, overload
 
-from typing_extensions import Concatenate, TypeVarTuple, Unpack, ParamSpec
+from typing_extensions import Concatenate, TypeVarTuple, Unpack, ParamSpec, deprecated
 
-from gloe.async_transformer import AsyncTransformer
 from gloe.exceptions import TransformerRequiresMultiArgs
 from gloe.transformers import Transformer
 
@@ -23,9 +22,32 @@ P1 = ParamSpec("P1")
 P2 = ParamSpec("P2")
 
 
+def _awaitable_signature(signature: Signature) -> Signature:
+    if signature.return_annotation is inspect._empty:
+        return signature
+    return signature.replace(
+        return_annotation=Awaitable[signature.return_annotation],  # type: ignore[name-defined]
+    )
+
+
+
+@overload
 def partial_transformer(
     func: Callable[Concatenate[A, P1], S],
 ) -> Callable[P1, Transformer[A, S]]:
+    pass
+
+
+@overload
+def partial_transformer(
+    func: Callable[Concatenate[A, P1], Awaitable[S]],
+) -> Callable[P1, Transformer[A, Awaitable[S]]]:
+    pass
+
+
+def partial_transformer(
+    func: Callable[Concatenate[A, P1], object],
+) -> Callable[P1, Transformer[A, object]]:
     """
     This decorator let us create partial transformers, which are transformers that
     allow for partial application of their arguments. This capability is particularly
@@ -63,20 +85,42 @@ def partial_transformer(
         :code:`S` as the outcome type.
     """
 
-    def partial(*args: P1.args, **kwargs: P1.kwargs) -> Transformer[A, S]:
+    def partial(*args: P1.args, **kwargs: P1.kwargs) -> Transformer[A, object]:
         func_signature = inspect.signature(func)
+        is_async = inspect.iscoroutinefunction(func)
 
-        class LambdaTransformer(Transformer[A, S]):
-            __doc__ = func.__doc__
-            __annotations__ = cast(FunctionType, func).__annotations__
+        if is_async:
+            async_func = cast(Callable[Concatenate[A, P1], Awaitable[S]], func)
 
-            def signature(self) -> Signature:
-                return func_signature
+            class LambdaAsyncTransformer(Transformer[A, Awaitable[S]]):
+                __doc__ = func.__doc__
+                __annotations__ = cast(FunctionType, func).__annotations__
 
-            def transform(self, data: A) -> S:
-                return func(data, *args, **kwargs)
+                def signature(self) -> Signature:
+                    return _awaitable_signature(func_signature)
 
-        lambda_transformer = LambdaTransformer()
+                def transform(self, data: A) -> Awaitable[S]:
+                    return async_func(data, *args, **kwargs)
+
+        else:
+            sync_func = cast(Callable[Concatenate[A, P1], S], func)
+
+            class LambdaSyncTransformer(Transformer[A, S]):
+                __doc__ = func.__doc__
+                __annotations__ = cast(FunctionType, func).__annotations__
+
+                def signature(self) -> Signature:
+                    return func_signature
+
+                def transform(self, data: A) -> S:
+                    return sync_func(data, *args, **kwargs)
+
+        if is_async:
+            lambda_transformer: Transformer[A, object] = cast(
+                Transformer[A, object], LambdaAsyncTransformer()
+            )
+        else:
+            lambda_transformer = cast(Transformer[A, object], LambdaSyncTransformer())
         lambda_transformer.__class__.__name__ = func.__name__
         lambda_transformer._label = func.__name__
         return lambda_transformer
@@ -84,9 +128,10 @@ def partial_transformer(
     return partial
 
 
+@deprecated("Use @partial_transformer with async callables instead.")
 def partial_async_transformer(
     func: Callable[Concatenate[A, P1], Awaitable[S]],
-) -> Callable[P1, AsyncTransformer[A, S]]:
+) -> Callable[P1, Transformer[A, Awaitable[S]]]:
     """
     This decorator enables the creation of partial asynchronous transformers, which are
     transformers capable of partial argument application. Such functionality is
@@ -122,29 +167,11 @@ def partial_async_transformer(
 
     Returns:
         A callable that receives the same arguments as :code:`func`, excluding the first
-        one and returns an async transformer with incoming type being :code:`A` and with
+        one and returns a transformer with incoming type being :code:`A` and with
         :code:`S` as the outcome type.
     """
 
-    def partial(*args: P1.args, **kwargs: P1.kwargs) -> AsyncTransformer[A, S]:
-        func_signature = inspect.signature(func)
-
-        class LambdaTransformer(AsyncTransformer[A, S]):
-            __doc__ = func.__doc__
-            __annotations__ = cast(FunctionType, func).__annotations__
-
-            def signature(self) -> Signature:
-                return func_signature
-
-            async def transform_async(self, data: A) -> S:
-                return await func(data, *args, **kwargs)
-
-        lambda_transformer = LambdaTransformer()
-        lambda_transformer.__class__.__name__ = func.__name__
-        lambda_transformer._label = func.__name__
-        return lambda_transformer
-
-    return partial
+    return partial_transformer(func)
 
 
 Rest = TypeVarTuple("Rest")
@@ -161,6 +188,18 @@ def transformer(
 
 
 @overload
+def transformer(
+    func: Callable[[A, B, Unpack[Rest]], Awaitable[S]],
+) -> Transformer[A, B, Unpack[Rest], Awaitable[S]]:
+    pass
+
+
+@overload
+def transformer(func: Callable[[], Awaitable[S]]) -> Transformer[None, Awaitable[S]]:
+    pass
+
+
+@overload
 def transformer(func: Callable[[], S]) -> Transformer[None, S]:
     pass
 
@@ -170,7 +209,12 @@ def transformer(func: Callable[[A], S]) -> Transformer[A, S]:
     pass
 
 
-def transformer(func):
+@overload
+def transformer(func: Callable[[A], Awaitable[S]]) -> Transformer[A, Awaitable[S]]:
+    pass
+
+
+def transformer(func: Callable[..., object]) -> Transformer:
     """
     Convert a callable to an instance of the Transformer class.
 
@@ -191,42 +235,85 @@ def transformer(func):
         defined in the provided callable.
     """
     func_signature = inspect.signature(func)
+    is_async = inspect.iscoroutinefunction(func)
 
     if len(func_signature.parameters) > 1:
 
-        class LambdaMultiArgsTransformer(Transformer):
+        if is_async:
+
+            class LambdaAsyncMultiArgsTransformer(Transformer):
+                __doc__ = func.__doc__
+                __annotations__ = cast(FunctionType, func).__annotations__
+
+                def signature(self) -> Signature:
+                    return _awaitable_signature(func_signature)
+
+                def transform(self, data) -> Awaitable[object]:
+                    if type(data) is tuple:
+                        if len(data) == 1:
+                            raise TransformerRequiresMultiArgs()
+                        return cast(Callable[..., Awaitable[object]], func)(*data)
+                    raise NotImplementedError()  # pragma: no cover
+
+        else:
+
+            class LambdaSyncMultiArgsTransformer(Transformer):
+                __doc__ = func.__doc__
+                __annotations__ = cast(FunctionType, func).__annotations__
+
+                def signature(self) -> Signature:
+                    return func_signature
+
+                def transform(self, data) -> object:
+                    if type(data) is tuple:
+                        if len(data) == 1:
+                            raise TransformerRequiresMultiArgs()
+                        return cast(Callable[..., object], func)(*data)
+                    raise NotImplementedError()  # pragma: no cover
+
+        if is_async:
+            lambda_transformer1: Transformer = LambdaAsyncMultiArgsTransformer()
+        else:
+            lambda_transformer1 = LambdaSyncMultiArgsTransformer()
+        lambda_transformer1._multi_args = True
+        lambda_transformer1.__class__.__name__ = func.__name__
+        lambda_transformer1._label = func.__name__
+        return cast(Transformer, lambda_transformer1)
+
+    if is_async:
+
+        class LambdaAsyncTransformer(Transformer):
+            __doc__ = func.__doc__
+            __annotations__ = cast(FunctionType, func).__annotations__
+
+            def signature(self) -> Signature:
+                return _awaitable_signature(func_signature)
+
+            def transform(self, data=None) -> Awaitable[object]:
+                async_func = cast(Callable[..., Awaitable[object]], func)
+                if len(func_signature.parameters) == 0:
+                    return async_func()
+                return async_func(data)
+
+    else:
+
+        class LambdaSyncTransformer(Transformer):
             __doc__ = func.__doc__
             __annotations__ = cast(FunctionType, func).__annotations__
 
             def signature(self) -> Signature:
                 return func_signature
 
-            def transform(self, data):
-                if type(data) is tuple:
-                    if len(data) == 1:
-                        raise TransformerRequiresMultiArgs()
-                    return func(*data)
-                raise NotImplementedError()  # pragma: no cover
+            def transform(self, data=None) -> object:
+                sync_func = cast(Callable[..., object], func)
+                if len(func_signature.parameters) == 0:
+                    return sync_func()
+                return sync_func(data)
 
-        lambda_transformer1 = LambdaMultiArgsTransformer()
-        lambda_transformer1._multi_args = True
-        lambda_transformer1.__class__.__name__ = func.__name__
-        lambda_transformer1._label = func.__name__
-        return cast(Transformer, lambda_transformer1)
-
-    class LambdaTransformer(Transformer):
-        __doc__ = func.__doc__
-        __annotations__ = cast(FunctionType, func).__annotations__
-
-        def signature(self) -> Signature:
-            return func_signature
-
-        def transform(self, data=None):
-            if len(func_signature.parameters) == 0:
-                return func()
-            return func(data)
-
-    lambda_transformer2 = LambdaTransformer()
+    if is_async:
+        lambda_transformer2: Transformer = LambdaAsyncTransformer()
+    else:
+        lambda_transformer2 = LambdaSyncTransformer()
     lambda_transformer2.__class__.__name__ = func.__name__
     lambda_transformer2._label = func.__name__
     return lambda_transformer2
@@ -235,23 +322,24 @@ def transformer(func):
 @overload
 def async_transformer(
     func: Callable[[A, B, Unpack[Rest]], Awaitable[S]],
-) -> AsyncTransformer[A, B, Unpack[Rest], S]:
+) -> Transformer[A, B, Unpack[Rest], Awaitable[S]]:
     pass
 
 
 @overload
-def async_transformer(func: Callable[[], Awaitable[S]]) -> AsyncTransformer[None, S]:
+def async_transformer(func: Callable[[], Awaitable[S]]) -> Transformer[None, Awaitable[S]]:
     pass
 
 
 @overload
-def async_transformer(func: Callable[[A], Awaitable[S]]) -> AsyncTransformer[A, S]:
+def async_transformer(func: Callable[[A], Awaitable[S]]) -> Transformer[A, Awaitable[S]]:
     pass
 
 
+@deprecated("Use @transformer with async callables instead.")
 def async_transformer(func):
     """
-    Convert a callable to an instance of the AsyncTransformer class.
+    Convert a callable to an instance of the Transformer class.
 
     See Also:
         For more information about this feature, refer to the :ref:`async-transformers`.
@@ -268,46 +356,7 @@ def async_transformer(func):
     Args:
         func: A callable with only positional arguments and returns a coroutine.
     Returns:
-        Returns an instance of the AsyncTransformer class, representing the built async
+        Returns an instance of the Transformer class, representing the built async
         transformer.
     """
-    func_signature = inspect.signature(func)
-
-    if len(func_signature.parameters) > 1:
-
-        class LambdaMultiArgsTransformer(AsyncTransformer):
-            __doc__ = func.__doc__
-            __annotations__ = cast(FunctionType, func).__annotations__
-
-            def signature(self) -> Signature:
-                return func_signature
-
-            async def transform_async(self, data):
-                if type(data) is tuple:
-                    if len(data) == 1:
-                        raise TransformerRequiresMultiArgs()
-                    return await func(*data)
-                raise NotImplementedError()  # pragma: no cover
-
-        lambda_transformer1 = LambdaMultiArgsTransformer()
-        lambda_transformer1._multi_args = True
-        lambda_transformer1.__class__.__name__ = func.__name__
-        lambda_transformer1._label = func.__name__
-        return cast(AsyncTransformer, lambda_transformer1)
-
-    class LambdaAsyncTransformer(AsyncTransformer):
-        __doc__ = func.__doc__
-        __annotations__ = cast(FunctionType, func).__annotations__
-
-        def signature(self) -> Signature:
-            return func_signature
-
-        async def transform_async(self, data):
-            if len(func_signature.parameters) == 0:
-                return await func()
-            return await func(data)
-
-    lambda_transformer = LambdaAsyncTransformer()
-    lambda_transformer.__class__.__name__ = func.__name__
-    lambda_transformer._label = func.__name__
-    return lambda_transformer
+    return transformer(func)

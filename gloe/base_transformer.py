@@ -19,6 +19,7 @@ from typing import (
     Type,
     Optional,
     cast,
+    Awaitable,
 )
 
 from typing_extensions import Self, TypeAlias, deprecated

@@ -35,7 +35,7 @@ class TestMultiArgsAsyncTransformer(unittest.IsolatedAsyncioTestCase):
         async def concat(arg1: str, arg2: str) -> str:
             return arg1 + arg2
 
-        with self.assertRaises(TransformerRequiresMultiArgs):
+        with self.assertRaises(TypeError):
             await concat("test")  # type: ignore[call-arg]
 
     async def test_composition_transform_method(self):

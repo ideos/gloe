@@ -56,7 +56,7 @@ class TestMultiArgsTransformer(unittest.TestCase):
         def concat(arg1: str, arg2: str) -> str:
             return arg1 + arg2
 
-        with self.assertRaises(TransformerRequiresMultiArgs):
+        with self.assertRaises(TypeError):
             concat("test")  # type: ignore[call-arg]
 
     def test_noargs_basic_call(self):

@@ -106,13 +106,23 @@ class AsyncTransformer(Generic[_In, _Out], BaseTransformer[_In, _Out]):
 
     @overload
     async def __call__(self: "AsyncTransformer[None, _Out]") -> _Out:
-        return await _execute_async_flow(self._flow, None)
+        pass
+
+    @overload
+    async def __call__(
+        self: "AsyncTransformer[tuple[Unpack[Args]], _Out]", *args: Unpack[Args]
+    ) -> _Out:
+        pass
 
     @overload
     async def __call__(self, data: _In) -> _Out:
-        return await _execute_async_flow(self._flow, data)
+        pass
 
-    async def __call__(self, data=None):
+    async def __call__(self, *data):
+        if len(data) == 0:
+            return await _execute_async_flow(self._flow, None)
+        if len(data) == 1:
+            return await _execute_async_flow(self._flow, data[0])
         return await _execute_async_flow(self._flow, data)
 
     @overload
@@ -191,101 +201,6 @@ class AsyncTransformer(Generic[_In, _Out], BaseTransformer[_In, _Out]):
             BaseTransformer[_Out, _O7],
         ],
     ) -> "AsyncTransformer[_In, tuple[_NextOut, _O2, _O3, _O4, _O5, _O6, _O7]]":
-        pass
-
-    def __rshift__(self, next_node):  # pragma: no cover
-        pass
-
-
-class MultiArgsAsyncTransformer(
-    Generic[Unpack[Args], _Out], AsyncTransformer[tuple[Unpack[Args]], _Out]
-):
-    @override
-    async def __call__(  # type: ignore[override]
-        self: "MultiArgsAsyncTransformer[Unpack[Args], _Out]", *data: Unpack[Args]
-    ) -> _Out:
-        return await _execute_async_flow(self._flow, data)
-
-    @overload
-    def __rshift__(
-        self, next_node: BaseTransformer[_Out, _NextOut]
-    ) -> "MultiArgsAsyncTransformer[Unpack[Args], _NextOut]":
-        pass
-
-    @overload
-    def __rshift__(
-        self,
-        next_node: tuple[BaseTransformer[_Out, _NextOut], BaseTransformer[_Out, _O2]],
-    ) -> "MultiArgsAsyncTransformer[Unpack[Args], tuple[_NextOut, _O2]]":
-        pass
-
-    @overload
-    def __rshift__(
-        self,
-        next_node: tuple[
-            BaseTransformer[_Out, _NextOut],
-            BaseTransformer[_Out, _O2],
-            BaseTransformer[_Out, _O3],
-        ],
-    ) -> "MultiArgsAsyncTransformer[Unpack[Args], tuple[_NextOut, _O2, _O3]]":
-        pass
-
-    @overload
-    def __rshift__(
-        self,
-        next_node: tuple[
-            BaseTransformer[_Out, _NextOut],
-            BaseTransformer[_Out, _O2],
-            BaseTransformer[_Out, _O3],
-            BaseTransformer[_Out, _O4],
-        ],
-    ) -> "MultiArgsAsyncTransformer[Unpack[Args], tuple[_NextOut, _O2, _O3, _O4]]":
-        pass
-
-    @overload
-    def __rshift__(
-        self,
-        next_node: tuple[
-            BaseTransformer[_Out, _NextOut],
-            BaseTransformer[_Out, _O2],
-            BaseTransformer[_Out, _O3],
-            BaseTransformer[_Out, _O4],
-            BaseTransformer[_Out, _O5],
-        ],
-    ) -> "MultiArgsAsyncTransformer[Unpack[Args], tuple[_NextOut, _O2, _O3, _O4, _O5]]":
-        pass
-
-    @overload
-    def __rshift__(
-        self,
-        next_node: tuple[
-            BaseTransformer[_Out, _NextOut],
-            BaseTransformer[_Out, _O2],
-            BaseTransformer[_Out, _O3],
-            BaseTransformer[_Out, _O4],
-            BaseTransformer[_Out, _O5],
-            BaseTransformer[_Out, _O6],
-        ],
-    ) -> """MultiArgsAsyncTransformer[
-        Unpack[Args], tuple[_NextOut, _O2, _O3, _O4, _O5, _O6]
-    ]""":
-        pass
-
-    @overload
-    def __rshift__(
-        self,
-        next_node: tuple[
-            BaseTransformer[_Out, _NextOut],
-            BaseTransformer[_Out, _O2],
-            BaseTransformer[_Out, _O3],
-            BaseTransformer[_Out, _O4],
-            BaseTransformer[_Out, _O5],
-            BaseTransformer[_Out, _O6],
-            BaseTransformer[_Out, _O7],
-        ],
-    ) -> """MultiArgsAsyncTransformer[
-        Unpack[Args], tuple[_NextOut, _O2, _O3, _O4, _O5, _O6, _O7]
-    ]""":
         pass
 
     def __rshift__(self, next_node):  # pragma: no cover

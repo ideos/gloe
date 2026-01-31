@@ -4,12 +4,17 @@ from gloe.exceptions import TransformerRequiresMultiArgs
 from gloe.utils import forward
 
 from gloe import async_transformer
-from tests.lib.transformers import square, sum_tuple2, async_plus1
+from tests.lib.transformers import square, sum_tuple2, async_plus1, plus1, times2
 
 
 @async_transformer
 async def sum2(num1: float, num2: float) -> float:
     return num1 + num2
+
+
+@async_transformer
+async def sum3(num1: float, num2: float, num3: float) -> float:
+    return num1 + num2 + num3
 
 
 class TestMultiArgsAsyncTransformer(unittest.IsolatedAsyncioTestCase):
@@ -29,6 +34,16 @@ class TestMultiArgsAsyncTransformer(unittest.IsolatedAsyncioTestCase):
         pipeline2 = sum2 >> (square, square) >> sum2
 
         self.assertEqual(await pipeline2(1, 2), 18)
+
+    async def test_divergent_composition_three_outputs(self):
+        pipeline = forward[float]() >> (square, plus1, times2) >> sum3
+
+        self.assertEqual(await pipeline(2.0), 11.0)
+
+    async def test_tuple_input_for_three_args(self):
+        pipeline = forward[tuple[float, float, float]]() >> sum3
+
+        self.assertEqual(await pipeline((1.0, 2.0, 3.0)), 6.0)
 
     async def test_single_arg_exception(self):
         @async_transformer

@@ -16,7 +16,14 @@ from gloe.async_transformer import _execute_async_flow
 from gloe.functional import partial_async_transformer
 from gloe.utils import forward
 from tests.lib.exceptions import LnOfNegativeNumber
-from tests.lib.transformers import async_plus1, async_natural_logarithm
+from tests.lib.transformers import (
+    async_plus1,
+    async_natural_logarithm,
+    plus1,
+    square,
+    to_string,
+    sum_tuple2,
+)
 
 _In = TypeVar("_In")
 
@@ -30,6 +37,12 @@ async def raise_an_error():
 
 @async_transformer
 async def request_data(url: str) -> dict[str, str]:
+    await asyncio.sleep(0.01)
+    return _DATA
+
+
+@transformer
+async def request_data_async_callable(url: str) -> dict[str, str]:
     await asyncio.sleep(0.01)
     return _DATA
 
@@ -95,8 +108,22 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
 
         self.assertDictEqual(_DATA, result)
 
+    async def test_async_callable_basic_case(self):
+        test_forward = request_data_async_callable >> forward()
+
+        result = await test_forward(_URL)
+
+        self.assertDictEqual(_DATA, result)
+
     async def test_begin_with_transformer(self):
         test_forward = forward[str]() >> request_data
+
+        result = await test_forward(_URL)
+
+        self.assertDictEqual(_DATA, result)
+
+    async def test_begin_with_async_callable_transformer(self):
+        test_forward = forward[str]() >> request_data_async_callable
 
         result = await test_forward(_URL)
 
@@ -109,8 +136,25 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual((_URL, _DATA), result)
 
+    async def test_async_callable_on_divergent_connection(self):
+        test_forward = forward[str]() >> (forward[str](), request_data_async_callable)
+
+        result = await test_forward(_URL)
+
+        self.assertEqual((_URL, _DATA), result)
+
     async def test_divergent_connection_from_async(self):
         test_forward = request_data >> (
+            forward[dict[str, str]](),
+            forward[dict[str, str]](),
+        )
+
+        result = await test_forward(_URL)
+
+        self.assertEqual((_DATA, _DATA), result)
+
+    async def test_divergent_connection_from_async_callable(self):
+        test_forward = request_data_async_callable >> (
             forward[dict[str, str]](),
             forward[dict[str, str]](),
         )
@@ -178,10 +222,20 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(str(signature), "(url: str) -> Awaitable[dict[str, str]]")
 
+    def test_async_callable_signature_representation(self):
+        signature = request_data_async_callable.signature()
+
+        self.assertEqual(str(signature), "(url: str) -> Awaitable[dict[str, str]]")
+
     def test_async_transformer_representation(self):
         self.assertEqual(
             repr(request_data),
             "str -> (request_data) -> Awaitable[dict[str, str]]",
+        )
+
+        self.assertEqual(
+            repr(request_data_async_callable),
+            "str -> (request_data_async_callable) -> Awaitable[dict[str, str]]",
         )
 
         class_request_data = RequestData()
@@ -196,6 +250,11 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
         request_and_serialize = request_data >> dict_to_str
         self.assertEqual(
             "str -> (2 transformers omitted) -> str", repr(request_and_serialize)
+        )
+
+        request_and_serialize2 = request_data_async_callable >> dict_to_str
+        self.assertEqual(
+            "str -> (2 transformers omitted) -> str", repr(request_and_serialize2)
         )
 
     async def test_exhausting_large_flow(self):
@@ -248,3 +307,20 @@ class TestAsyncTransformer(unittest.IsolatedAsyncioTestCase):
 
         result2 = await test2.transform_async(5)
         self.assertIsNone(result2)
+
+    async def test_mixed_sync_async_pipeline(self):
+        async_pipeline = plus1 >> async_plus1 >> square >> to_string
+
+        result = await async_pipeline(2.0)
+
+        self.assertEqual("16.0", result)
+
+    async def test_mixed_divergent_pipeline(self):
+        async_pipeline = plus1 >> (
+            async_plus1,
+            square >> async_plus1,
+        ) >> sum_tuple2
+
+        result = await async_pipeline(1.0)
+
+        self.assertEqual(8.0, result)

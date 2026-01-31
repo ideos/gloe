@@ -4,12 +4,17 @@ from gloe.exceptions import TransformerRequiresMultiArgs
 from gloe.utils import forward
 
 from gloe import transformer
-from tests.lib.transformers import square, sum_tuple2, plus1
+from tests.lib.transformers import square, sum_tuple2, plus1, times2
 
 
 @transformer
 def sum2(num1: float, num2: float) -> float:
     return num1 + num2
+
+
+@transformer
+def sum3(num1: float, num2: float, num3: float) -> float:
+    return num1 + num2 + num3
 
 
 class TestMultiArgsTransformer(unittest.TestCase):
@@ -39,6 +44,16 @@ class TestMultiArgsTransformer(unittest.TestCase):
         pipeline2 = sum2 >> (square, square)
 
         self.assertEqual(pipeline2(1, 2), (9, 9))
+
+    def test_diverging_composition_three_outputs(self):
+        pipeline = forward[float]() >> (square, plus1, times2) >> sum3
+
+        self.assertEqual(pipeline(2.0), 11.0)
+
+    def test_tuple_input_for_three_args(self):
+        pipeline = forward[tuple[float, float, float]]() >> sum3
+
+        self.assertEqual(pipeline((1.0, 2.0, 3.0)), 6.0)
 
     def test_composition_transform_method(self):
         test1 = sum2 >> plus1

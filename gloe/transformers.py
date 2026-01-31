@@ -3,9 +3,9 @@ from inspect import Signature
 
 from typing import TypeVar, overload, cast, Optional, Any
 
-from typing_extensions import TypeAlias, Unpack, TypeVarTuple, Generic, override
+from typing_extensions import TypeAlias, TypeVarTuple, Unpack
 
-from gloe.async_transformer import AsyncTransformer, MultiArgsAsyncTransformer
+from gloe.async_transformer import AsyncTransformer
 from gloe._transformer_utils import catch_transformer_exception
 from gloe.base_transformer import BaseTransformer, Flow
 
@@ -113,10 +113,20 @@ class Transformer(BaseTransformer[_I, _O], ABC):
         pass
 
     @overload
+    def __call__(
+        self: "Transformer[tuple[Unpack[Args]], _O]", *args: Unpack[Args]
+    ) -> _O:
+        return _execute_flow(self._flow, args)
+
+    @overload
     def __call__(self, data: _I) -> _O:
         pass
 
-    def __call__(self, data=None):
+    def __call__(self, *data):
+        if len(data) == 0:
+            return _execute_flow(self._flow, None)
+        if len(data) == 1:
+            return _execute_flow(self._flow, data[0])
         return _execute_flow(self._flow, data)
 
     @overload
@@ -224,145 +234,5 @@ class Transformer(BaseTransformer[_I, _O], ABC):
     ) -> AsyncTransformer[_I, tuple[O1, O2, O3, O4, O5, O6, O7]]:
         pass
 
-    def __rshift__(self, next_node):  # pragma: no cover
-        pass
-
-
-class MultiArgsTransformer(
-    Generic[Unpack[Args], _O], Transformer[tuple[Unpack[Args]], _O]
-):
-    # The below ignored override errors are recommended by the documentation itself,
-    # "if you decide that type safety is not necessary", which is clearly the case.
-    # https://mypy.readthedocs.io/en/stable/common_issues.html#incompatible-overrides
-    @override
-    def __call__(  # type: ignore[override]
-        self: "MultiArgsTransformer[Unpack[Args], _O]", *data: Unpack[Args]
-    ) -> _O:
-        if len(data) == 1 and type(data[0]) is tuple:  # type: ignore
-            data = data[0]  # type: ignore
-        return _execute_flow(self._flow, data)
-
-    @overload  # type: ignore[override]
-    @override
-    def __rshift__(
-        self, next_node: "Transformer[_O, O1]"
-    ) -> "MultiArgsTransformer[Unpack[Args], O1]":
-        pass
-
-    @overload
-    @override
-    def __rshift__(
-        self,
-        next_node: tuple["Tr[_O, O1]", "Tr[_O, O2]"],
-    ) -> "MultiArgsTransformer[Unpack[Args], tuple[O1, O2]]":
-        pass
-
-    @overload
-    @override
-    def __rshift__(
-        self,
-        next_node: tuple["Tr[_O, O1]", "Tr[_O, O2]", "Tr[_O, O3]"],
-    ) -> "MultiArgsTransformer[Unpack[Args], tuple[O1, O2, O3]]":
-        pass
-
-    @overload
-    @override
-    def __rshift__(
-        self,
-        next_node: tuple["Tr[_O, O1]", "Tr[_O, O2]", "Tr[_O, O3]", "Tr[_O, O4]"],
-    ) -> "MultiArgsTransformer[Unpack[Args], tuple[O1, O2, O3, O4]]":
-        pass
-
-    @overload
-    @override
-    def __rshift__(
-        self,
-        next_node: tuple[
-            "Tr[_O, O1]", "Tr[_O, O2]", "Tr[_O, O3]", "Tr[_O, O4]", "Tr[_O, O5]"
-        ],
-    ) -> "MultiArgsTransformer[Unpack[Args], tuple[O1, O2, O3, O4, O5]]":
-        pass
-
-    @overload
-    @override
-    def __rshift__(
-        self,
-        next_node: tuple[
-            "Tr[_O, O1]",
-            "Tr[_O, O2]",
-            "Tr[_O, O3]",
-            "Tr[_O, O4]",
-            "Tr[_O, O5]",
-            "Tr[_O, O6]",
-        ],
-    ) -> "MultiArgsTransformer[Unpack[Args], tuple[O1, O2, O3, O4, O5, O6]]":
-        pass
-
-    @overload
-    @override
-    def __rshift__(
-        self,
-        next_node: tuple[
-            "Tr[_O, O1]",
-            "Tr[_O, O2]",
-            "Tr[_O, O3]",
-            "Tr[_O, O4]",
-            "Tr[_O, O5]",
-            "Tr[_O, O6]",
-            "Tr[_O, O7]",
-        ],
-    ) -> "MultiArgsTransformer[Unpack[Args], tuple[O1, O2, O3, O4, O5, O6, O7]]":
-        pass
-
-    @overload
-    @override
-    def __rshift__(
-        self, next_node: AsyncTransformer[_O, O1]
-    ) -> MultiArgsAsyncTransformer[_I, O1]:
-        pass
-
-    @overload
-    @override
-    def __rshift__(
-        self, next_node: AsyncNext2[_O, O1, O2]
-    ) -> MultiArgsAsyncTransformer[_I, tuple[O1, O2]]:
-        pass
-
-    @overload
-    @override
-    def __rshift__(
-        self, next_node: AsyncNext3[_O, O1, O2, O3]
-    ) -> MultiArgsAsyncTransformer[_I, tuple[O1, O2, O3]]:
-        pass
-
-    @overload
-    @override
-    def __rshift__(
-        self, next_node: AsyncNext4[_O, O1, O2, O3, O4]
-    ) -> MultiArgsAsyncTransformer[_I, tuple[O1, O2, O3, O4]]:
-        pass
-
-    @overload
-    @override
-    def __rshift__(
-        self, next_node: AsyncNext5[_O, O1, O2, O3, O4, O5]
-    ) -> MultiArgsAsyncTransformer[_I, tuple[O1, O2, O3, O4, O5]]:
-        pass
-
-    @overload
-    @override
-    def __rshift__(
-        self, next_node: AsyncNext6[_O, O1, O2, O3, O4, O5, O6]
-    ) -> MultiArgsAsyncTransformer[_I, tuple[O1, O2, O3, O4, O5, O6]]:
-        pass
-
-    @overload
-    @override
-    def __rshift__(
-        self, next_node: AsyncNext7[_O, O1, O2, O3, O4, O5, O6, O7]
-    ) -> MultiArgsAsyncTransformer[_I, tuple[O1, O2, O3, O4, O5, O6, O7]]:
-        pass
-
-    @override
     def __rshift__(self, next_node):  # pragma: no cover
         pass

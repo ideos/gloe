@@ -3,7 +3,7 @@ from typing import TypeVar
 from gloe.utils import forward
 from typing_extensions import assert_type
 
-from gloe import transformer, MultiArgsTransformer, Transformer
+from gloe import transformer, Transformer
 from tests.lib.transformers import square
 from tests.type_utils.mypy_test_suite import MypyTestSuite
 
@@ -21,13 +21,13 @@ class TestMultiArgsTransformerTypes(MypyTestSuite):
         def sum2(num1: int, num2: float) -> float:
             return num1 + num2
 
-        assert_type(sum2, MultiArgsTransformer[int, float, float])
+        assert_type(sum2, Transformer[tuple[int, float], float])
 
         @transformer
         def sum3(num1: int, num2: int, num3: int) -> int:
             return num1 + num2 + num3
 
-        assert_type(sum3, MultiArgsTransformer[int, int, int, int])
+        assert_type(sum3, Transformer[tuple[int, int, int], int])
 
     def test_noargs_transformer(self):
         """
@@ -47,7 +47,7 @@ class TestMultiArgsTransformerTypes(MypyTestSuite):
 
         pipeline = sum2 >> square
 
-        assert_type(pipeline, MultiArgsTransformer[float, float, float])
+        assert_type(pipeline, Transformer[tuple[float, float], float])
 
         pipeline2 = forward[float]() >> (square, square) >> sum2
 
@@ -55,4 +55,4 @@ class TestMultiArgsTransformerTypes(MypyTestSuite):
 
         pipeline3 = sum2 >> (square, square) >> sum2
 
-        assert_type(pipeline3, MultiArgsTransformer[float, float, float])
+        assert_type(pipeline3, Transformer[tuple[float, float], float])

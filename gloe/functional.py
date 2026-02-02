@@ -153,14 +153,30 @@ B = TypeVar("B")
 
 
 @overload
+def transformer(func: Callable[[], Awaitable[S]]) -> AsyncTransformer[None, S]:
+    pass
+
+
+@overload
 def transformer(func: Callable[[], S]) -> Transformer[None, S]:
     pass
 
 
 @overload
 def transformer(
+    func: Callable[[A, B, Unpack[Rest]], Awaitable[S]],
+) -> AsyncTransformer[tuple[A, B, Unpack[Rest]], S]:
+    pass
+
+@overload
+def transformer(
     func: Callable[[A, B, Unpack[Rest]], S],
 ) -> Transformer[tuple[A, B, Unpack[Rest]], S]:
+    pass
+
+
+@overload
+def transformer(func: Callable[[A], Awaitable[S]]) -> AsyncTransformer[A, S]:
     pass
 
 

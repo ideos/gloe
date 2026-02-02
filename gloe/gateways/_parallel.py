@@ -39,7 +39,7 @@ class _ParallelAsync(_base_gateway[_In], AsyncTransformer[_In, tuple[Any, ...]])
         sync_children = [
             (i, child)
             for i, child in indexed_children
-            if isinstance(child, Transformer)
+            if isinstance(child, Transformer) and not isinstance(child, AsyncTransformer)
         ]
 
         async_results = await asyncio.gather(

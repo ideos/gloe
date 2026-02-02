@@ -73,10 +73,6 @@ class _ensure_base:
         self._input_data = None
 
     @overload
-    def __call__(self, transformer: Transformer[_U, _S]) -> Transformer[_U, _S]:
-        pass
-
-    @overload
     def __call__(
         self, transformer: AsyncTransformer[_U, _S]
     ) -> AsyncTransformer[_U, _S]:
@@ -84,8 +80,8 @@ class _ensure_base:
 
     @overload
     def __call__(
-        self, partial_transformer: Callable[_P1, Transformer[_T, _U]]
-    ) -> Callable[_P1, Transformer[_T, _U]]:
+        self, transformer: Transformer[_U, _S]
+    ) -> Transformer[_U, _S]:
         pass
 
     @overload
@@ -94,20 +90,26 @@ class _ensure_base:
     ) -> Callable[_P1, AsyncTransformer[_T, _U]]:
         pass
 
+    @overload
+    def __call__(
+        self, partial_transformer: Callable[_P1, Transformer[_T, _U]]
+    ) -> Callable[_P1, Transformer[_T, _U]]:
+        pass
+
     def __call__(self, arg):
-        if isinstance(arg, Transformer):
-            return self._generate_new_transformer(arg)
         if isinstance(arg, AsyncTransformer):
             return self._generate_new_async_transformer(arg)
+        if isinstance(arg, Transformer):
+            return self._generate_new_transformer(arg)
         if callable(arg):
             partial_transformer = arg
 
             def ensured_partial_transformer(*args, **kwargs):
                 transformer = partial_transformer(*args, **kwargs)
-                if isinstance(transformer, Transformer):
-                    return self._generate_new_transformer(transformer)
                 if isinstance(transformer, AsyncTransformer):
                     return self._generate_new_async_transformer(transformer)
+                if isinstance(transformer, Transformer):
+                    return self._generate_new_transformer(transformer)
 
                 raise UnsupportedEnsurerArgException(transformer)
 
@@ -120,7 +122,11 @@ class _ensure_base:
         first_node = _flow[0]
         last_node = _flow[-1]
 
-        if isinstance(first_node, Transformer) and len(transformer) == 1:
+        if (
+            isinstance(first_node, Transformer)
+            and not isinstance(first_node, AsyncTransformer)
+            and len(transformer) == 1
+        ):
 
             def transform(_, data):
                 for ensurer in self.input_ensurers_instances:
@@ -132,9 +138,13 @@ class _ensure_base:
 
             return transformer.copy(transform)
 
-        if isinstance(first_node, Transformer) and (
-            len(self.input_ensurers_instances) > 0
-            or len(self.output_ensurers_instances) > 0
+        if (
+            isinstance(first_node, Transformer)
+            and not isinstance(first_node, AsyncTransformer)
+            and (
+                len(self.input_ensurers_instances) > 0
+                or len(self.output_ensurers_instances) > 0
+            )
         ):
 
             def transform(_, data):
@@ -148,6 +158,7 @@ class _ensure_base:
 
         if (
             isinstance(last_node, Transformer)
+            and not isinstance(last_node, AsyncTransformer)
             and len(self.output_ensurers_instances) > 0
         ):
 

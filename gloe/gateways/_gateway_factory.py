@@ -82,10 +82,6 @@ T7A7: Ta = tuple[
 
 class _GatewayFactory(Protocol):
     @overload
-    def __call__(self, *args: Unpack[T2[_I, O1, O2]]) -> Transformer[_I, tuple[O1, O2]]:
-        pass
-
-    @overload
     def __call__(
         self, *args: Unpack[T2A1[_I, O1, O2]]
     ) -> AsyncTransformer[_I, tuple[O1, O2]]:
@@ -98,9 +94,7 @@ class _GatewayFactory(Protocol):
         pass
 
     @overload
-    def __call__(
-        self, *args: Unpack[T3[_I, O1, O2, O3]]
-    ) -> Transformer[_I, tuple[O1, O2, O3]]:
+    def __call__(self, *args: Unpack[T2[_I, O1, O2]]) -> Transformer[_I, tuple[O1, O2]]:
         pass
 
     @overload
@@ -123,8 +117,8 @@ class _GatewayFactory(Protocol):
 
     @overload
     def __call__(
-        self, *args: Unpack[T4[_I, O1, O2, O3, O4]]
-    ) -> Transformer[_I, tuple[O1, O2, O3, O4]]:
+        self, *args: Unpack[T3[_I, O1, O2, O3]]
+    ) -> Transformer[_I, tuple[O1, O2, O3]]:
         pass
 
     @overload
@@ -153,8 +147,8 @@ class _GatewayFactory(Protocol):
 
     @overload
     def __call__(
-        self, *args: Unpack[T5[_I, O1, O2, O3, O4, O5]]
-    ) -> Transformer[_I, tuple[O1, O2, O3, O4, O5]]:
+        self, *args: Unpack[T4[_I, O1, O2, O3, O4]]
+    ) -> Transformer[_I, tuple[O1, O2, O3, O4]]:
         pass
 
     @overload
@@ -189,8 +183,8 @@ class _GatewayFactory(Protocol):
 
     @overload
     def __call__(
-        self, *args: Unpack[T6[_I, O1, O2, O3, O4, O5, O6]]
-    ) -> Transformer[_I, tuple[O1, O2, O3, O4, O5, O6]]:
+        self, *args: Unpack[T5[_I, O1, O2, O3, O4, O5]]
+    ) -> Transformer[_I, tuple[O1, O2, O3, O4, O5]]:
         pass
 
     @overload
@@ -231,8 +225,8 @@ class _GatewayFactory(Protocol):
 
     @overload
     def __call__(
-        self, *args: Unpack[T7[_I, O1, O2, O3, O4, O5, O6, O7]]
-    ) -> Transformer[_I, tuple[O1, O2, O3, O4, O5, O6, O7]]:
+        self, *args: Unpack[T6[_I, O1, O2, O3, O4, O5, O6]]
+    ) -> Transformer[_I, tuple[O1, O2, O3, O4, O5, O6]]:
         pass
 
     @overload
@@ -275,6 +269,12 @@ class _GatewayFactory(Protocol):
     def __call__(
         self, *args: Unpack[T7A7[_I, O1, O2, O3, O4, O5, O6, O7]]
     ) -> AsyncTransformer[_I, tuple[O1, O2, O3, O4, O5, O6, O7]]:
+        pass
+
+    @overload
+    def __call__(
+        self, *args: Unpack[T7[_I, O1, O2, O3, O4, O5, O6, O7]]
+    ) -> Transformer[_I, tuple[O1, O2, O3, O4, O5, O6, O7]]:
         pass
 
     def __call__(self, *args):  # pragma: no cover

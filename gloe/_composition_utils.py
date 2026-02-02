@@ -17,7 +17,7 @@ _NextOut = TypeVar("_NextOut")
 def is_transformer(node):
     if isinstance(node, list) or isinstance(node, tuple):
         return all(is_transformer(n) for n in node)
-    return isinstance(node, Transformer)
+    return isinstance(node, Transformer) and not isinstance(node, AsyncTransformer)
 
 
 def _resolve_serial_connection_signatures(

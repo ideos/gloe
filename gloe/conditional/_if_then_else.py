@@ -8,6 +8,7 @@ from gloe.conditional._implication import (
     _AsyncImplication,
     _BaseImplication,
 )
+from gloe._transformer_types import SyncTransformer
 
 from typing import (
     Callable,
@@ -62,14 +63,14 @@ class _IfThen(_BaseIfThen[In, ThenOut, PrevThenOut]):
 
     @overload
     def Else(
-        self, else_transformer: Transformer[In, ElseOut]
-    ) -> Transformer[In, Union[ThenOut, PrevThenOut, ElseOut]]:
+        self, else_transformer: AsyncTransformer[In, ElseOut]
+    ) -> AsyncTransformer[In, Union[ThenOut, PrevThenOut, ElseOut]]:
         pass
 
     @overload
     def Else(
-        self, else_transformer: AsyncTransformer[In, ElseOut]
-    ) -> AsyncTransformer[In, Union[ThenOut, PrevThenOut, ElseOut]]:
+        self, else_transformer: SyncTransformer[In, ElseOut]
+    ) -> Transformer[In, Union[ThenOut, PrevThenOut, ElseOut]]:
         pass
 
     def Else(self, else_transformer):
@@ -180,7 +181,7 @@ class _ElseIf(_BaseElseIf[In, PrevThenOut]):
 
     @overload
     def Then(
-        self, next_transformer: Transformer[In, ElseIfOut]
+        self, next_transformer: SyncTransformer[In, ElseIfOut]
     ) -> _IfThen[In, ElseIfOut, PrevThenOut]:
         pass
 

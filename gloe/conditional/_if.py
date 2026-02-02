@@ -3,6 +3,7 @@ from gloe.base_transformer import BaseTransformer
 from gloe.exceptions import UnsupportedTransformerArgException
 from gloe.conditional._if_then_else import _IfThen, _AsyncIfThen, _BaseIfThen
 from gloe.conditional._implication import _Implication, _AsyncImplication
+from gloe._transformer_types import SyncTransformer
 from typing import (
     Callable,
     Generic,
@@ -43,18 +44,18 @@ class If(Generic[In]):
 
     @overload
     def Then(
-        self, next_transformer: Transformer[In, ThenOut]
-    ) -> _IfThen[In, ThenOut, ThenOut]:
-        pass
-
-    @overload
-    def Then(
         self, next_transformer: AsyncTransformer[In, ThenOut]
     ) -> _AsyncIfThen[In, ThenOut, ThenOut]:
         pass
 
+    @overload
     def Then(
-        self, next_transformer: BaseTransformer[In, ThenOut]
+        self, next_transformer: SyncTransformer[In, ThenOut]
+    ) -> _IfThen[In, ThenOut, ThenOut]:
+        pass
+
+    def Then(
+        self, next_transformer: BaseTransformer[In, ThenOut] | SyncTransformer[In, ThenOut]
     ) -> _BaseIfThen[In, ThenOut, ThenOut]:
         if isinstance(next_transformer, AsyncTransformer):
             async_implication = _AsyncImplication[In, ThenOut](

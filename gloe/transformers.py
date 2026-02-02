@@ -1,22 +1,24 @@
 from abc import ABC, abstractmethod
 from inspect import Signature
 
-from typing import TypeVar, overload, cast, Optional, Any
+from typing import TYPE_CHECKING, TypeVar, overload, cast, Optional, Any, Literal
 
-from typing_extensions import TypeAlias, TypeVarTuple, Unpack
+from typing_extensions import TypeAlias
 
-from gloe.async_transformer import AsyncTransformer
 from gloe._transformer_utils import catch_transformer_exception
 from gloe.base_transformer import BaseTransformer, Flow
+from gloe._transformer_types import SyncTransformer
 
-from gloe._generic_types import (
-    AsyncNext2,
-    AsyncNext3,
-    AsyncNext4,
-    AsyncNext5,
-    AsyncNext6,
-    AsyncNext7,
-)
+if TYPE_CHECKING:
+    from gloe.async_transformer import AsyncTransformer
+    from gloe._generic_types import (
+        AsyncNext2,
+        AsyncNext3,
+        AsyncNext4,
+        AsyncNext5,
+        AsyncNext6,
+        AsyncNext7,
+    )
 
 __all__ = ["Transformer"]
 
@@ -35,12 +37,16 @@ O6 = TypeVar("O6")
 O7 = TypeVar("O7")
 To = TypeVar("To", bound=BaseTransformer)
 
-Args = TypeVarTuple("Args")
+
 
 
 def _execute_flow(flow: Flow, arg: Any) -> Any:
+    from gloe.async_transformer import AsyncTransformer
+
     result = arg
     for op in flow:
+        if isinstance(op, AsyncTransformer):
+            raise NotImplementedError()
         if isinstance(op, Transformer):
             result = op._safe_transform(result)
         else:
@@ -67,6 +73,10 @@ class Transformer(BaseTransformer[_I, _O], ABC):
     def __init__(self):
         super().__init__()
         self.__class__.__annotations__ = self.transform.__annotations__
+
+    @property
+    def is_async(self) -> Literal[False]:
+        return False
 
     @abstractmethod
     def transform(self, data: _I) -> _O:
@@ -113,16 +123,10 @@ class Transformer(BaseTransformer[_I, _O], ABC):
         pass
 
     @overload
-    def __call__(
-        self: "Transformer[tuple[Unpack[Args]], _O]", *args: Unpack[Args]
-    ) -> _O:
-        return _execute_flow(self._flow, args)
-
-    @overload
-    def __call__(self, data: _I) -> _O:
+    def __call__(self: "Transformer[_I, _O]", data: _I, /) -> _O:
         pass
 
-    def __call__(self, *data):
+    def __call__(self, *data: Any) -> _O:
         if len(data) == 0:
             return _execute_flow(self._flow, None)
         if len(data) == 1:
@@ -130,27 +134,80 @@ class Transformer(BaseTransformer[_I, _O], ABC):
         return _execute_flow(self._flow, data)
 
     @overload
-    def __rshift__(self, next_node: "Transformer[_O, O1]") -> "Transformer[_I, O1]":
+    def __rshift__(
+        self, next_node: "AsyncTransformer[_O, O1]"
+    ) -> "AsyncTransformer[_I, O1]":
+        pass
+
+    @overload
+    def __rshift__(
+        self, next_node: "AsyncNext2[_O, O1, O2]"
+    ) -> "AsyncTransformer[_I, tuple[O1, O2]]":
+        pass
+
+    @overload
+    def __rshift__(
+        self, next_node: "AsyncNext3[_O, O1, O2, O3]"
+    ) -> "AsyncTransformer[_I, tuple[O1, O2, O3]]":
+        pass
+
+    @overload
+    def __rshift__(
+        self, next_node: "AsyncNext4[_O, O1, O2, O3, O4]"
+    ) -> "AsyncTransformer[_I, tuple[O1, O2, O3, O4]]":
+        pass
+
+    @overload
+    def __rshift__(
+        self, next_node: "AsyncNext5[_O, O1, O2, O3, O4, O5]"
+    ) -> "AsyncTransformer[_I, tuple[O1, O2, O3, O4, O5]]":
+        pass
+
+    @overload
+    def __rshift__(
+        self, next_node: "AsyncNext6[_O, O1, O2, O3, O4, O5, O6]"
+    ) -> "AsyncTransformer[_I, tuple[O1, O2, O3, O4, O5, O6]]":
+        pass
+
+    @overload
+    def __rshift__(
+        self, next_node: "AsyncNext7[_O, O1, O2, O3, O4, O5, O6, O7]"
+    ) -> "AsyncTransformer[_I, tuple[O1, O2, O3, O4, O5, O6, O7]]":
+        pass
+
+    @overload
+    def __rshift__(
+        self, next_node: "SyncTransformer[_O, O1]"
+    ) -> "Transformer[_I, O1]":
         pass
 
     @overload
     def __rshift__(
         self,
-        next_node: tuple["Tr[_O, O1]", "Tr[_O, O2]"],
+        next_node: tuple["SyncTransformer[_O, O1]", "SyncTransformer[_O, O2]"],
     ) -> "Transformer[_I, tuple[O1, O2]]":
         pass
 
     @overload
     def __rshift__(
         self,
-        next_node: tuple["Tr[_O, O1]", "Tr[_O, O2]", "Tr[_O, O3]"],
+        next_node: tuple[
+            "SyncTransformer[_O, O1]",
+            "SyncTransformer[_O, O2]",
+            "SyncTransformer[_O, O3]",
+        ],
     ) -> "Transformer[_I, tuple[O1, O2, O3]]":
         pass
 
     @overload
     def __rshift__(
         self,
-        next_node: tuple["Tr[_O, O1]", "Tr[_O, O2]", "Tr[_O, O3]", "Tr[_O, O4]"],
+        next_node: tuple[
+            "SyncTransformer[_O, O1]",
+            "SyncTransformer[_O, O2]",
+            "SyncTransformer[_O, O3]",
+            "SyncTransformer[_O, O4]",
+        ],
     ) -> "Transformer[_I, tuple[O1, O2, O3, O4]]":
         pass
 
@@ -158,7 +215,11 @@ class Transformer(BaseTransformer[_I, _O], ABC):
     def __rshift__(
         self,
         next_node: tuple[
-            "Tr[_O, O1]", "Tr[_O, O2]", "Tr[_O, O3]", "Tr[_O, O4]", "Tr[_O, O5]"
+            "SyncTransformer[_O, O1]",
+            "SyncTransformer[_O, O2]",
+            "SyncTransformer[_O, O3]",
+            "SyncTransformer[_O, O4]",
+            "SyncTransformer[_O, O5]",
         ],
     ) -> "Transformer[_I, tuple[O1, O2, O3, O4, O5]]":
         pass
@@ -167,12 +228,12 @@ class Transformer(BaseTransformer[_I, _O], ABC):
     def __rshift__(
         self,
         next_node: tuple[
-            "Tr[_O, O1]",
-            "Tr[_O, O2]",
-            "Tr[_O, O3]",
-            "Tr[_O, O4]",
-            "Tr[_O, O5]",
-            "Tr[_O, O6]",
+            "SyncTransformer[_O, O1]",
+            "SyncTransformer[_O, O2]",
+            "SyncTransformer[_O, O3]",
+            "SyncTransformer[_O, O4]",
+            "SyncTransformer[_O, O5]",
+            "SyncTransformer[_O, O6]",
         ],
     ) -> "Transformer[_I, tuple[O1, O2, O3, O4, O5, O6]]":
         pass
@@ -181,57 +242,15 @@ class Transformer(BaseTransformer[_I, _O], ABC):
     def __rshift__(
         self,
         next_node: tuple[
-            "Tr[_O, O1]",
-            "Tr[_O, O2]",
-            "Tr[_O, O3]",
-            "Tr[_O, O4]",
-            "Tr[_O, O5]",
-            "Tr[_O, O6]",
-            "Tr[_O, O7]",
+            "SyncTransformer[_O, O1]",
+            "SyncTransformer[_O, O2]",
+            "SyncTransformer[_O, O3]",
+            "SyncTransformer[_O, O4]",
+            "SyncTransformer[_O, O5]",
+            "SyncTransformer[_O, O6]",
+            "SyncTransformer[_O, O7]",
         ],
     ) -> "Transformer[_I, tuple[O1, O2, O3, O4, O5, O6, O7]]":
-        pass
-
-    @overload
-    def __rshift__(
-        self, next_node: AsyncTransformer[_O, O1]
-    ) -> AsyncTransformer[_I, O1]:
-        pass
-
-    @overload
-    def __rshift__(
-        self, next_node: AsyncNext2[_O, O1, O2]
-    ) -> AsyncTransformer[_I, tuple[O1, O2]]:
-        pass
-
-    @overload
-    def __rshift__(
-        self, next_node: AsyncNext3[_O, O1, O2, O3]
-    ) -> AsyncTransformer[_I, tuple[O1, O2, O3]]:
-        pass
-
-    @overload
-    def __rshift__(
-        self, next_node: AsyncNext4[_O, O1, O2, O3, O4]
-    ) -> AsyncTransformer[_I, tuple[O1, O2, O3, O4]]:
-        pass
-
-    @overload
-    def __rshift__(
-        self, next_node: AsyncNext5[_O, O1, O2, O3, O4, O5]
-    ) -> AsyncTransformer[_I, tuple[O1, O2, O3, O4, O5]]:
-        pass
-
-    @overload
-    def __rshift__(
-        self, next_node: AsyncNext6[_O, O1, O2, O3, O4, O5, O6]
-    ) -> AsyncTransformer[_I, tuple[O1, O2, O3, O4, O5, O6]]:
-        pass
-
-    @overload
-    def __rshift__(
-        self, next_node: AsyncNext7[_O, O1, O2, O3, O4, O5, O6, O7]
-    ) -> AsyncTransformer[_I, tuple[O1, O2, O3, O4, O5, O6, O7]]:
         pass
 
     def __rshift__(self, next_node):  # pragma: no cover

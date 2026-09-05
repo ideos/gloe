@@ -1,0 +1,536 @@
+{
+  "negative.py": {
+    "incompatible_stage": [
+      "Argument 1 to \"text_only\" has incompatible type \"int\"; expected \"str\"  [arg-type]"
+    ],
+    "incompatible_branch": [
+      "Argument 1 to \"text_only\" has incompatible type \"int\"; expected \"str\"  [arg-type]"
+    ],
+    "any_output": [
+      "Pipeline stage result contains Any or an erased signature; annotate or adapt it  [misc]"
+    ],
+    "erased_output": [
+      "Pipeline callable signature was erased; retain its typed parameters  [misc]"
+    ],
+    "any_input": [
+      "Pipeline input type contains Any or an erased callable signature  [misc]"
+    ]
+  },
+  "negative_factories.py": {
+    "missing_required_configuration": [
+      "Missing named argument \"amount\" for \"add\"  [call-arg]"
+    ],
+    "configuration_type": [
+      "Argument \"amount\" to \"add\" has incompatible type \"str\"; expected \"int\"  [arg-type]"
+    ],
+    "positional_configuration": [
+      "Too many positional arguments for \"add\"  [call-arg]"
+    ],
+    "data_passed_to_factory": [
+      "Unexpected keyword argument \"value\" for \"add\"  [call-arg]"
+    ],
+    "optional_configuration_type": [
+      "Argument \"prefix\" to \"render\" has incompatible type \"int\"; expected \"str\"  [arg-type]"
+    ],
+    "generic_configuration_type": [
+      "Argument \"count\" to \"repeat\" has incompatible type \"str\"; expected \"int\"  [arg-type]"
+    ],
+    "configured_input": [
+      "Argument 1 to \"add\" has incompatible type \"str\"; expected \"int\"  [arg-type]"
+    ],
+    "configuration_at_execution": [
+      "Unexpected keyword argument \"amount\" for \"add\"  [call-arg]"
+    ],
+    "unconfigured_factory": [
+      "Too many positional arguments for \"add\"  [call-arg]"
+    ],
+    "unconfigured_optional_factory": [
+      "Too many positional arguments for \"render\"  [call-arg]",
+      "Argument 1 to \"render\" has incompatible type \"int\"; expected \"str\"  [arg-type]"
+    ],
+    "unconfigured_generic_factory": [
+      "Too many positional arguments for \"repeat\"  [call-arg]"
+    ],
+    "transformer_factory_call": [
+      "Too many positional arguments for \"sync\" of \"Transformer\"  [call-arg]"
+    ],
+    "untyped_lambda_stage": [
+      "Pipeline input type contains Any or an erased callable signature  [misc]",
+      "Pipeline stage result contains Any or an erased signature; annotate or adapt it  [misc]"
+    ],
+    "partial_configuration_type": [
+      "Argument \"prefix\" to \"configured\" has incompatible type \"int\"; expected \"str\"  [arg-type]"
+    ],
+    "partial_input_type": [
+      "Argument 1 to \"configured\" has incompatible type \"str\"; expected \"int\"  [arg-type]"
+    ],
+    "missing_root_configuration": [
+      "Missing named argument \"prefix\" for \"sync\" of \"Transformer\"  [call-arg]"
+    ],
+    "root_configuration_type": [
+      "Argument \"prefix\" to \"sync\" of \"Transformer\" has incompatible type \"int\"; expected \"str\"  [arg-type]"
+    ],
+    "root_input_type": [
+      "Argument 1 to \"sync\" of \"Transformer\" has incompatible type \"str\"; expected \"int\"  [arg-type]"
+    ],
+    "variadic_factory": [
+      "Configured transformers require explicit input and configuration parameters  [misc]"
+    ],
+    "zero_input_stage": [
+      "Too many arguments for \"constant\"  [call-arg]"
+    ]
+  },
+  "negative_guardrails.py": {
+    "nested_result_any": [
+      "Pipeline stage result contains Any or an erased signature; annotate or adapt it  [misc]"
+    ],
+    "mapping_result_any": [
+      "Pipeline stage result contains Any or an erased signature; annotate or adapt it  [misc]"
+    ],
+    "typeddict_result_any": [
+      "Pipeline stage result contains Any or an erased signature; annotate or adapt it  [misc]"
+    ],
+    "transformer_result_any": [
+      "Pipeline stage result contains Any or an erased signature; annotate or adapt it  [misc]"
+    ],
+    "input_any": [
+      "Pipeline input type contains Any or an erased callable signature  [misc]"
+    ],
+    "nested_input_any": [
+      "Pipeline input type contains Any or an erased callable signature  [misc]"
+    ],
+    "input_erased_callable": [
+      "Pipeline input type contains Any or an erased callable signature  [misc]"
+    ],
+    "erased_result_signature": [
+      "Pipeline stage result contains Any or an erased signature; annotate or adapt it  [misc]"
+    ],
+    "erased_partial_signature": [
+      "Partial signature was erased; retain inference or use a typed adapter  [misc]"
+    ]
+  },
+  "negative_helpers.py": {
+    "map_input": [
+      "Argument 1 has incompatible type \"list[str]\"; expected \"Iterable[int]\"  [arg-type]"
+    ],
+    "map_any_output": [
+      "Pipeline stage result contains Any or an erased signature; annotate or adapt it  [misc]",
+      "Collection callback output contains Any or an erased signature  [misc]"
+    ],
+    "filter_non_bool": [
+      "Filter and condition predicates must produce bool  [misc]"
+    ],
+    "filter_input": [
+      "Argument 1 has incompatible type \"list[int]\"; expected \"Iterable[str]\"  [arg-type]",
+      "Filter and condition predicates must produce bool  [misc]"
+    ],
+    "parallel_branch": [
+      "Argument 1 has incompatible type \"int\"; expected \"Never\"  [arg-type]"
+    ],
+    "sequential_branch": [
+      "Argument 1 has incompatible type \"int\"; expected \"Never\"  [arg-type]"
+    ],
+    "condition_predicate": [
+      "Argument 1 has incompatible type \"int\"; expected \"Never\"  [arg-type]",
+      "Filter and condition predicates must produce bool  [misc]"
+    ],
+    "incoming_type": [
+      "Argument 1 to \"incoming_text\" has incompatible type \"int\"; expected \"str\"  [arg-type]"
+    ],
+    "outcome_type": [
+      "Argument 1 to \"outcome_int\" has incompatible type \"str\"; expected \"int\"  [arg-type]"
+    ],
+    "changes_type": [
+      "Argument 1 to \"changes_text\" has incompatible type \"int\"; expected \"str\"  [arg-type]"
+    ],
+    "async_validator": [
+      "Ensurer validators must synchronously return None or raise  [misc]"
+    ],
+    "ensure_non_unary": [
+      "Ensurers require one positional data input  [misc]"
+    ],
+    "unpack_keyword_only": [
+      "Missing named argument \"suffix\" for \"keyword_only\"  [call-arg]",
+      "Argument 1 to \"keyword_only\" has incompatible type \"tuple[int, str]\"; expected \"int\"  [arg-type]",
+      "unpack cannot supply keyword-only callable parameters  [misc]"
+    ],
+    "unpack_variadic": [
+      "Argument 1 to \"variadic\" has incompatible type \"tuple[int, ...]\"; expected \"int\"  [arg-type]",
+      "unpack requires a fixed positional callable signature  [misc]"
+    ],
+    "validator_non_none": [
+      "Ensurer validators must synchronously return None or raise  [misc]"
+    ],
+    "map_erased_output": [
+      "Pipeline stage result contains Any or an erased signature; annotate or adapt it  [misc]",
+      "Collection callback output contains Any or an erased signature  [misc]"
+    ],
+    "overload_validator_output": [
+      "Argument 1 to \"check_text\" has incompatible type \"int\"; expected \"str\"  [arg-type]"
+    ]
+  },
+  "negative_inference.py": {
+    "identity_only": [
+      "Identity-only input needs an explicit type  [misc]"
+    ],
+    "incompatible_branch_inputs": [
+      "Branch input types do not establish one compatible input; provide input[T]()  [misc]"
+    ],
+    "generic_first_stage": [
+      "Cannot infer input from a generic or unknown parameter; provide input[T]()  [misc]"
+    ],
+    "overloaded_first_stage": [
+      "Cannot infer pipeline input from an overloaded stage; provide input[T]()  [misc]"
+    ],
+    "any_first_stage": [
+      "Cannot infer input from a generic or unknown parameter; provide input[T]()  [misc]"
+    ],
+    "zero_argument_inference": [
+      "Cannot infer input from a generic or unknown parameter; provide input[T]()  [misc]"
+    ],
+    "multiple_argument_inference": [
+      "Missing positional argument \"second\" in call to \"two\"  [call-arg]"
+    ],
+    "erased_callable_inference": [
+      "Pipeline stage result contains Any or an erased signature; annotate or adapt it  [misc]"
+    ]
+  },
+  "negative_malformed.py": {
+    "overlapping_variadic_overload": [
+      "Overloaded function signature 2 will never be matched: signature 1's parameter type(s) are the same or broader  [overload-cannot-match]"
+    ],
+    "malformed_factory_signature": [
+      "Configured transformers require explicit input and configuration parameters  [misc]"
+    ]
+  },
+  "negative_matrix.py": {
+    "erased_root_input": [
+      "Pipeline input type contains Any or an erased callable signature  [misc]"
+    ],
+    "erased_root_output": [
+      "Pipeline stage result contains Any or an erased signature; annotate or adapt it  [misc]"
+    ],
+    "union_unknown_output": [
+      "Pipeline stage result contains Any or an erased signature; annotate or adapt it  [misc]"
+    ],
+    "erased_record_input": [
+      "Pipeline input type contains Any or an erased callable signature  [misc]"
+    ],
+    "erased_class_input": [
+      "Pipeline input type contains Any or an erased callable signature  [misc]"
+    ],
+    "recursive_unknown_alias": [
+      "Pipeline input type contains Any or an erased callable signature  [misc]"
+    ],
+    "recursive_unknown_argument": [
+      "Pipeline input type contains Any or an erased callable signature  [misc]"
+    ],
+    "overload_missing_configuration": [
+      "Missing named argument \"label\" for \"formatted\"  [call-arg]"
+    ],
+    "overload_configuration_type": [
+      "Argument \"label\" to \"formatted\" has incompatible type \"int\"; expected \"str\"  [arg-type]"
+    ],
+    "overload_data_type": [
+      "No overload variant of \"formatted\" matches argument type \"float\"  [call-overload]",
+      "Pipeline stage result contains Any or an erased signature; annotate or adapt it  [misc]"
+    ],
+    "overload_configuration_literal": [
+      "No overload variant of \"mode\" matches argument type \"str\"  [call-overload]"
+    ],
+    "missing_root_input": [
+      "Too few arguments for \"sync\" of \"Transformer\"  [call-arg]"
+    ],
+    "positional_only_root": [
+      "Unexpected keyword argument \"first\" for \"sync\" of \"Transformer\"  [call-arg]"
+    ],
+    "optional_root_input_type": [
+      "Argument \"second\" to \"sync\" of \"Transformer\" has incompatible type \"int\"; expected \"str\"  [arg-type]"
+    ],
+    "root_keyword_type": [
+      "Argument \"suffix\" to \"sync\" of \"Transformer\" has incompatible type \"int\"; expected \"str\"  [arg-type]"
+    ],
+    "root_keyword_passed_positionally": [
+      "Too many positional arguments for \"sync\" of \"Transformer\"  [call-arg]"
+    ],
+    "extra_zero_root_argument": [
+      "Too many arguments for \"sync\" of \"Transformer\"  [call-arg]"
+    ],
+    "variadic_root_argument": [
+      "Argument 2 to \"sync\" of \"Transformer\" has incompatible type \"str\"; expected \"int\"  [arg-type]"
+    ],
+    "variadic_root_keyword": [
+      "Argument \"extra\" to \"sync\" of \"Transformer\" has incompatible type \"str\"; expected \"int\"  [arg-type]"
+    ],
+    "configuration_rebound": [
+      "Unexpected keyword argument \"suffix\" for \"configured\"  [call-arg]"
+    ],
+    "configured_positional_only": [
+      "Unexpected keyword argument \"first\" for \"configured\"  [call-arg]"
+    ],
+    "configured_optional_input": [
+      "Argument \"second\" to \"configured\" has incompatible type \"int\"; expected \"str\"  [arg-type]"
+    ],
+    "unknown_configuration": [
+      "Unexpected keyword argument \"unknown\" for \"configured\"  [call-arg]"
+    ],
+    "config_generic_specialization": [
+      "Argument 1 to \"convert\" has incompatible type \"str\"; expected \"int\"  [arg-type]"
+    ],
+    "zero_root_as_stage": [
+      "Too many arguments for \"__call__\" of \"Transformer\"  [call-arg]"
+    ],
+    "last_branch_input": [
+      "Argument 1 to \"name\" has incompatible type \"int\"; expected \"Named\"  [arg-type]"
+    ],
+    "raw_nested_branch_tuple": [
+      "\"tuple[Callable[[int], int], Callable[[int], Coroutine[Any, Any, str]]]\" not callable  [operator]",
+      "Pipeline stage result contains Any or an erased signature; annotate or adapt it  [misc]"
+    ],
+    "list_is_not_fanout": [
+      "\"list[Callable[[int], object]]\" not callable  [operator]",
+      "Pipeline stage result contains Any or an erased signature; annotate or adapt it  [misc]"
+    ],
+    "non_callable_stage": [
+      "\"int\" not callable  [operator]",
+      "Pipeline stage result contains Any or an erased signature; annotate or adapt it  [misc]"
+    ],
+    "none_stage": [
+      "\"None\" not callable  [misc]",
+      "Pipeline stage result contains Any or an erased signature; annotate or adapt it  [misc]"
+    ],
+    "incompatible_explicit_identity": [
+      "Argument 1 to \"__call__\" of \"Transformer\" has incompatible type \"int\"; expected \"str\"  [arg-type]"
+    ],
+    "awaitable_input_is_data": [
+      "Argument 1 to \"increment\" has incompatible type \"Awaitable[int]\"; expected \"int\"  [arg-type]"
+    ],
+    "custom_awaitable_result": [
+      "Argument 1 to \"increment\" has incompatible type \"str\"; expected \"int\"  [arg-type]"
+    ],
+    "nested_awaitable_is_data": [
+      "Argument 1 to \"upper\" of \"str\" has incompatible type \"Awaitable[str]\"; expected \"str\"  [arg-type]"
+    ],
+    "optional_requires_handling": [
+      "Argument 1 to \"increment\" has incompatible type \"int | None\"; expected \"int\"  [arg-type]"
+    ],
+    "literal_input": [
+      "Argument 1 to \"choose\" has incompatible type \"Literal['c']\"; expected \"Literal['a', 'b']\"  [arg-type]"
+    ],
+    "record_input": [
+      "Argument 1 to \"row_name\" has incompatible type \"int\"; expected \"Row\"  [arg-type]"
+    ],
+    "nominal_record_mismatch": [
+      "Argument 1 to \"row_name\" has incompatible type \"Person\"; expected \"Row\"  [arg-type]"
+    ],
+    "nominal_unit_input": [
+      "Argument 1 to \"account\" has incompatible type \"int\"; expected \"UserId\"  [arg-type]"
+    ],
+    "unpack_missing_argument": [
+      "Argument 1 to \"join\" has incompatible type \"tuple[int]\"; expected \"tuple[int, int]\"  [arg-type]"
+    ],
+    "unpack_overload_mismatch": [
+      "Argument 1 to \"join\" has incompatible type \"tuple[int, str]\"; expected \"tuple[int, int]\"  [arg-type]"
+    ],
+    "unpack_extra_argument": [
+      "Argument 1 to \"join\" has incompatible type \"tuple[int, int, int]\"; expected \"tuple[int, int]\"  [arg-type]"
+    ],
+    "unpack_default_type": [
+      "Argument 1 to \"arguments\" has incompatible type \"tuple[str]\"; expected \"tuple[int]\"  [arg-type]"
+    ],
+    "unpack_unknown_length": [
+      "Argument 1 to \"arguments\" has incompatible type \"tuple[int, ...]\"; expected \"tuple[int]\"  [arg-type]"
+    ],
+    "unpack_non_callable": [
+      "\"int\" not callable  [operator]",
+      "unpack requires one explicitly typed callable  [misc]"
+    ],
+    "unbound_required_keyword": [
+      "Missing named argument \"required\" for \"keyword\"  [call-arg]"
+    ],
+    "unpack_required_keyword": [
+      "unpack cannot supply keyword-only callable parameters  [misc]"
+    ],
+    "unpack_variadic": [
+      "unpack requires a fixed positional callable signature  [misc]"
+    ],
+    "partial_remaining_input": [
+      "Argument 1 to \"arguments\" has incompatible type \"int\"; expected \"str\"  [arg-type]"
+    ],
+    "partial_positional_keyword": [
+      "Unexpected keyword argument \"first\" for \"arguments\"  [call-arg]"
+    ],
+    "variadic_keyword_factory": [
+      "Configured transformers require explicit input and configuration parameters  [misc]"
+    ],
+    "direct_map_input": [
+      "List item 0 has incompatible type \"str\"; expected \"int\"  [list-item]"
+    ],
+    "direct_filter_input": [
+      "List item 0 has incompatible type \"str\"; expected \"int\"  [list-item]"
+    ],
+    "async_predicate_output": [
+      "Filter and condition predicates must produce bool  [misc]"
+    ],
+    "predicate": [
+      "Filter and condition predicates must produce bool  [misc]"
+    ],
+    "condition_else_input": [
+      "Argument 1 has incompatible type \"int\"; expected \"Never\"  [arg-type]"
+    ],
+    "condition_then_input": [
+      "Argument 1 has incompatible type \"int\"; expected \"Never\"  [arg-type]"
+    ],
+    "condition_unknown": [
+      "Condition branch output contains Any or an erased signature  [misc]"
+    ],
+    "parallel_unknown": [
+      "Dynamic branch output contains Any or an erased signature  [misc]"
+    ],
+    "sequential_unknown": [
+      "Dynamic branch output contains Any or an erased signature  [misc]"
+    ],
+    "non_callable_dynamic_branch": [
+      "\"int\" not callable  [operator]",
+      "Dynamic branch output contains Any or an erased signature  [misc]",
+      "Argument 1 to \"parallel\" has incompatible type \"tuple[Callable[[int], int], int]\"; expected \"Iterable[Callable[[int], int]]\"  [arg-type]"
+    ],
+    "erased_dynamic_signature": [
+      "Pipeline callable signature was erased; retain its typed parameters  [misc]"
+    ],
+    "erased_sequential_signature": [
+      "Pipeline callable signature was erased; retain its typed parameters  [misc]"
+    ],
+    "erased_map_signature": [
+      "Pipeline callable signature was erased; retain its typed parameters  [misc]"
+    ],
+    "erased_predicate_signature": [
+      "Pipeline callable signature was erased; retain its typed parameters  [misc]"
+    ],
+    "erased_condition_signature": [
+      "Pipeline callable signature was erased; retain its typed parameters  [misc]"
+    ],
+    "erased_partial_map": [
+      "Partial signature was erased; retain inference or use a typed adapter  [misc]"
+    ],
+    "erased_partial_root": [
+      "Pipeline input type contains Any or an erased callable signature  [misc]"
+    ],
+    "generic_partial_root": [
+      "Generic partial roots need a concrete signature; use input[T]()  [misc]"
+    ],
+    "callable_object_factory_adapter": [
+      "transformer requires one explicitly typed callable  [misc]"
+    ],
+    "callable_object_ensurer_adapter": [
+      "Ensurers require one explicitly typed callable  [misc]"
+    ],
+    "async_object_validator": [
+      "Ensurer validators must synchronously return None or raise  [misc]"
+    ],
+    "non_none_incoming": [
+      "Ensurer validators must synchronously return None or raise  [misc]"
+    ],
+    "list_validator_input": [
+      "Argument 1 to \"check_text\" has incompatible type \"int\"; expected \"str\"  [arg-type]"
+    ],
+    "non_callable_validator": [
+      "\"None\" not callable  [misc]",
+      "Ensurer validators must synchronously return None or raise  [misc]"
+    ],
+    "ensure_zero_input": [
+      "Ensurers require one positional data input  [misc]"
+    ],
+    "ensure_multiple_inputs": [
+      "Ensurers require one positional data input  [misc]"
+    ],
+    "ensure_variadic_keywords": [
+      "Ensurers require one positional data input  [misc]"
+    ],
+    "overload_validator_input": [
+      "Argument 1 to \"check_text\" has incompatible type \"int\"; expected \"str\"  [arg-type]"
+    ],
+    "unresolved_generic_anchor": [
+      "Cannot infer input from a generic or unknown parameter; provide input[T]()  [misc]"
+    ],
+    "empty_inferred_fanout": [
+      "Identity-only input needs an explicit type  [misc]"
+    ],
+    "awaited_root_type": [
+      "Argument 1 to \"__call__\" of \"Transformer\" has incompatible type \"str\"; expected \"int\"  [arg-type]"
+    ],
+    "awaited_missing_input": [
+      "Too few arguments for \"__call__\" of \"Transformer\"  [call-arg]"
+    ],
+    "awaited_keyword_type": [
+      "Argument \"suffix\" to \"__call__\" of \"Transformer\" has incompatible type \"int\"; expected \"str\"  [arg-type]"
+    ],
+    "awaited_zero_root": [
+      "Too many arguments for \"__call__\" of \"Transformer\"  [call-arg]"
+    ],
+    "awaited_pipeline_input": [
+      "Argument 1 to \"__call__\" of \"Transformer\" has incompatible type \"str\"; expected \"int\"  [arg-type]"
+    ],
+    "blocking_pipeline_input": [
+      "Argument 1 to \"sync\" of \"Transformer\" has incompatible type \"str\"; expected \"int\"  [arg-type]"
+    ],
+    "awaited_output_type": [
+      "Incompatible types in assignment (expression has type \"str\", variable has type \"int\")  [assignment]"
+    ],
+    "missing_await": [
+      "Incompatible types in assignment (expression has type \"Coroutine[Any, Any, str]\", variable has type \"str\")  [assignment]"
+    ],
+    "union_erased_callable": [
+      "Pipeline callable signature was erased; retain its typed parameters  [misc]"
+    ],
+    "union_erased_partial": [
+      "Partial signature was erased; retain inference or use a typed adapter  [misc]"
+    ],
+    "unknown_predicate_output": [
+      "Predicate result contains Any or an erased signature; annotate or adapt it  [misc]"
+    ],
+    "unknown_condition_predicate": [
+      "Predicate result contains Any or an erased signature; annotate or adapt it  [misc]"
+    ]
+  },
+  "negative_workflows.py": {
+    "wrong_unit": [
+      "Argument \"limit\" to \"within_budget\" has incompatible type \"Kilometers\"; expected \"Meters\"  [arg-type]"
+    ],
+    "wrong_resource": [
+      "Argument \"session\" to \"insert_rows\" has incompatible type \"str\"; expected \"Session\"  [arg-type]"
+    ],
+    "index_contract": [
+      "Dict entry 0 has incompatible type \"str\": \"str\"; expected \"str\": \"int\"  [dict-item]"
+    ],
+    "generic_factory_config": [
+      "Argument \"count\" to \"replicate\" has incompatible type \"str\"; expected \"int\"  [arg-type]"
+    ],
+    "monetary_validator_result": [
+      "Argument 2 to \"conserved\" has incompatible type \"str\"; expected \"tuple[int, ...]\"  [arg-type]"
+    ],
+    "async_registry_signature": [
+      "Argument 1 has incompatible type \"list[Callable[[Query], str]]\"; expected \"Iterable[Callable[[Query], Awaitable[Indicator]]]\"  [arg-type]"
+    ],
+    "incompatible_process_phases": [
+      "Argument 1 to \"store_batch\" has incompatible type \"Document\"; expected \"ImportBatch\"  [arg-type]"
+    ],
+    "wrong_pipeline_entry": [
+      "Argument 1 to \"sync\" of \"Transformer\" has incompatible type \"Compensation\"; expected \"ImportBatch\"  [arg-type]"
+    ],
+    "resolved_result_is_indicator": [
+      "Argument 1 to \"use_query\" has incompatible type \"Indicator\"; expected \"Query\"  [arg-type]"
+    ],
+    "incompatible_inferred_branches": [
+      "Branch input types do not establish one compatible input; provide input[T]()  [misc]"
+    ],
+    "input_awaitable_remains_data": [
+      "Argument 1 to \"check_number\" has incompatible type \"Awaitable[int]\"; expected \"int\"  [arg-type]"
+    ]
+  },
+  "plugin_missing.py": {
+    "plugin_missing": [
+      "Unsupported operand types for >> (\"input[int]\" and \"Callable[[int], int]\")  [operator]"
+    ]
+  }
+}

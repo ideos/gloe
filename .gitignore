@@ -9,3 +9,7 @@ htmlcov
 gloe.egg-info
 # python virtual environments
 .venv
+
+build/
+dist/
+coverage.xml

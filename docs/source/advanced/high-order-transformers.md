@@ -1,63 +1,47 @@
-# High-Order Transformers
+# Higher-order functions
 
-A common need you probably will have is to create transformers that receive other transformers as arguments. This is called high-order transformers. It is a powerful feature that allows you to create more complex transformers by combining simpler ones.
-
-## Creating the "reduce" Transformer
-
-Let's create a transformer that receives a list of integers and apply a "reducer" transformer to combine them sequentially. The types of this first example will be all static and the transformer will be called "reduce" (inspired by [`reduce`](https://realpython.com/python-reduce-function/)).
+When a stage receives another callable, keep that contract in an ordinary
+function. Gloe can compose the resulting callable or pipeline without a
+special high-order class.
 
 ```python
-from gloe import partial_transformer, transformer, Transformer
-
-@partial_transformer
-def reduce(
-    data: list[int],
-    reducer: Transformer[tuple[int, int], int],
-    initial_value: int = 0
-) -> int:
-    result = initial_value
-    for num in data:
-        result = reducer((result, num))
-    return result
+import gloe
+from collections.abc import Callable
 
 
-@transformer
-def sum_tuple2(data: tuple[int, int]) -> int:
-    return data[0] + data[1]
-
-
-sum_all = reduce(sum_tuple2)
-
-print(sum_all([1, 2, 3, 4]))  # returns 10
-```
-
-
-## Creating the "Reduce" Generic Transformer
-
-Now, let's create a more generic version of the "reduce" transformer. This time, we will use the `Generic` type from Python's `typing` module to allow the reducer to receive any type of data.
-
-```python
-from gloe import Transformer
-from typing import Generic, TypeVar
-
-T = TypeVar('T')
-S = TypeVar('S')
-
-class Reduce(Generic[T, S], Transformer[list[T], S]):
-    def __init__(self, reducer: Transformer[tuple[S, T], S], initial_value: S):
-        super().__init__()
-
-        self.reducer = reducer
-        self.initial_value = initial_value
-
-    def transform(self, data: list[T]) -> S:
-        result = self.initial_value
-        for num in data:
-            result = self.reducer((result, num))
+def make_reducer(
+    reducer: Callable[[int, int], int], *, initial: int = 0
+) -> Callable[[list[int]], int]:
+    def reduce_values(values: list[int]) -> int:
+        result = initial
+        for value in values:
+            result = reducer(result, value)
         return result
 
+    return reduce_values
 
-flow = Reduce(sum_tuple2, initial_value=0.0)
-print(sum_all([1, 2, 3, 4]))  # returns 10
 
-``` 
+sum_values = make_reducer(lambda total, value: total + value)
+pipeline = gloe.input[list[int]]() >> sum_values
+result = pipeline.sync([1, 2, 3])  # 6
+```
+
+If configuration should be visible to the pipeline checker, use a
+keyword-configured function:
+
+```python
+@gloe.transformer
+def reduce_with(value: list[int], *, reducer: Callable[[int, int], int]) -> int:
+    total = 0
+    for item in value:
+        total = reducer(total, item)
+    return total
+
+
+pipeline = gloe.input() >> reduce_with(reducer=lambda a, b: a + b)
+result = pipeline.sync([1, 2, 3])  # 6
+```
+
+The [function cookbooks](../cookbooks.md) cover reductions, map-over-data, and
+runtime-selected callables. Keep domain rules and resource ownership in these
+ordinary functions.

@@ -1,38 +1,43 @@
-# Transformer Factory Pattern
+# Configured transformer factories
 
-The Transformer Factory is a design pattern that allows developers to create flows with some steps being abstract or with parameterized values, using these to instantiate transformers within the flow.
-
-## Example
-
-Suppose you have a flow to send emails to a list of members of a department. You want this flow to be flexible, allowing filtering of the members who receive the email by different criteria. You can create a function that takes a transformer and returns a flow with this transformer as a step.
+Use a normal factory when its parameters are ordinary Python arguments. Use
+`@gloe.transformer` when keyword-only parameters are configuration that should
+be bound before the data enters a pipeline.
 
 ```python
-def send_department_emails(
-    filter_members: Transformer[list[User], list[User]]
-) -> Transformer[Department, EmailResult]:
-    return get_department_members >> filter_members >> send_emails
+import gloe
+
+
+def deliver(template: str, address: str) -> str:
+    return f"{template}:{address}"
+
+
+@gloe.transformer
+def send_email(value: str, *, template: str) -> str:
+    return deliver(template, value)
+
+
+send_welcome = send_email(template="welcome")
+pipeline = gloe.input[str]() >> send_welcome
+result = pipeline.sync("ana@example.com")  # "welcome:ana@example.com"
 ```
 
-From here, there are two important things to notice:
-1. The `send_department_emails` function can be used in another flow because it returns a transformer. For example:
-    ```python
-    @transformer
-    def filter_manager_members(members: list[User]) -> list[User]:
-        return [member for member in members if member.role == "manager"]
-   
-    send_emails = get_department_by_id >> send_department_emails(filter_manager_members)
-    ```
-2. The `filter_members` transformer received as an argument can be any other arbitrarily complex flow. The only constraint is that its input type must be `list[User]` and its output type must be `list[User]`. For example:
-    ```python
-    @transformer
-    def filter_manager_members(members: list[User]) -> list[User]:
-        return [member for member in members if member.role == "manager"]
+After `template` is bound, `send_welcome` is an ordinary callable with the
+unary input contract. It can be reused in several pipelines. The factory does
+not hold invocation-specific state.
 
-    @transformer
-    def filter_senior_members(members: list[User]) -> list[User]:
-        return [member for member in members if member.years_of_service > 5]
-   
-    filter_senior_managers = filter_manager_members >> filter_senior_members
-   
-    send_emails = get_department_by_id >> send_department_emails(filter_senior_managers)
-    ```
+For a stage without configuration, prefer a plain function. A decorated
+no-configuration stage is still a factory and must be called as `stage()` before
+composition.
+
+When a factory returns a whole pipeline, keep that pipeline's data contract
+explicit and let the caller choose its input anchor:
+
+```python
+def for_department(template: str):
+    return gloe.input[str]() >> send_email(template=template)
+
+
+department_pipeline = for_department("reminder")
+result = department_pipeline.sync("ana@example.com")  # "reminder:ana@example.com"
+```

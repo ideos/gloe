@@ -1,231 +1,258 @@
-
 <div align="center" style="margin-top: 2rem;">
-  <img src="https://gloe.ideos.com.br/_static/assets/gloe-logo.png"><br>
+  <img src="https://gloe.ideos.com.br/_static/assets/gloe-logo.png" alt="Gloe"><br>
 </div>
-<br/>
+
 <div align="center">
 <a href="https://github.com/ideos/gloe/actions/workflows/test.yml">
-    <img src="https://github.com/ideos/gloe/actions/workflows/test.yml/badge.svg" alt="CI - Test">
-</a>
-<a href="https://codecov.io/gh/ideos/gloe">
-    <img src="https://codecov.io/github/ideos/gloe/coverage.svg?branch=main" alt="Coverage">
+  <img src="https://github.com/ideos/gloe/actions/workflows/test.yml/badge.svg" alt="CI - Test">
 </a>
 <a href="https://pypi.org/project/gloe">
-    <img src="https://img.shields.io/pypi/v/gloe.svg?color=%2334D058" alt="PyPI Latest Release">
+  <img src="https://img.shields.io/pypi/v/gloe.svg?color=%2334D058" alt="PyPI Latest Release">
 </a>
-<a href="https://anaconda.org/conda-forge/gloe">
-    <img src="https://anaconda.org/conda-forge/gloe/badges/version.svg" alt="Anaconda Latest Release">
+<a href="https://www.python.org/">
+  <img src="https://img.shields.io/pypi/pyversions/gloe.svg?color=%2334D058" alt="Supported Python versions">
 </a>
-</div>
-<div align="center">
-<a href="https://pypi.org/project/gloe">
-    <img src="https://img.shields.io/pypi/pyversions/gloe.svg?color=%2334D058" alt="Supported Python versions">
-</a>
-<a href="https://github.com/ideos/gloe/blob/main/LICENSE">
-    <img src="https://img.shields.io/pypi/l/gloe.svg?color=%2304b367" alt="License - Apache 2.0">
-</a>
-<a href="https://www.mypy-lang.org/">
-    <img src="https://www.mypy-lang.org/static/mypy_badge.svg" alt="Mypy">
+<a href="https://www.apache.org/licenses/LICENSE-2.0">
+  <img src="https://img.shields.io/pypi/l/gloe.svg?color=%2304b367" alt="License - Apache 2.0">
 </a>
 </div>
 
+Gloe is a small, typed language for building inspectable Python pipelines. A
+pipeline is an immutable sequence of ordinary callables and branches. Gloe
+connects those functions, checks their declared edges with its bundled mypy
+plugin, executes synchronous and asynchronous callables through one invocation
+boundary, and exposes the resulting graph.
 
-***
+Read the [documentation](https://gloe.ideos.com.br) or the
+[source code](https://github.com/ideos/gloe).
 
-**Read the documentation**: [gloe.ideos.com.br](https://gloe.ideos.com.br)
+## Install
 
-**Souce code**: [github.com/ideos/gloe](https://github.com/ideos/gloe)
-
-***
-
-# Your Code as a Flow
-
-Gloe (pronounced like "glow") is a general-purpose library designed to guide developers in expressing their code as a **flow**. 
-
-**Why follow this approach?** Because it ensures that you can keep your Python code easy to maintain, document, and test. Gloe guides you to write code in the form of small, safely connected units, rather than relying on scattered functions and classes with no clear relationship.
-
-**What is a flow?** Formally, a flow is defined as a DAG (Directed Acyclic Graph) with one source and one sink, meaning it has a beginning and an end. In practice, it is a sequence of steps that transform data from one form to another.
-
-**Where can I use it?** Anywhere! Gloe is particularly useful for data science and machine learning pipelines, as well as for servers, scripts, or any area where there is a **gap between code and logical business understanding**.
-
-**[Give me examples!](https://gloe.ideos.com.br/examples/index.html)**
-
-## Key Features
-
-- Write **type-safe** pipelines with pure Python.
-- Express a pipeline as a set of **atomic**, **isolated**, **extensible** and **trackable** units of responsibility called [transformers](https://gloe.ideos.com.br/theory.html).
-- [Validate the input, the output and the changes between them](https://gloe.ideos.com.br/getting-started/ensurers.html) of transformers during execution.
-- [Mix sync and async](https://gloe.ideos.com.br/getting-started/async-transformers.html#async-pipelines) code without worrying about its concurrent nature.
-- Keep your code **readable** and **maintainable**, even for **complex flows**. ¹ 
-- Use it **anywhere** without changing your existing workflow.
-- [Visualize you pipelines](https://gloe.ideos.com.br/getting-started/plotting.html) and the data flowing through them. ²
-- Use a functional approach to work with [conditions](https://gloe.ideos.com.br/getting-started/conditional-flows.html) and [collections](https://gloe.ideos.com.br/api-reference/gloe.collection.html).
-
-<sub>1. Gloe emerged in the context of a large application with extremely complex business logic. After transitioning the code to Gloe, maintenance efficiency improved by 200%, leading the entire team to adopt it widely.</sub>
-
-<sub style="display: block; margin-top: -0.5rem;">2. This feature is under development.</sub>
-
-## Installing
-
-Requirements:
-- Python (>= 3.9)
-- typing-extensions (>= 4.7)
-
-You can install Gloe using pip or conda:
+Gloe supports Python 3.12, 3.13, and 3.14.
 
 ```shell
-# PyPI
 pip install gloe
 ```
 
+Install the optional typing tools when the project uses composition checks:
+
 ```shell
-# or conda
-conda install -c conda-forge gloe
+pip install 'gloe[types]'
 ```
 
-## Example
+The extra pins mypy 2.3.1, the tested checker release. Installation does
+not change a project's checker configuration. Enable the bundled plugin
+explicitly:
 
-Consider the following flow. It is part of an e-commerce server and starts from a HTTP request and ends with a list of recommended products. 
+```toml
+[tool.mypy]
+plugins = ["gloe.mypy_plugin"]
+```
 
+Other checkers can check the ordinary functions in a pipeline, but Gloe's
+verified composition contract is provided by this mypy plugin.
+
+## The canonical pipeline
+
+Use an ordinary typed function for a stage. Use `@gloe.transformer` only when a
+function has keyword-only configuration that should be bound before the
+pipeline runs. The decorator always returns a configuration factory:
 
 ```python
-get_recommendations = (
-    extract_request_id >>
-    get_user_by_id >> (
-        get_last_seen_items,
-        get_last_ordered_items,
-        get_user_network_data,
-    ) >>
-    get_recommended_items
-)
+import gloe
+
+
+@gloe.transformer
+def add(value: int, *, amount: int) -> int:
+    return value + amount
+
+
+def as_text(value: int) -> str:
+    return str(value)
+
+
+pipe = gloe.input() >> add(amount=2) >> as_text
+result = pipe.sync(3)  # "5"
 ```
 
-Steps of this flow:
-1. The user ID is extracted from the request. 
-2. The corresponding user data is retrieved using this ID. 
-3. Three pieces of information about the user are gathered: the last seen items, the last ordered items, and the user's network data (such as personal information and relationships). 
-4. These three pieces of information are used to generate a list of recommended items for this specific user.
-
-Can we agree that it is easy to understand just by reading the code?
-
-### Flow Steps: Transformers
-
-Each step of a flow is called a **transformer** and creating one is as easy as:
+`gloe.input()` infers the concrete input from the first stage. If the entry
+point is generic or ambiguous, anchor it explicitly:
 
 ```python
-from gloe import transformer
-
-@transformer
-def extract_request_id(req: Request) -> int:
-    # your logic goes here
+explicit = gloe.input[int]() >> add(amount=2) >> as_text
+result = explicit.sync(3)  # "5"
 ```
 
-
-
-You can connect many transformers using the right shift operator, just like the above example. When the argument of `>>` is a tuple, you are creating branches using the default [parallel gateway](). 
-
-> Learn more about [creating transformers](https://gloe.ideos.com.br/getting-started/transformers.html), [pipelines](https://gloe.ideos.com.br/getting-started/transformers.html#building-a-pipeline), and [gateways](https://gloe.ideos.com.br/getting-started/gateways.html).
-
-### Maintainance
-
-When the manager requests you to return the items grouped by department instead of in a flat list, the refactoring process is straightforward:
-
-```diff python
-get_user_recommendations = (
-    extract_request_id >>
-    get_user_by_id >> (
-        get_last_seen_items,
-        get_last_ordered_items,
-        get_user_network_data,
-    ) >>
-    get_recommended_items >>
-    group_by_department
-)
-```
-
-> See [full transformers definition](https://gloe.ideos.com.br/getting-started/plotting.html).
-
-### Type checking
-
-If, by some chance, you connect two transformers with incompatible types, the IDE along with [Mypy](https://github.com/python/mypy) will warn you about the malformed flow.
-
-For example, suppose you implemented the `extract_request_id` transformer returning a string instead of a integer ID:
+Pipeline construction does not execute a stage. Calling a pipeline is always
+awaitable, including when every stage is synchronous:
 
 ```python
-@transformer
-def extract_request_id(request: Request) -> str:
-    ...
+result = await pipe(3)  # "5", from an async entry point
 ```
 
-But the `get_user_by_id` transformer expects an `int` as input:
+Synchronous code can use the same execution path through `.sync(...)`:
 
 ```python
-@transformer
-def get_user_by_id(user_id: int) -> User:
-    ...
+result = pipe.sync(3)  # "5"
 ```
 
-The result will be something like this:
+`.sync(...)` blocks and rejects calls made from an already running event loop.
+Synchronous stages run on the caller's thread; use an explicit executor or
+`asyncio.to_thread` when that boundary is required.
 
-![Malformed pipeline example](https://gloe.ideos.com.br/_images/malformed-pipeline-example.jpeg)
-
-### Simple Usage
-
-Considering is everything okay about the types, this pipeline can be invoked from a server, for example:
+For a function with no configuration, prefer a plain function. If the
+decorator is useful for a uniform public factory, call the no-configuration
+factory before composing it:
 
 ```python
-@users_router.get('/:user_id/recommended')
-def recommended_items_route(req: Request):
-    return get_user_recommendations(req)
+@gloe.transformer
+def normalize(value: str) -> str:
+    return value.strip().lower()
+
+
+pipe = gloe.input[str]() >> normalize()
+result = pipe.sync(" Hello ")  # "hello"
 ```
 
-### Quick Documentation
+## Branches and data flow
 
-When you need to document it somewhere, you can just [plot it](https://gloe.ideos.com.br/getting-started/plotting.html).
-
-![Graph for send_promotion](https://gloe.ideos.com.br/_images/graph_example.jpeg)
-
-### Integration 
-
-Suppose you don't need to extract the user ID within the flow because you are using a web framework that already does it, like [FastAPI](https://fastapi.tiangolo.com/), you can remove the `extract_request_id` transformer. Since the incoming type for `get_user_by_id` is integer, the configuration would be:
-
+A tuple after `>>` is a static fan-out. Each branch receives the same value,
+runs concurrently, and returns a tuple in declaration order:
 
 ```python
-get_user_recommendations = (
-    get_user_by_id >> (
-        get_last_seen_items,
-        get_last_ordered_items,
-        get_user_network_data,
-    ) >>
-    get_recommended_items >>
-    group_by_department
-)
+def word_count(value: str) -> int:
+    return len(value.split())
 
 
-@users_router.get('/{user_id}/recommended')
-def recommended_items_route(user_id: int):
-    return get_user_recommendations(user_id)
+async def fetch_score(value: str) -> float:
+    return len(value) / 2
+
+
+analysis = gloe.input[str]() >> (word_count, fetch_score)
+result = await analysis("hello world")  # (2, 5.5)
 ```
 
-We hope the above example illustrates how easily you can identify maintenance points and gain confidence that the rest of the code will continue to working properly, as long as the transformers' interfaces remain satisfied.
+Failures cancel and await outstanding sibling branches. Synchronous work is not
+silently moved to a worker. A pipeline has no implicit cache or deduplication:
+composing `pipe2 >> pipe3` executes both complete sequences. Share a prefix
+explicitly when the data flow should fork:
+
+```python
+prefix = gloe.input[str]() >> normalize()
+pipeline = prefix >> (word_count, fetch_score)
+result = await pipeline("Hello")  # (1, 2.5)
+```
+
+Tuples remain one value. To call a function with positional arguments from a
+tuple, make that adaptation explicit:
+
+```python
+def finish(count: int, score: float) -> str:
+    return f"{count}:{score:.2f}"
 
 
-## Motivation
+pipeline = analysis >> gloe.unpack(finish)
+result = await pipeline("hello world")  # "2:5.50"
+```
 
-Software development has lots of patterns and good practices related to the code itself, like how to document, test, structure and what programming paradigm to use. However, beyond all that, we believe that the key point of a successful software project is a good communication between everyone involved in the development. Of course, this communication is not necessarily restricted to meetings or text messages, it is present also in documentation artifacts and in a well-written code.
+To retain an earlier value, use an identity branch and a typed join. The
+identity branch keeps a reference; it is not a deep copy or a snapshot:
 
-When developers write a code, they are telling a story to the next person who will read or/and refactor it. Depending on the code's quality, this story could be quite confusing, with no clear roles of the characters and a messy plot (sometimes with an undesired twist). The next person to maintain the software may take a long time to clearly understand the narrative and make it clear, or they will simply give up, leaving it as is.
-
-
-### How Can Gloe Help Me?
-
-Gloe comes to turn this story coherent, logically organized and easy to follow. This is achieved by dividing the code into [concise steps](https://gloe.ideos.com.br/theory.html) with an unambiguous responsibility and explicit interface. Then, Gloe allows you to connect these steps, clarifying their relationship and identifying necessary changes during refactoring. Thus, you can quickly understand the entire story being told and enhance it. Inspired by things like [natural transformation](https://ncatlab.org/nlab/show/natural+transformation) and Free Monad (present in [Scala](https://typelevel.org/cats/datatypes/freemonad.html) and [Haskell](https://serokell.io/blog/introduction-to-free-monads)), Gloe implemented this approach using functional programming and strong typing concepts.
-
-### Gloe is not a workflow orchestrator
-
-Currently, unlike platforms like [Air Flow](https://airflow.apache.org/) that include scheduler backends for task orchestration, Gloe's primary purpose is to aid in development. The [graph structure](https://gloe.ideos.com.br/theory.html) aims to make the code [more flat and hence readable](https://en.wikibooks.org/wiki/Computer_Programming/Coding_Style/Minimize_nesting). However, it is important to note that Gloe does not offer functionalities for executing tasks in a dedicated environment, nor does it directly contribute to execution speed or scalability improvements.
+```python
+def tokenize(document: str) -> tuple[str, ...]:
+    return tuple(document.split())
 
 
-## License
+def finish(original: str, tokens: tuple[str, ...]) -> str:
+    return f"{original!r}: {len(tokens)} tokens"
 
-[Apache License Version 2.0](https://github.com/ideos/gloe/blob/main/LICENSE)
+
+retained = prefix >> (gloe.input(), tokenize) >> gloe.unpack(finish)
+result = await retained("Hello")  # "'hello': 1 tokens"
+```
+
+Use immutable outputs or an explicit copy when a before/after comparison needs
+a snapshot.
+
+## Reusable operations
+
+Gloe's public operations are lowercase factories with one consistent
+configuration vocabulary:
+
+```python
+def positive(value: int) -> bool:
+    return value > 0
+
+
+def double(value: int) -> int:
+    return value * 2
+
+
+numbers = gloe.input() >> gloe.filter(positive) >> gloe.map(double)
+result = await numbers([-2, 0, 3])  # [6]
+```
+
+`map(callback)` and `filter(predicate)` consume iterables sequentially and
+return ordered lists. Their callbacks may be synchronous or asynchronous.
+`condition(predicate, then=..., otherwise=...)` selects one branch. Use
+`parallel(callables)` for a runtime homogeneous collection of independent
+callables, or `sequential(callables)` when those callables must run in order.
+Both return ordered lists. Static heterogeneous fan-out uses the tuple form
+shown above.
+
+For validation, keep synchronous validators small and explicit:
+
+```python
+def nonnegative(value: int) -> None:
+    if value < 0:
+        raise ValueError("value must be nonnegative")
+
+
+@gloe.transformer
+@gloe.ensure(incoming=nonnegative, outcome=nonnegative)
+def add_checked(value: int, *, amount: int) -> int:
+    return value + amount
+
+
+pipeline = gloe.input[int]() >> add_checked(amount=2)
+result = pipeline.sync(3)  # 5
+```
+
+Validators return `None` or raise. Configuration is excluded from the data
+contract. Put `@gloe.transformer` outside `@gloe.ensure` for configured
+functions; an unconfigured function can use `@gloe.ensure` directly.
+
+## Inspect the graph
+
+Graph inspection does not run business functions:
+
+```python
+graph = pipeline.graph()
+nodes = graph.nodes
+edges = graph.edges
+result = pipeline.sync(3)  # 5
+
+dot = pipeline.to_dot()       # DOT text
+pipeline.to_dot("flow.dot")   # optional file path
+pipeline.to_image("flow.png") # requires gloe[plot]
+```
+
+Repeated occurrences stay distinct in the graph. Graphs describe dependencies;
+they do not claim that a stage is pure or cached.
+
+## Migration
+
+Gloe 0.8 uses one pipeline model. Functions and callable objects are ordinary
+Python values, `@gloe.transformer` is a configuration factory, and native async
+functions are composed directly. See the [migration table](docs/source/migration.md)
+and [function cookbooks](docs/source/cookbooks.md) for common 0.7 rewrites.
+
+## Scope
+
+Gloe helps a team write, inspect, and type-check a flow. It is not a scheduler,
+workflow service, transaction manager, retry system, dataframe schema
+language, or automatic concurrency runtime. Resource lifetimes, retries,
+transactions, loops, and domain algorithms stay in ordinary Python around the
+pipeline.
+
+Gloe is distributed under the [Apache License 2.0](LICENSE).

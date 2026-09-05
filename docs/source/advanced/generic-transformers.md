@@ -1,42 +1,42 @@
-# Transformers With Generic Types
+# Generic pipelines and explicit roots
 
-Currently, Gloe doesn't support the creation of transformers with generic types using the `@transformer` or any other decorator. However, you can still create transformers with generic types by using the `Transformer` class directly. Some examples are provided in the {py:mod}`gloe.collection` package.
-
-## Creating the "Zip" Transformer
-
-Suppose we want to build a transformer that receives two lists with the same length and we want to zip them. 
-
-The input type of the transformer is a tuple with two lists of the different types: list1 with type `list[T]` and list2 with type `list[S]`. So, the input type of the Zip transformer is `tuple[list[T], list[U]]`
-
-The output type is a list of tuples, each tuple with type `tuple[T, S]`. So, the output type of the Zip transformer is `list[tuple[T, S]]`.
-
-Lets implement the Zip transformer using the `Transformer` class directly:
+The public type is `Transformer[P, R]`: `P` is the callable input signature and
+`R` is the resolved output. A function with one integer input and a string
+output can be named explicitly as:
 
 ```python
-from typing import TypeVar, Generic
+import gloe
 from gloe import Transformer
 
-T = TypeVar("T")
-U = TypeVar("U")
 
-class Zip(Generic[T, U], Transformer[tuple[list[T], list[U]], list[tuple[T, U]]]):
-    def transform(self, data: tuple[list[T], list[U]]) -> list[tuple[T, U]]:
-        list1, list2 = data
-        return list(zip(list1, list2))
+def stringify(value: int) -> str:
+    return str(value)
+
+
+stage: Transformer[[int], str] = Transformer(stringify)
+result = stage.sync(7)  # "7"
 ```
 
-```{note}
-For more information about the `Transformer` class, check {class}`gloe.Transformer`.
-```
-
-With this class, we can use each in different types of lists:
+Most code can leave the type to the plugin:
 
 ```python
-list1 = [1, 2, 3]
-list2 = ["a", "b", "c"]
-
-zip_transformer = Zip[int, str]()
-
-output = zip_transformer(list1, list2)
-print(output)  # [(1, 'a'), (2, 'b'), (3, 'c')]
+pipeline = gloe.input() >> stringify
+result = pipeline.sync(7)  # "7"
 ```
+
+Use an explicit anchor when a generic function cannot establish its input from
+the first edge:
+
+```python
+def identity[T](value: T) -> T:
+    return value
+
+
+pipeline = gloe.input[int]() >> identity
+result = pipeline.sync(7)  # 7
+```
+
+The plugin checks each composition edge and branch. It does not infer a whole
+program's runtime values, database state, or protocol intersections. For a
+callable with multiple positional inputs, `Transformer(function)` supplies the
+operator root; a tuple-to-call adaptation still requires `gloe.unpack`.

@@ -10,19 +10,17 @@ authors = [
 ]
 description = "Gloe is a general-purpose library designed to guide developers in expressing their code as a flow."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 classifiers = [
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    'typing_extensions~=4.7',
+    'typing_extensions>=4.12,<5',
 ]
 
 [tool.setuptools.dynamic]
@@ -36,9 +34,16 @@ Repository = "https://github.com/ideos/gloe"
 
 [project.optional-dependencies]
 plot = ['pygraphviz>=1.11']
-types = ['mypy~=1.7.0']
+types = ['mypy==2.3.1']
 
-[tool.pytest.ini_options]
-pythonpath = [
-  "gloe"
-]
+dev = ['mypy==2.3.1', 'black', 'flake8', 'coverage', 'build']
+docs = ['sphinx', 'myst-parser', 'furo']
+
+[tool.setuptools.packages.find]
+include = ["gloe*"]
+
+[tool.setuptools.package-data]
+gloe = ["py.typed"]
+
+[tool.black]
+target-version = ["py312"]

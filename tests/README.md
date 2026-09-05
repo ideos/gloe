@@ -3,7 +3,7 @@
 See [the contract matrix](contract-matrix.md) for accepted forms, intentional
 rejections, real scenarios and the accounting for removed 0.7 tests.
 
-The runtime suite targets the approved 0.8 public API and uses only the
+The runtime suite targets the 0.8 public API and uses only the
 standard library plus Gloe itself.  `tests/scenarios.py` contains synthetic
 records and operations shaped like reporting, reconciliation, route
 preparation, indicator selection, monetary allocation, and transactional import

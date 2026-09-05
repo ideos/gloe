@@ -132,9 +132,7 @@ run_selected = gloe.input[list[ReportFunction]]() >> gloe.map(
 result = await run_selected(selected)  # [5, 10]
 ```
 
-This is the shape exercised by the Partech consumer scenarios. Database names,
-registry contents, and query ownership remain runtime boundaries. The research
-used synthetic fixtures; it did not run a production integration.
+The application owns the registry contents and query parameters.
 
 ## Keep transactions outside the pipeline
 
@@ -207,9 +205,10 @@ assert result == (ImportBatch(rows=(101, 102)), (101, 102))
 
 Gloe does not infer commit, rollback, retries, or resource ownership.
 
-## Geo Routes as a candidate shape
+## Prepare route inputs
 
-One researched route endpoint can be expressed as a possible data-flow shape:
+Filter available segments, then retain that network alongside a smaller set
+of hot segments within a distance budget:
 
 ```python
 from dataclasses import dataclass
@@ -247,7 +246,7 @@ def build_route_inputs(
 seeds = (
     gloe.input[list[Segment]]()
     >> gloe.filter(is_hot)
-    >> within_budget(limit=100)
+    >> gloe.filter(within_budget(limit=100))
 )
 
 prepare = (
@@ -268,6 +267,5 @@ result = prepare.sync(segments)
 assert result == (segments[:3], [segments[2]])
 ```
 
-Geo Routes was inspected as a candidate consumer, not as a current Gloe user.
-The example does not validate route connectivity, coordinate systems, map
-matching, or real integration behavior.
+Route connectivity, coordinate systems, and map matching belong in the
+application's route-building functions.

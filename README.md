@@ -247,11 +247,6 @@ Python values, `@gloe.transformer` is a configuration factory, and native async
 functions are composed directly. See the [migration table](docs/source/migration.md)
 and [function cookbooks](docs/source/cookbooks.md) for common 0.7 rewrites.
 
-The repository's consumer research found Gloe 0.7 in the Partech engines and
-used those workflows to exercise synthetic migration scenarios. Geo Routes is a
-candidate scenario rather than an existing Gloe consumer. Those checks did not
-run production integrations.
-
 ## Scope
 
 Gloe helps a team write, inspect, and type-check a flow. It is not a scheduler,

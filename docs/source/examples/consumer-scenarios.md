@@ -1,9 +1,7 @@
-# Consumer-shaped scenarios
+# Workflow examples
 
-The repository research inspected the Partech engines, where Gloe 0.7 is an
-actual dependency, and used small synthetic scenarios to exercise the 0.8
-surface. It also inspected Geo Routes as a candidate use case. These examples
-do not claim production integration tests.
+These examples combine filtering, mapping, sequential reconciliation, and
+validation using ordinary typed functions.
 
 ## Report builders
 

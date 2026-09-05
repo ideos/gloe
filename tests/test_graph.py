@@ -51,6 +51,16 @@ class GraphProjectionTests(TestCase):
         self.assertIn("identity", [data["label"] for data in graph.nodes.values()])
         self.assertEqual(pipe.sync(2), (2, 3))
 
+    def test_empty_fanout_keeps_a_connected_graph(self) -> None:
+        pipe = gloe.input[int]() >> ()
+        graph = pipe.graph()
+        labels = {node: data["label"] for node, data in graph.nodes.items()}
+        self.assertEqual(
+            {(labels[start], labels[end]) for start, end in graph.edges},
+            {("input", "fork"), ("fork", "join"), ("join", "output")},
+        )
+        self.assertEqual(pipe.sync(2), ())
+
     def test_configured_and_root_functions_keep_useful_labels(self) -> None:
         @gloe.transformer
         def add(value: int, *, amount: int) -> int:

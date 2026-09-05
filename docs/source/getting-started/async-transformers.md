@@ -1,75 +1,58 @@
-(async-transformers)=
-# Async Transformers
+# Synchronous and asynchronous stages
 
-```{admonition} API Reference
-:class: seealso
-- {func}`gloe.async_transformer`
-- {func}`gloe.partial_async_transformer`
-- {class}`gloe.AsyncTransformer`
-```
-
-Transformers can be also created from [coroutines](https://docs.python.org/3/library/asyncio-task.html#coroutines), but, in this case, you need to use the `@async_transformer` decorator. For example, consider the transformer below that fetches data from an external http server:
+Native `async def` functions are ordinary stages. There is no separate
+decorator, pipeline class, or collection variant for asynchronous code:
 
 ```python
-import httpx
-from gloe import async_transformer
+import gloe
 
-@async_transformer
-async def fetch_data(resource: str) -> httpx.Response:
-    async with httpx.AsyncClient() as client:
-        r = await client.get(f'{BASE_URL}/{resource}')
-    return r
+
+def parse(raw: str) -> int:
+    return int(raw)
+
+
+async def lookup(value: int) -> str:
+    return f"item-{value}"
+
+
+pipe = gloe.input() >> parse >> lookup
+item = await pipe("7")  # "item-7"
 ```
-The `@async_transformer` decorator converts the `fetch_data` function into an instance of the `AsyncTransformer` class.
 
-To call this transformer, we need to use the `await` syntax, just like a normal coroutine:
+The pipeline call is always awaitable, even when every stage is synchronous.
+Gloe awaits one callable result layer at the boundary. A nested awaitable that
+the callable intentionally returns remains data.
+
+## Synchronous entry points
+
+Use `.sync(...)` from synchronous application code:
 
 ```python
-await fetch_data('users')
+result = pipe.sync("7")  # "item-7"
 ```
 
-## Async Pipelines
+`.sync(...)` blocks while driving the same execution path and raises when
+called from a running event loop. A synchronous stage runs on the caller's
+thread. If blocking work must leave an async event loop, make that boundary
+explicit with the application's executor or `asyncio.to_thread`.
 
-An async transformer can be composed with other async transformers or with other sync transformers (normal transformers). For example:
+## Branches
+
+Static tuple branches run concurrently and return in declaration order. Mixed
+sync/async branches use the same rule:
 
 ```python
-@async_transformer
-async def get_user_by_id(user_id: int) -> User: ...
+def local_score(value: int) -> int:
+    return value * 2
 
-@transformer
-def extract_user_roles(user: User) -> list[Role]: ...
 
-get_user_roles = get_user_by_id >> extract_user_roles
+async def remote_score(value: int) -> int:
+    return value + 1
+
+
+scores = gloe.input[int]() >> (local_score, remote_score)
+result = await scores(3)  # (6, 4)
 ```
 
-When a pipeline has at least one async transformer, the entire pipeline becomes async, so we must call it using the `await` statement:
-
-```python
-await get_user_roles(user_id)
-```
-
-Alternatively, we can start the pipeline with a sync transformer and append an async transformer to it:
-
-```python
-@transformer
-def extract_user_id(request: Request) -> int: ...
-
-get_user = extract_user_id >> get_user_by_id
-```
-
-Briefly, you can mix async and sync transformers together without worrying about its concurrent nature, but it is still a transformer, so you'll still have to make sure the typing is correct.
-
-(partial-async-transformers)=
-## Partial Async Transformers
-
-Just like in sync transformers, you can create [partial transformers](/getting-started/partial-transformers) with an async behavior. It can be done using the `@partial_async_transformer`:
-
-```python
-from gloe import partial_async_transformer
-
-@partial_async_transformer
-async def get_users_by_role(role: str, page: int = 0, page_size: int = 10) -> Page[User]:
-    "Get users with a specific role. The response is paginated."
-    ...
-
-```
+If a branch fails or is cancelled, Gloe cancels and awaits outstanding sibling
+branches. It does not offload synchronous branches automatically.

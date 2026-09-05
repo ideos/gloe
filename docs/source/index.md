@@ -1,44 +1,37 @@
-```{eval-rst} 
-:og:description: Gloe is a general-purpose library designed to guide developers in expressing their code as a flow.
-
-:og:image:alt: Gloe is a general-purpose library designed to guide developers in expressing their code as a flow.
-
-.. meta::
-  :description: Gloe is a general-purpose library designed to guide developers in expressing their code as a flow.
+```{eval-rst}
+:og:description: Gloe is a small, typed language for building inspectable Python pipelines.
 ```
 
-```{include} ../../README.md
-```
+# Gloe
 
+Gloe connects ordinary typed Python callables into immutable, inspectable
+pipelines. The 0.8 API has one execution model: build with `>>`, invoke with
+`await pipe(value)`, or use `pipe.sync(value)` from synchronous code.
+
+Start with [the canonical pipeline](getting-started/transformers.md), then read
+the [migration table](migration.md) when moving from 0.7. The
+[cookbooks](cookbooks.md) show how to keep reductions, `map`-over-data, loops,
+and domain-specific algorithms as ordinary Python functions.
 
 ```{toctree}
-:caption: 'Contents'
-:maxdepth: 3
+:caption: Learn
+:maxdepth: 2
 :hidden:
 
-Introduction <self>
 getting-started/index
-faq
-philosophy
-limitations
-
-```
-
-
-```{toctree}
-:caption: 'Learn'
-:maxdepth: 3
-:hidden:
-
-
 examples/index
 patterns/index
 advanced/index
+migration
+cookbooks
+faq
+limitations
+philosophy
 ```
 
 ```{toctree}
-:caption: 'Development'
-:maxdepth: 3
+:caption: Reference
+:maxdepth: 2
 :hidden:
 
 api-reference/index

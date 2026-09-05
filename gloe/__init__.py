@@ -1,37 +1,27 @@
-from gloe._composition_utils import _compose_nodes
-from gloe.functional import (
-    transformer,
-    partial_transformer,
-    partial_async_transformer,
-    async_transformer,
+"""Typed, inspectable pipelines built from ordinary Python functions."""
+
+from ._core import Transformer as Transformer, input as input
+from ._functions import (
+    transformer as transformer,
+    map as map,
+    filter as filter,
+    condition as condition,
+    parallel as parallel,
+    sequential as sequential,
+    unpack as unpack,
 )
-from gloe.conditional import If, condition
-from gloe.ensurer import ensure
-from gloe.exceptions import UnsupportedTransformerArgException
-from gloe.transformers import Transformer, MultiArgsTransformer
-from gloe.base_transformer import BaseTransformer, PreviousTransformer
-from gloe.base_transformer import TransformerException
-from gloe.async_transformer import AsyncTransformer, MultiArgsAsyncTransformer
+from ._validation import ensure as ensure
 
-__version__ = "0.7.0"
-
+__version__ = "0.8.0"
 __all__ = [
-    "transformer",
-    "partial_transformer",
-    "partial_async_transformer",
-    "async_transformer",
-    "If",
-    "condition",
-    "ensure",
-    "UnsupportedTransformerArgException",
-    "BaseTransformer",
-    "PreviousTransformer",
     "Transformer",
-    "TransformerException",
-    "AsyncTransformer",
+    "input",
+    "transformer",
+    "map",
+    "filter",
+    "condition",
+    "parallel",
+    "sequential",
+    "unpack",
+    "ensure",
 ]
-
-setattr(Transformer, "__rshift__", _compose_nodes)
-setattr(AsyncTransformer, "__rshift__", _compose_nodes)
-setattr(MultiArgsTransformer, "__rshift__", _compose_nodes)
-setattr(MultiArgsAsyncTransformer, "__rshift__", _compose_nodes)

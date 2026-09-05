@@ -1,136 +1,94 @@
-(collectiosn)=
 # Collections
 
-```{admonition} API Reference
-:class: seealso
-- {class}`gloe.collection.Map`
-- {class}`gloe.collection.MapAsync`
-- {class}`gloe.collection.Filter`
-- {class}`gloe.collection.FilterAsync`
-- {class}`gloe.collection.MapOver`
-- {class}`gloe.collection.MapOverAsync`
-```
-
-Gloe provides a way to work of collections of data in a functional way, but using transformers instead of functions. The `Map`, `Filter`, and `MapOver` classes are the main tools to work with collections.
-
-## Map
-
-The {class}`gloe.collection.Map` class is used to apply a transformer to each element of a collection. For example, consider we have a list of users and we want to get the age of each one:
+Use lowercase `map(callback)` and `filter(predicate)` factories for the
+common ordered collection operations. They accept ordinary synchronous or
+asynchronous callbacks and return lists:
 
 ```python
-from gloe import transformer
-from gloe.collection import Map
+import gloe
 
-@transformer
-def get_user_age(user: User) -> int:
-    return user.age
 
-get_users_ages = Map(get_user_age)  # Transformer[Iterable[User], Iterable[int]]
+def is_positive(value: int) -> bool:
+    return value > 0
 
-get_users_ages([
-    User(name='Anny', age=16),
-    User(name='Alice', age=25),
-    User(name='Bob', age=30)
-])  # returns [16, 25, 30]
+
+def double(value: int) -> int:
+    return value * 2
+
+
+positive = gloe.filter(is_positive)
+twice = gloe.map(double)
+
+
+pipe = gloe.input[list[int]]() >> positive >> twice
+result = await pipe([-2, 0, 3])  # [2, 6]
 ```
 
-## MapAsync
-
-The {class}`gloe.collection.MapAsync` class is just an alternative to `Map` to apply async transformers to each element of a collection. For example, consider we have the same list of users and we want to fetch last post of each one:
+The input iterable is consumed sequentially. Output order matches input order.
+`filter` requires callbacks to return actual booleans; it does not treat an
+arbitrary truthy value as a predicate result. A callback can be another Gloe
+pipeline or a configured callable.
 
 ```python
-from gloe import async_transformer
-from gloe.collection import MapAsync
+async def keep_remote(value: int) -> bool:
+    return value % 2 == 0
 
-@async_transformer
-async def fetch_last_post(user: User) -> Post:
-    return await UserService.get_last_post(user)
 
-fetch_last_posts = MapAsync(fetch_last_post)  # AsyncTransformer[Iterable[User], Iterable[Post]]
+async_filter = gloe.filter(keep_remote)
+async_pipe = gloe.input[list[int]]() >> async_filter
+result = await async_pipe([1, 2, 3])  # [2]
 ```
 
-## Filter
+## Runtime-selected operations
 
-The {class}`gloe.collection.Filter` class is used to filter elements of a collection. For example, consider the same previous list of users and we want to filter only the ones older than 18:
+When an application has a homogeneous iterable of callables at runtime, use
+`parallel(callables)` or `sequential(callables)`:
 
 ```python
-from gloe import transformer
-from gloe.collection import Filter
+def check_schema(value: int) -> str:
+    return f"schema:{value}"
 
-@transformer
-def is_older_than_18(user: User) -> bool:
-    return user.age > 18
 
-filter_older_than_18 = Filter(is_older_than_18)  # Transformer[Iterable[User], Iterable[User]]
+def check_policy(value: int) -> str:
+    return f"policy:{value}"
 
-filter_older_than_18([
-    User(name='Anny', age=16),
-    User(name='Alice', age=25),
-    User(name='Bob', age=30)
-]) # returns [User(name='Alice', age=25), User(name='Bob', age=30)]
+
+checks = gloe.parallel([check_schema, check_policy])
+parallel_pipe = gloe.input[int]() >> checks
+parallel_result = await parallel_pipe(3)  # ["schema:3", "policy:3"]
+
+
+def normalize(value: int) -> int:
+    return value + 1
+
+
+def enrich(value: int) -> int:
+    return value + 10
+
+
+ordered = gloe.sequential([normalize, enrich])
+sequential_pipe = gloe.input[int]() >> ordered
+sequential_result = await sequential_pipe(3)  # [4, 13]
 ```
 
-We can also do both filter and map:
-```python
-get_ages_greater_than_18 = Filter(is_older_than_18) >> Map(get_user_age)
+Both helpers return lists in declaration order. `parallel` cancels and awaits
+sibling work after a failure; `sequential` invokes each callable in order.
+These helpers keep the collection homogeneous; a fixed tuple of different
+branch result types belongs directly after `>>`.
 
-get_ages_greater_than_18([
-    User(name='Anny', age=16),
-    User(name='Alice', age=25),
-    User(name='Bob', age=30)
-]) # returns [25, 30]
-```
+## Keep specialized algorithms in Python
 
-## FilterAsync
-
-The {class}`gloe.collection.FilterAsync` class is just an alternative to `Filter` to apply async transformers to filter elements of a collection. For example, consider the same previous list of users, and we want to filter only the ones that have more than 1.000 friends:
-
-```python
-from gloe import async_transformer
-from gloe.collection import FilterAsync
-
-@async_transformer
-async def has_more_than_1000_friends(user: User) -> bool:
-    friends_result = await UserService.get_friends(user)
-    return friends_result.count > 1000
-
-filter_popular_users = FilterAsync(has_more_than_1000_friends)  # AsyncTransformer[Iterable[User], Iterable[User]]
-```
-
-## MapOver
-
-The {class}`gloe.collection.MapOver` class is used to zip the input collection with a static collection passed as argument during the instantiation.
-For example, consider the same previous list of users, we want to zip each user with a static list of roles, then format the user's name with the role name:
+There is no separate operation for every list method. A typed ordinary
+function is easier to read and keeps its domain rules visible:
 
 ```python
-from gloe import transformer
-from gloe.collection import MapOver
+def flatten[T](groups: list[list[T]]) -> list[T]:
+    return [item for group in groups for item in group]
 
-roles: list[Role] = [admin_role, member_role, manager_role]
 
-@transformer
-def format_user(user: User, role: Role) -> str:
-    return f'{user.name} is {role.name}'
-
-format_user_roles = MapOver(roles, format_user)  # Transformer[User, Iterable[str]]
-
-format_user_roles(User(name='Anny', age=16)) # returns ['Anny is admin', 'Anny is member', 'Anny is manager']
+pipe = gloe.input[list[list[int]]]() >> flatten
+result = pipe.sync([[1, 2], [3]])  # [1, 2, 3]
 ```
 
-## MapOverAsync
-
-The {class}`gloe.collection.MapOverAsync` class is just an alternative to `MapOver` to apply async transformers to zip the input collection with a static collection passed as argument during the instantiation. For example, consider the same previous list of users, we want to zip each user with a static list of roles, then update the role of each user:
-
-```python
-from gloe import async_transformer
-from gloe.collection import MapOverAsync
-
-roles: list[Role] = [admin_role, member_role, manager_role]
-
-@async_transformer
-async def update_user_role(user: User, role: Role) -> User:
-    return await UserService.update_role(user, role)
-
-update_users_roles = MapOverAsync(roles, update_user_role)  # AsyncTransformer[User, Iterable[User]]
-```
-
+See the [cookbooks](../cookbooks.md) for `reduce` and the old map-over-data
+pattern.

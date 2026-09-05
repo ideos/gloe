@@ -1,49 +1,35 @@
-# API Reference
+# API reference
 
-## Packages
+The reference describes the small public 0.8 surface. It is written directly
+so documentation builds do not depend on importing application modules or
+auto-importing legacy package paths.
 
 ```{toctree}
-:maxdepth: 4
+:maxdepth: 2
 
-gloe <self>
-gloe.collection
-gloe.gateways
-gloe.utils
-gloe.experimental
+gloe
+factories
+graph
+typing
 ```
 
-## Module contents
+## Public exports
 
-### Decorators
+The top-level package exports:
 
-```{eval-rst}
-.. autodecorator:: gloe.transformer
-.. autodecorator:: gloe.async_transformer
-.. autodecorator:: gloe.partial_transformer
-.. autodecorator:: gloe.partial_async_transformer
-.. autodecorator:: gloe.condition
-.. autodecorator:: gloe.ensure
+```text
+Transformer
+input
+transformer
+map
+filter
+condition
+parallel
+sequential
+unpack
+ensure
 ```
 
-### Classes
-
-```{eval-rst}
-.. autoclass:: gloe.BaseTransformer
-   :members:
-   :show-inheritance:
-.. autoclass:: gloe.Transformer
-   :members:
-   :show-inheritance:
-.. autoclass:: gloe.AsyncTransformer
-   :members:
-   :show-inheritance:
-.. autoclass:: gloe.If
-   :members:
-   :show-inheritance:
-```
-
-### Exceptions
-```{eval-rst}
-.. autoexception:: gloe.TransformerException
-.. autoexception:: gloe.UnsupportedTransformerArgException
-```
+Native `async def` functions, callable objects, bound methods, partials, and
+other pipelines use these same exports. There are no separate async, multi-input
+or branch-class variants.

@@ -1,6 +1,11 @@
+[run]
+branch = True
+source = gloe
+# The checker plugin runs in mypy subprocesses; its contract has a separate gate.
+omit = gloe/mypy_plugin.py
+
 [report]
-omit =
-    tests/*
+show_missing = True
 exclude_lines =
     pragma: no cover
-    @overload
+    if TYPE_CHECKING:

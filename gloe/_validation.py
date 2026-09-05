@@ -55,7 +55,7 @@ class _Ensurer(Generic[Incoming, Outcome, C]):
             )
         ]
         if len(inputs) != 1 or any(
-            p.kind == inspect.Parameter.VAR_POSITIONAL
+            p.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD)
             for p in signature.parameters.values()
         ):
             raise TypeError(

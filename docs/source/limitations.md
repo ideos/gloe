@@ -15,6 +15,21 @@ retry.
   in place, use a fresh output or explicit snapshot when a before value matters.
 - Async validators are outside the `ensure` contract; validators are
   synchronous and return `None` or raise.
+- `transformer` and `ensure` inspect function signatures. For a callable
+  object, decorate its bound `operation.__call__` method or an ordinary typed
+  adapter. Decorate stages before composing them into a pipeline.
+- Generic or overloaded first stages need `input[T]()`. A generic partial
+  also needs a concrete input anchor instead of a direct `Transformer` root.
+  Retain inferred partial types; an annotation such as `partial[str]` erases
+  the parameter contract.
+- Predicate narrowing is supported for concrete TypeIs/TypeGuard targets that
+  are subtypes of the source item. Other targets retain the source type.
+  Ambiguous overloaded or generic guards may require a typed adapter; a
+  conditional's false branch must accept the full source type.
+- Collection helper inference follows callback annotations. For example,
+  `filter(bool)` has an `object` item contract; a predicate declared with an
+  `int` parameter retains an `int` result element type. Use a domain-typed
+  predicate when that precision matters downstream.
 
 Keep loops, resource lifetimes, transactions, retries, and specialized domain
 algorithms in ordinary typed Python when adding a Gloe operator would only give

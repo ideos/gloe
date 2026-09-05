@@ -34,7 +34,13 @@ from mypy.nodes import (
     MemberExpr,
     TempNode,
 )
-from mypy.plugin import FunctionContext, MethodContext, MethodSigContext, Plugin
+from mypy.plugin import (
+    FunctionContext,
+    FunctionSigContext,
+    MethodContext,
+    MethodSigContext,
+    Plugin,
+)
 from mypy.subtypes import is_subtype
 from mypy.typeops import get_type_vars
 from mypy.types import (
@@ -46,6 +52,7 @@ from mypy.types import (
     Parameters,
     TupleType,
     Type,
+    TypeAliasType,
     TypeGuardedType,
     TypeType,
     TypedDictType,
@@ -108,8 +115,17 @@ def _contains_unknown(value: Type, seen: Optional[set[int]] = None) -> bool:
     normal inference behavior.
     """
 
-    proper = get_proper_type(value)
     visited = set() if seen is None else seen
+    if isinstance(value, TypeAliasType):
+        # Expanding a recursive alias creates fresh type objects. Visit its
+        # definition once, but always check actual generic arguments for Any.
+        if any(_contains_unknown(argument, visited) for argument in value.args):
+            return True
+        if value.alias is None or id(value.alias) in visited:
+            return False
+        visited.add(id(value.alias))
+        return _contains_unknown(value.alias.target, visited)
+    proper = get_proper_type(value)
     identity = id(proper)
     if identity in visited:
         return False
@@ -193,6 +209,20 @@ def _call(
 ) -> Type:
     """Run mypy's normal call checker against a synthetic expression."""
 
+    proper = get_proper_type(function)
+    candidates = proper.items if isinstance(proper, UnionType) else [function]
+    for candidate in candidates:
+        if _is_erased_partial(candidate):
+            ctx.api.fail(
+                "Partial signature was erased; retain inference or use a typed adapter",
+                ctx.context,
+            )
+        signature = _signature(ctx, candidate)
+        if signature is not None and _is_erased_callable(signature):
+            ctx.api.fail(
+                "Pipeline callable signature was erased; retain its typed parameters",
+                ctx.context,
+            )
     callee = TempNode(function)
     callee.set_line(ctx.context)
     values: List[Expression] = []
@@ -217,6 +247,10 @@ def _signature(
     if isinstance(proper, (CallableType, Overloaded)):
         return proper
     if isinstance(proper, Instance):
+        if proper.type.fullname == "functools.partial" and proper.extra_attrs:
+            partial = proper.extra_attrs.attrs.get("__mypy_partial")
+            if partial is not None:
+                return _signature(ctx, partial)
         access = MemberExpr(TempNode(value), "__call__")
         access.set_line(ctx.context)
         called = get_proper_type(ctx.api.get_expression_type(access))
@@ -254,14 +288,16 @@ def _copy_callable(function: CallableType, **changes: object) -> CallableType:
     return function.copy_modified(**changes)  # type: ignore[arg-type]
 
 
-def _partition_one(ctx: FunctionContext, function: CallableType) -> CallableType:
+def _partition_one(
+    ctx: FunctionContext, function: CallableType
+) -> Optional[CallableType]:
     if any(kind in (ARG_STAR, ARG_STAR2) for kind in function.arg_kinds):
         ctx.api.fail(
             "Configured transformers require explicit input and configuration "
             "parameters",
             ctx.context,
         )
-        return function
+        return None
 
     config_indexes = [
         index
@@ -306,9 +342,33 @@ def _partition_factory(ctx: FunctionContext) -> Type:
         return ctx.default_return_type
     function = get_proper_type(ctx.arg_types[0][0])
     if isinstance(function, CallableType):
-        return _partition_one(ctx, function)
+        return _partition_one(ctx, function) or ctx.default_return_type
     if isinstance(function, Overloaded):
-        return Overloaded([_partition_one(ctx, item) for item in function.items])
+        factories: List[CallableType] = []
+        for item in function.items:
+            factory = _partition_one(ctx, item)
+            if factory is None:
+                return ctx.default_return_type
+            for index, previous in enumerate(factories):
+                if _copy_callable(previous, ret_type=NoneType()) == _copy_callable(
+                    factory, ret_type=NoneType()
+                ):
+                    result = get_proper_type(previous.ret_type)
+                    choice = get_proper_type(factory.ret_type)
+                    assert isinstance(result, (CallableType, Overloaded))
+                    assert isinstance(choice, CallableType)
+                    choices = (
+                        list(result.items)
+                        if isinstance(result, Overloaded)
+                        else [result]
+                    )
+                    factories[index] = _copy_callable(
+                        previous, ret_type=Overloaded([*choices, choice])
+                    )
+                    break
+            else:
+                factories.append(factory)
+        return factories[0] if len(factories) == 1 else Overloaded(factories)
     ctx.api.fail("transformer requires one explicitly typed callable", ctx.context)
     return ctx.default_return_type
 
@@ -327,6 +387,27 @@ def _construct_transformer(ctx: FunctionContext) -> Type:
     result = get_proper_type(ctx.default_return_type)
     if not isinstance(result, Instance) or len(result.args) != 2:
         return result
+    function = _argument(ctx, "function", 0)
+    if function is not None and _is_instance(function, "functools.partial"):
+        signature = _signature(ctx, function)
+        if isinstance(signature, CallableType):
+            if any(
+                get_type_vars(value)
+                for value in [*signature.arg_types, signature.ret_type]
+            ):
+                ctx.api.fail(
+                    "Generic partial roots need a concrete signature; use input[T]()",
+                    ctx.context,
+                )
+            parameters = Parameters(
+                signature.arg_types, signature.arg_kinds, signature.arg_names
+            )
+            result = result.copy_modified(args=[parameters, signature.ret_type])
+    if _contains_unknown(result.args[0]):
+        ctx.api.fail(
+            "Pipeline input type contains Any or an erased callable signature",
+            ctx.context,
+        )
     output = _resolved(result.args[1])
     if _contains_unknown(output):
         ctx.api.fail(
@@ -437,17 +518,6 @@ def _compose(ctx: MethodContext) -> Type:
         if _is_identity(item):
             outputs.append(upstream)
             continue
-        if _is_erased_partial(item):
-            ctx.api.fail(
-                "Partial signature was erased; retain inference or use a typed adapter",
-                ctx.context,
-            )
-        signature = _signature(ctx, item)
-        if signature is not None and _is_erased_callable(signature):
-            ctx.api.fail(
-                "Pipeline callable signature was erased; retain its typed parameters",
-                ctx.context,
-            )
         result = _call(ctx, item, [upstream])
         resolved = _resolved(result)
         if _contains_unknown(resolved):
@@ -466,7 +536,9 @@ def _compose(ctx: MethodContext) -> Type:
     return Instance(base.type, [parameters, output])
 
 
-def _checked_argument_signature(ctx: MethodSigContext) -> CallableType:
+def _checked_argument_signature(
+    ctx: Union[MethodSigContext, FunctionSigContext],
+) -> CallableType:
     object_type = ctx.api.named_generic_type("builtins.object", [])
     return ctx.default_signature.copy_modified(arg_types=[object_type])
 
@@ -546,6 +618,20 @@ def _collection_factory(ctx: FunctionContext, keep_input: bool) -> Type:
     function = _argument(ctx, "using", 0)
     if item is None or function is None:
         return stage
+    if _is_instance(function, "functools.partial"):
+        signature = _signature(ctx, function)
+        if isinstance(signature, CallableType):
+            first = _first_positional(signature)
+            if (
+                first is not None
+                and not _contains_unknown(first)
+                and not get_type_vars(first)
+            ):
+                item = first
+                stage = _copy_callable(
+                    stage,
+                    arg_types=[ctx.api.named_generic_type("typing.Iterable", [item])],
+                )
     if keep_input:
         result_item = _predicate(ctx, function, item)
     else:
@@ -578,11 +664,6 @@ def _dynamic_factory(ctx: FunctionContext) -> Type:
     )
     outputs: List[Type] = []
     for function in branch_types:
-        if _is_erased_callable(function):
-            ctx.api.fail(
-                "Dynamic branch signature was erased; retain its typed parameters",
-                ctx.context,
-            )
         output = _resolved(_call(ctx, function, [item_input]))
         if _contains_unknown(output):
             ctx.api.fail(
@@ -607,6 +688,20 @@ def _condition_factory(ctx: FunctionContext) -> Type:
     otherwise = _argument(ctx, "otherwise", 2)
     if predicate is None or then is None or otherwise is None:
         return stage
+    # The predicate establishes the domain. Inferring it jointly with a
+    # narrowed true branch can incorrectly shrink object to str (or Never).
+    signature = _signature(ctx, predicate)
+    if isinstance(signature, CallableType) and (
+        signature.type_is is not None or signature.type_guard is not None
+    ):
+        first = _first_positional(signature)
+        if (
+            first is not None
+            and not _contains_unknown(first)
+            and not get_type_vars(first)
+        ):
+            item = first
+            stage = _copy_callable(stage, arg_types=[item])
     narrowed = _predicate(ctx, predicate, item)
     if narrowed is None:
         narrowed = item
@@ -720,7 +815,8 @@ def _group_callbacks(value: Type) -> List[Type]:
 def _ensure_callable(ctx: MethodContext) -> Type:
     # The signature hook preserves the original callable instead of selecting
     # one overload through the generic decorator parameter.
-    function = _proper_arg(ctx.arg_types)
+    original = _proper_arg(ctx.arg_types)
+    function = get_proper_type(original)
     if isinstance(function, CallableType):
         signatures = [function]
     elif isinstance(function, Overloaded):
@@ -756,7 +852,7 @@ def _ensure_callable(ctx: MethodContext) -> Type:
                         "Ensurer validators must synchronously return None or raise",
                         ctx.context,
                     )
-    return function if function is not None else ctx.default_return_type
+    return original if original is not None else ctx.default_return_type
 
 
 def _proper_arg(arguments: List[List[Type]]) -> Optional[Type]:
@@ -767,6 +863,13 @@ def _proper_arg(arguments: List[List[Type]]) -> Optional[Type]:
 
 
 class GloeMypyPlugin(Plugin):
+    def get_function_signature_hook(
+        self, fullname: str
+    ) -> Optional[Callable[[FunctionSigContext], CallableType]]:
+        if fullname in {f"{_FUNCTIONS}unpack", f"{_FUNCTIONS}transformer"}:
+            return _checked_argument_signature
+        return None
+
     def get_method_signature_hook(
         self, fullname: str
     ) -> Optional[Callable[[MethodSigContext], CallableType]]:

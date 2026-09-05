@@ -22,16 +22,18 @@ from tests.scenarios import (
 
 # Configured factories retain application-level nominal units and dependencies.
 # Rejected: wrong unit
-gloe.transformer(within_budget)(limit=Kilometers(1))  # reject:
+gloe.transformer(within_budget)(limit=Kilometers(1))  # reject: wrong_unit
 
 # Rejected: wrong resource
-gloe.transformer(insert_rows)(session="connection")  # reject:
+gloe.transformer(insert_rows)(session="connection")  # reject: wrong_resource
 
 # Rejected: index contract
-gloe.transformer(reconcile)(index={"invoice": "id"}, exact=True)  # reject:
+gloe.transformer(reconcile)(
+    index={"invoice": "id"}, exact=True  # reject: index_contract
+)
 
 # Rejected: generic factory config
-gloe.transformer(replicate)(count="twice")  # reject:
+gloe.transformer(replicate)(count="twice")  # reject: generic_factory_config
 
 
 def wrong_allocation(value: Compensation) -> str:
@@ -39,7 +41,7 @@ def wrong_allocation(value: Compensation) -> str:
 
 
 # Rejected: monetary validator result
-gloe.ensure(changes=conserved)(wrong_allocation)  # reject:
+gloe.ensure(changes=conserved)(wrong_allocation)  # reject: monetary_validator_result
 
 
 def source_indicators(query: Query) -> list[Callable[[Query], str]]:
@@ -48,7 +50,7 @@ def source_indicators(query: Query) -> list[Callable[[Query], str]]:
 
 run = gloe.transformer(run_indicator)(query=Query(1))
 # Rejected: async registry signature
-gloe.input() >> source_indicators >> gloe.map(run)  # reject:
+gloe.input() >> source_indicators >> gloe.map(run)  # reject: async_registry_signature
 
 
 def load_document(query: Query) -> Document:
@@ -60,11 +62,11 @@ def store_batch(batch: ImportBatch) -> ImportBatch:
 
 
 # Rejected: incompatible process phases
-gloe.input() >> load_document >> store_batch  # reject:
+gloe.input() >> load_document >> store_batch  # reject: incompatible_process_phases
 
 importing = gloe.input() >> validate_rows
 # Rejected: wrong pipeline entry
-importing.sync(Compensation(10, 2))  # reject:
+importing.sync(Compensation(10, 2))  # reject: wrong_pipeline_entry
 
 
 async def load_indicator(query: Query) -> Indicator:
@@ -76,7 +78,7 @@ def use_query(query: Query) -> int:
 
 
 # Rejected: resolved result is Indicator
-gloe.input() >> load_indicator >> use_query  # reject:
+gloe.input() >> load_indicator >> use_query  # reject: resolved_result_is_indicator
 
 
 def consume_session(session: Session) -> Reconciliation:
@@ -84,7 +86,10 @@ def consume_session(session: Session) -> Reconciliation:
 
 
 # Rejected: incompatible inferred branches
-gloe.input() >> (load_indicator, consume_session)  # reject:
+gloe.input() >> (  # reject: incompatible_inferred_branches
+    load_indicator,
+    consume_session,
+)
 
 
 def check_number(value: int) -> None:
@@ -96,4 +101,4 @@ def keep_future(value: Awaitable[int]) -> Awaitable[int]:
 
 
 # Rejected: input awaitable remains data
-gloe.ensure(incoming=check_number)(keep_future)  # reject:
+gloe.ensure(incoming=check_number)(keep_future)  # reject: input_awaitable_remains_data

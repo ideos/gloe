@@ -159,4 +159,4 @@ def check_text(value: str) -> None:
 
 
 # The first overload passes, but the second output cannot use this validator.
-ensure(outcome=check_text)(overloaded)  # reject:
+ensure(outcome=check_text)(overloaded)  # reject: overload_validator_output
